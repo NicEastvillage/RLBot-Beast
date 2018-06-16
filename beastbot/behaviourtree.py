@@ -160,7 +160,7 @@ class RepeatUntilFailure(BTNode):
 		super().__init__([child])
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
-		elif prev_status != FAILURE:
+		if prev_status != FAILURE:
 			return (EVALUATING, self.children[0], None)
 		else:
 			return (SUCCESS, self.parent, None)
