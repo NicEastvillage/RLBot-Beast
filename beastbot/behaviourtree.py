@@ -170,3 +170,23 @@ class RepeatUntilSuccess(BTNode):
 			return (EVALUATING, self.children[0], None)
 		else:
 			return (SUCCESS, self.parent, None)
+
+# sig: <task>
+class AlwaysFailure(BTNode):
+	def __init__(self, child):
+		super().__init__([child])
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status == EVALUATING:
+			return (EVALUATING, self.children[0], None)
+		return (FAILURE, self.parent, None)
+
+# sig: <task>
+class AlwaysSuccess(BTNode):
+	def __init__(self, child):
+		super().__init__([child])
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status == EVALUATING:
+			return (EVALUATING, self.children[0], None)
+		return (SUCCESS, self.parent, None)
