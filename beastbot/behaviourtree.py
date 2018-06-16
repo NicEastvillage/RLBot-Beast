@@ -48,3 +48,65 @@ class BehaviourTree:
 			return controller_state
 			
 		return SimpleControllerState()
+
+# Sequencer, aborts on failure by returning failure
+class Sequencer(BTNode):
+	def __init__(self, children = []):
+		super().__init__(children)
+		self.next = 0
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		child_count = len(self.children)
+		if child_count <= 0:
+			print("ERROR: Sequencer has no children!")
+		
+		# abort
+		if prev_status == FAILURE:
+			self.next = 0
+			return (FAILURE, self.parent, None)
+		
+		# resolve next
+		if self.next < child_count:
+			self.next += 1
+			return (EVALUATING, self.children[self.next - 1], None)
+		else:
+			# out of children, all succeeded!
+			self.next = 0
+			return (SUCCESS, self.parent, None)
+
+# Selector, aborts on success by returning success
+class Sequencer(BTNode):
+	def __init__(self, children = []):
+		super().__init__(children)
+		self.next = 0
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		child_count = len(self.children)
+		if child_count <= 0:
+			print("ERROR: Selector has no children!")
+		
+		# abort
+		if prev_status == SUCCESS:
+			self.next = 0
+			return (SUCCESS, self.parent, None)
+		
+		# resolve next
+		if self.next < child_count:
+			self.next += 1
+			return (EVALUATING, self.children[self.next - 1], None)
+		else:
+			# out of children, all failed!
+			self.next = 0
+			return (FAILURE, self.parent, None)
+
+# Returns SUCCESS when done
+# sig: <task>
+class RepeatUntilFailure(BTNode):
+	def __init__(self, child):
+		super().__init__([child])
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status != FAILURE:
+			return (EVALUATING, self.children[0], None)
+		else:
+			return (SUCCESS, self.parent, None)

@@ -14,7 +14,7 @@ class Beast(BaseAgent):
 
     def initialize_agent(self):
         #This runs once before the bot starts up
-        self.behaviour = bt.BehaviourTree(nodes.TaskGoTo([datafetch.ball_location]))
+        self.behaviour = bt.BehaviourTree(bt.RepeatUntilFailure(nodes.TaskGoTo([datafetch.ball_location])))
         pass
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
