@@ -16,4 +16,4 @@ class Beast(BaseAgent):
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
         ball_location = Vec2(packet.game_ball.physics.location.x, packet.game_ball.physics.location.y)
-        return moves.go_to_point(car, packet, ball_location)
+        return moves.go_to_point(car, packet, ball_location, slide=True)
