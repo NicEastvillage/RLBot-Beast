@@ -19,6 +19,7 @@ class Sequencer(bt.BTNode):
 		
 		# abort
 		if prev_status == bt.FAILURE:
+			self.next = 0
 			return (bt.FAILURE, self.parent, None)
 		
 		# resolve next
@@ -27,6 +28,7 @@ class Sequencer(bt.BTNode):
 			return (bt.EVALUATING, self.children[self.next - 1], None)
 		else:
 			# out of children, all succeeded!
+			self.next = 0
 			return (bt.SUCCESS, self.parent, None)
 
 # Selector, aborts on success by returning success
@@ -42,6 +44,7 @@ class Sequencer(bt.BTNode):
 		
 		# abort
 		if prev_status == bt.SUCCESS:
+			self.next = 0
 			return (bt.SUCCESS, self.parent, None)
 		
 		# resolve next
@@ -50,7 +53,20 @@ class Sequencer(bt.BTNode):
 			return (bt.EVALUATING, self.children[self.next - 1], None)
 		else:
 			# out of children, all failed!
+			self.next = 0
 			return (bt.FAILURE, self.parent, None)
+
+# Returns SUCCESS when done
+# sig: <task>
+class RepeatUntilFailure(bt.BTNode):
+	def __init__(self, child):
+		super().__init__([child])
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status != bt.FAILURE:
+			return (bt.EVALUATING, self.children[0], None)
+		else:
+			return (bt.SUCCESS, self.parent, None)
 
 # sig: <point:Vec2Func>
 class TaskGoTo(bt.BTNode):
@@ -61,8 +77,8 @@ class TaskGoTo(bt.BTNode):
 	def resolve(self, prev_status, car, packet: GameTickPacket):
 		point = self.pointFunc(car, packet)
 		controller = moves.go_to_point(car, packet, point, slide=True)
-		return (bt.ACTION, self, controller)
-	
+		return (bt.ACTION, self.parent, controller)
+
 # sig: <dist:float> <pointA:Vec2Func> <pointB:Vec2Func>	
 class GuardDistanceLessThan(bt.BTNode):
 	def __init(self, arguments):
