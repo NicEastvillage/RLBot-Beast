@@ -1,6 +1,6 @@
 from vec2 import Vec2
 
-from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
+from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 SUCCESS = 0
@@ -9,7 +9,7 @@ EVALUATING = 2
 ACTION = 3
 
 class BTNode:
-	def __init__(self, arguments):
+	def __init__(self):
 		parent = None
 		children = []
 	
