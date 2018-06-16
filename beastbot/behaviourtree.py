@@ -113,6 +113,41 @@ class Inverter(BTNode):
 			return (FAILURE, self.parent, None)
 
 # Returns SUCCESS when done
+# sig: <x:int> <task>
+class RepeatXTimes(BTNode):
+	def __init__(self, x, child):
+		super().__init__([child])
+		self.x = x
+		self.count = 0
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if self.count < self.x:
+			self.count += 1
+			return (EVALUATING, self.children[0], None)
+		else:
+			self.count = 0
+			return (SUCCESS, self.parent, None)
+
+# Returns FAILURE after X tries without child return SUCCESS or ACTION
+# sig: <x:int> <task>
+class TryXTimes(BTNode):
+	def __init__(self, x, child):
+		super().__init__([child])
+		self.x = x
+		self.count = 0
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status == ACTION or prev_status == SUCCESS:
+			self.count = 0
+			return (SUCCESS, self.parent, None)
+		elif self.count < self.x:
+			self.count += 1
+			return (EVALUATING, self.children[0], None)
+		else:
+			self.count = 0
+			return (FAILURE, self.parent, None)
+
+# Returns SUCCESS when done
 # sig: <task>
 class RepeatUntilFailure(BTNode):
 	def __init__(self, child):
