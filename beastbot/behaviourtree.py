@@ -5,7 +5,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 SUCCESS = 0
 FAILURE = 1
-EVALUATING = 2
+EVALUATING = 2 # always goes downwards in tree
 ACTION = 3
 
 class BTNode:
@@ -99,6 +99,19 @@ class Sequencer(BTNode):
 			self.next = 0
 			return (FAILURE, self.parent, None)
 
+# sig: <task>
+class Inverter(BTNode):
+	def __init__(self, child):
+		super().__init__([child])
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status == EVALUATING:
+			return (EVALUATING, self.children[0], None)
+		elif prev_status == FAILURE:
+			return (SUCCESS, self.parent, None)
+		else:
+			return (FAILURE, self.parent, None)
+
 # Returns SUCCESS when done
 # sig: <task>
 class RepeatUntilFailure(BTNode):
@@ -106,7 +119,19 @@ class RepeatUntilFailure(BTNode):
 		super().__init__([child])
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
-		if prev_status != FAILURE:
+		elif prev_status != FAILURE:
+			return (EVALUATING, self.children[0], None)
+		else:
+			return (SUCCESS, self.parent, None)
+
+# Returns SUCCESS when done
+# sig: <task>
+class RepeatUntilSuccess(BTNode):
+	def __init__(self, child):
+		super().__init__([child])
+	
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		if prev_status != SUCCESS:
 			return (EVALUATING, self.children[0], None)
 		else:
 			return (SUCCESS, self.parent, None)
