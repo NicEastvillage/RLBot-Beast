@@ -1,20 +1,20 @@
 import math
 import rlmath
-from vec2 import Vec2
+from vec import Vec3
 
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 REQUIRED_SLIDE_ANG = 1.6
 
-def go_to_point(car, packet: GameTickPacket, point: Vec2, slide=False) -> SimpleControllerState:
+def go_to_point(car, packet: GameTickPacket, point: Vec3, slide=False) -> SimpleControllerState:
 	controller_state = SimpleControllerState()
 	
-	car_location = Vec2(car.physics.location.x, car.physics.location.y)
+	car_location = Vec3(car.physics.location.x, car.physics.location.y)
 	car_direction = rlmath.get_car_facing_vector(car)
 	car_to_ball = point - car_location
 	
-	steer_correction_radians = car_direction.correction_to(car_to_ball)
+	steer_correction_radians = car_direction.angTo2d(car_to_ball)
 	
 	do_smoothing = True
 	if slide:

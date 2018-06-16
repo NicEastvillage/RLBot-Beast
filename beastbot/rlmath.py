@@ -1,5 +1,5 @@
 import math
-from vec2 import Vec2 
+from vec import Vec3
 
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
@@ -11,7 +11,7 @@ def get_car_facing_vector(car):
     facing_x = math.cos(pitch) * math.cos(yaw)
     facing_y = math.cos(pitch) * math.sin(yaw)
 
-    return Vec2(facing_x, facing_y)
+    return Vec3(facing_x, facing_y)
     
 def steer_correction_smooth(val):
     # increasing the constant will make the correction more smooth

@@ -1,12 +1,12 @@
 import math
-from vec2 import Vec2
+from vec import Vec3
 import behaviourtree as bt
 import moves
 
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
-# sig: <point:Vec2Func>
+# sig: <point:Vec3Func>
 class TaskGoTo(bt.BTNode):
 	def __init__(self, arguments):
 		super().__init__()
@@ -17,7 +17,7 @@ class TaskGoTo(bt.BTNode):
 		controller = moves.go_to_point(car, packet, point, slide=True)
 		return (bt.ACTION, self.parent, controller)
 
-# sig: <dist:float> <pointA:Vec2Func> <pointB:Vec2Func>	
+# sig: <dist:float> <pointA:Vec3Func> <pointB:Vec3Func>	
 class GuardDistanceLessThan(bt.BTNode):
 	def __init(self, arguments):
 		super().__init__()

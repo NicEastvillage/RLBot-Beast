@@ -1,6 +1,6 @@
 import math
 import rlmath
-from vec2 import Vec2
+from vec import Vec3
 import moves
 import behaviourtree as bt
 import nodes

@@ -1,4 +1,4 @@
-from vec2 import Vec2
+from vec import Vec3
 
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
