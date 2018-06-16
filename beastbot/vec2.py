@@ -11,6 +11,12 @@ class Vec2:
     def __sub__(self, val):
         return Vec2(self.x - val.x, self.y - val.y)
 
+    def dist(self, other):
+        return math.sqrt(self.dist2(other))
+
+    def dist2(self, other):
+        return (self.x - other.x)**2 + (self.y - other.y)**2
+
     def correction_to(self, ideal):
         current_in_radians = math.atan2(self.y, self.x)
         ideal_in_radians = math.atan2(ideal.y, ideal.x)

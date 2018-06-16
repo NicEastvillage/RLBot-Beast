@@ -9,9 +9,11 @@ EVALUATING = 2
 ACTION = 3
 
 class BTNode:
-	def __init__(self):
-		parent = None
-		children = []
+	def __init__(self, children=[]):
+		self.parent = None
+		self.children = []
+		for child in children:
+			self.add_child(child)
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
 		# Here the node will calculate and do stuff
@@ -21,7 +23,7 @@ class BTNode:
 		pass
 		
 	def add_child(self, child):
-		children.append(child)
+		self.children.append(child)
 		child.parent = self
 
 class BehaviourTree:
