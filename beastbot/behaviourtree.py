@@ -17,8 +17,10 @@ class BTNode:
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
 		# Here the node will calculate and do stuff
-		# Returns a tuple (int, BTNode, SimpleControllerState) with status,
-		# the next node to be called (eg. parent, self, or child), and a controller state (when status == ACTION)
+		# Returns a tuple (int, BTNode, SimpleControllerState)
+		# - status
+		# - the next node to be called (eg. parent, or child)
+		# - a controller state (only when status == ACTION)
 		# Remember to reset when nercessary
 		pass
 		
@@ -48,6 +50,8 @@ class BehaviourTree:
 			return controller_state
 			
 		return SimpleControllerState()
+
+# ========================== Composite Nodes =========================================================================
 
 # Sequencer, aborts on failure by returning failure
 class Sequencer(BTNode):
@@ -98,6 +102,8 @@ class Sequencer(BTNode):
 			# out of children, all failed!
 			self.next = 0
 			return (FAILURE, self.parent, None)
+
+# ========================== Decorator Nodes =========================================================================
 
 # sig: <task>
 class Inverter(BTNode):
