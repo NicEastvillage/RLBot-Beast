@@ -35,3 +35,15 @@ class Vec3:
                 diff -= 2 * math.pi
 
         return diff
+
+class Zone:
+    def __init__(self, a, b):
+        self.low = Vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))
+        self.high = Vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z))
+    
+    def contains(self, point):
+        if self.low.x <= point.x and point.x <= self.high.x:
+            if self.low.y <= point.y and point.y <= self.high.y:
+                if self.low.z <= point.z and point.z <= self.high.z:
+                    return True
+        return False
