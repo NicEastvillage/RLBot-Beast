@@ -1,5 +1,5 @@
 # Beast from the East
-A python bot for Rocket League using the framework RLBot
+A python bot for Rocket League using the framework [RLBot](https://github.com/RLBot/RLBot).
 
 ## How to run
 
@@ -15,4 +15,4 @@ A python bot for Rocket League using the framework RLBot
 - Bot behavior is controlled by `python_example/python_example.py`
 - Bot appearance is controlled by `python_example/appearance.cfg`
 
-See https://github.com/RLBot/RLBotPythonExample/wiki for documentation and tutorials.
+See https://github.com/RLBot/RLBot/wiki for documentation and tutorials.
