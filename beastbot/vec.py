@@ -15,11 +15,26 @@ class Vec3:
     def __sub__(self, other):
         return Vec3(self.x - other.x, self.y - other.y, self.z - other.z)
 
+    def __mul__(self, scale):
+        return Vec3(self.x * scale, self.y * scale, self.z * scale)
+        
+    def __str__(self):
+        return "Vec3(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ")"
+
+    def length(self):
+        return math.sqrt(self.length2())
+        
+    def length2(self):
+        return self.x**2 + self.y**2 + self.z**2
+
     def dist(self, other):
         return math.sqrt(self.dist2(other))
 
     def dist2(self, other):
         return (self.x - other.x)**2 + (self.y - other.y)**2 + (self.z - other.z)**2
+    
+    def lerp(self, other, t):
+        return self * (1 - t) + other * t
     
     def angTo2d(self, ideal):
         current_in_radians = math.atan2(self.y, self.x)
