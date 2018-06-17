@@ -27,6 +27,9 @@ class BTNode:
 	def add_child(self, child):
 		self.children.append(child)
 		child.parent = self
+		
+	def reset(self):
+		pass
 
 class BehaviourTree:
 	def __init__(self, node):
@@ -50,6 +53,10 @@ class BehaviourTree:
 			return controller_state
 			
 		return SimpleControllerState()
+	
+	def reset(self):
+		self.current.reset()
+		self.current == self.root
 
 # ========================== Composite Nodes =========================================================================
 
@@ -66,7 +73,7 @@ class Sequencer(BTNode):
 		
 		# abort
 		if prev_status == FAILURE:
-			self.next = 0
+			self.reset()
 			return (FAILURE, self.parent, None)
 		
 		# resolve next
@@ -75,8 +82,11 @@ class Sequencer(BTNode):
 			return (EVALUATING, self.children[self.next - 1], None)
 		else:
 			# out of children, all succeeded!
-			self.next = 0
+			self.reset()
 			return (SUCCESS, self.parent, None)
+			
+	def reset(self):
+		self.next = 0
 
 # Selector, aborts on success by returning success
 class Sequencer(BTNode):
@@ -91,7 +101,7 @@ class Sequencer(BTNode):
 		
 		# abort
 		if prev_status == SUCCESS:
-			self.next = 0
+			self.reset()
 			return (SUCCESS, self.parent, None)
 		
 		# resolve next
@@ -100,8 +110,11 @@ class Sequencer(BTNode):
 			return (EVALUATING, self.children[self.next - 1], None)
 		else:
 			# out of children, all failed!
-			self.next = 0
+			self.reset()
 			return (FAILURE, self.parent, None)
+	
+	def reset(self):
+		self.next = 0
 
 # ========================== Decorator Nodes =========================================================================
 
@@ -131,8 +144,11 @@ class RepeatXTimes(BTNode):
 			self.count += 1
 			return (EVALUATING, self.children[0], None)
 		else:
-			self.count = 0
+			self.reset()
 			return (SUCCESS, self.parent, None)
+	
+	def reset(self):
+		self.count = 0
 
 # Returns FAILURE after X tries without child return SUCCESS or ACTION
 # sig: <x:int> <task>
@@ -144,14 +160,17 @@ class TryXTimes(BTNode):
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
 		if prev_status == ACTION or prev_status == SUCCESS:
-			self.count = 0
+			self.reset()
 			return (SUCCESS, self.parent, None)
 		elif self.count < self.x:
 			self.count += 1
 			return (EVALUATING, self.children[0], None)
 		else:
-			self.count = 0
+			self.reset()
 			return (FAILURE, self.parent, None)
+	
+	def reset(self):
+		self.count = 0
 
 # Returns SUCCESS when done
 # sig: <task>
