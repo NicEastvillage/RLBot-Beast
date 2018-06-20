@@ -18,6 +18,9 @@ class Vec3:
     def __mul__(self, scale):
         return Vec3(self.x * scale, self.y * scale, self.z * scale)
         
+    def __rmul__(self, scale):
+        return self * scale
+        
     def __str__(self):
         return "Vec3(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ")"
 

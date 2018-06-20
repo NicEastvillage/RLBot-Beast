@@ -21,16 +21,16 @@ class Beast(BaseAgent):
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
                     bt.Selector([
-                        guard.DistanceLessThan([500, datafetch.my_location, datafetch.ball_location]),
+                        guard.DistanceLessThan([1000, datafetch.my_location, datafetch.ball_location]),
                         # or
                         guard.IsPointInZone([datafetch.ball_location, datafetch.my_half_zone])
                     ]),
                     # do
-                    task.GoTowards([datafetch.ball_location, True, False])
+                    task.PushBall()
                 ])),
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
-                    bt.Inverter(guard.DistanceLessThan([200, datafetch.my_location, datafetch.my_goal_location])),
+                    bt.Inverter(guard.DistanceLessThan([300, datafetch.my_location, datafetch.my_goal_location])),
                     # do
                     task.GoTowards([datafetch.my_goal_location, True, False])
                 ])),
