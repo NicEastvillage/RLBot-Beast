@@ -12,7 +12,6 @@ class Wait(bt.BTNode):
 		super().__init__()
 		
 	def resolve(self, prev_status, car, packet: GameTickPacket):
-		print("Waiting")
 		return (bt.ACTION, self.parent, SimpleControllerState())
 
 # sig: <point:Vec3Func> <slide:bool> <boost:bool>

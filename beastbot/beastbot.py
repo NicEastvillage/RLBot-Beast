@@ -21,7 +21,7 @@ class Beast(BaseAgent):
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
                     bt.Selector([
-                        guard.DistanceLessThan([200, datafetch.my_location, datafetch.ball_location]),
+                        guard.DistanceLessThan([500, datafetch.my_location, datafetch.ball_location]),
                         # or
                         guard.IsPointInZone([datafetch.ball_location, datafetch.my_half_zone])
                     ]),
@@ -39,7 +39,7 @@ class Beast(BaseAgent):
                     guard.IsPointInZone([datafetch.ball_location, datafetch.enemy_half_zone]),
                     # do
                     task.Wait()
-                ])),
+                ]))
             ]))
             
         #task.GoTowards([datafetch.ball_location])

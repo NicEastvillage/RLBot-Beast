@@ -38,20 +38,25 @@ class BehaviourTree:
 	
 	def resolve(self, car, packet: GameTickPacket) -> SimpleControllerState:
 		if self.current:
+			
 			# Evaluate until an action is found
 			val = self.current.resolve(ACTION, car, packet)
 			while val[0] != ACTION:
+				
 				self.current = val[1]
 				if self.current == None:
 					# We have reached the root, do nothing but start from root next time
-					self.current == self.root
+					self.current = self.root
+					self.root.reset()
 					return SimpleControllerState()
 					
 				val = self.current.resolve(val[0], car, packet)
 			
+			self.current = val[1]
 			controller_state = val[2]
 			return controller_state
 			
+		print("ERROR: BT.current is None")
 		return SimpleControllerState()
 	
 	def reset(self):
@@ -76,6 +81,7 @@ class Sequencer(BTNode):
 			self.reset()
 			return (FAILURE, self.parent, None)
 		
+		# prev must have be success, action or evaluating
 		# resolve next
 		self.next += 1
 		if self.next < child_count:
@@ -100,10 +106,11 @@ class Selector(BTNode):
 			print("ERROR: Selector has no children!")
 		
 		# abort
-		if prev_status == SUCCESS:
+		if prev_status == SUCCESS or prev_status == ACTION:
 			self.reset()
 			return (SUCCESS, self.parent, None)
 		
+		# prev must have be failure or evaluating
 		# resolve next
 		self.next += 1
 		if self.next < child_count:
@@ -191,7 +198,7 @@ class RepeatUntilSuccess(BTNode):
 		super().__init__([child])
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
-		if prev_status != SUCCESS:
+		if prev_status != SUCCESS and prev_status != ACTION:
 			return (EVALUATING, self.children[0], None)
 		else:
 			return (SUCCESS, self.parent, None)
