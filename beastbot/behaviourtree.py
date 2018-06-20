@@ -64,7 +64,7 @@ class BehaviourTree:
 class Sequencer(BTNode):
 	def __init__(self, children = []):
 		super().__init__(children)
-		self.next = 0
+		self.next = -1
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
 		child_count = len(self.children)
@@ -77,22 +77,22 @@ class Sequencer(BTNode):
 			return (FAILURE, self.parent, None)
 		
 		# resolve next
+		self.next += 1
 		if self.next < child_count:
-			self.next += 1
-			return (EVALUATING, self.children[self.next - 1], None)
+			return (EVALUATING, self.children[self.next], None)
 		else:
 			# out of children, all succeeded!
 			self.reset()
 			return (SUCCESS, self.parent, None)
 			
 	def reset(self):
-		self.next = 0
+		self.next = -1
 
 # Selector, aborts on success by returning success
 class Selector(BTNode):
 	def __init__(self, children = []):
 		super().__init__(children)
-		self.next = 0
+		self.next = -1
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
 		child_count = len(self.children)
@@ -105,16 +105,16 @@ class Selector(BTNode):
 			return (SUCCESS, self.parent, None)
 		
 		# resolve next
+		self.next += 1
 		if self.next < child_count:
-			self.next += 1
-			return (EVALUATING, self.children[self.next - 1], None)
+			return (EVALUATING, self.children[self.next], None)
 		else:
 			# out of children, all failed!
 			self.reset()
 			return (FAILURE, self.parent, None)
 	
 	def reset(self):
-		self.next = 0
+		self.next = -1
 
 # ========================== Decorator Nodes =========================================================================
 
