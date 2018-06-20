@@ -2,8 +2,9 @@ import math
 import rlmath
 from vec import Vec3
 import moves
+import tasks as task
+import guards as guard
 import behaviourtree as bt
-import nodes
 import datafetch
 
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
@@ -14,34 +15,34 @@ class Beast(BaseAgent):
 
     def initialize_agent(self):
         #This runs once before the bot starts up
-        self.kickoff = bt.BehaviourTree(bt.RepeatUntilFailure(nodes.TaskGoTo([datafetch.ball_location])))
+        self.kickoff = bt.BehaviourTree(bt.RepeatUntilFailure(task.GoTowards([datafetch.ball_location, False, True])))
         self.behaviour = bt.BehaviourTree(
             bt.Sequencer([
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
                     bt.Selector([
-                        nodes.GuardDistanceLessThan([500, datafetch.my_location, datafetch.ball_location]),
+                        guard.DistanceLessThan([200, datafetch.my_location, datafetch.ball_location]),
                         # or
-                        nodes.GuardIsPointInZone([datafetch.ball_location, datafetch.my_half_zone])
+                        guard.IsPointInZone([datafetch.ball_location, datafetch.my_half_zone])
                     ]),
                     # do
-                    nodes.TaskGoTo([datafetch.ball_location])
+                    task.GoTowards([datafetch.ball_location, True, False])
                 ])),
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
-                    bt.Inverter(nodes.GuardDistanceLessThan([200, datafetch.my_location, datafetch.my_goal_location])),
+                    bt.Inverter(guard.DistanceLessThan([200, datafetch.my_location, datafetch.my_goal_location])),
                     # do
-                    nodes.TaskGoTo([datafetch.my_goal_location])
+                    task.GoTowards([datafetch.my_goal_location, True, False])
                 ])),
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
-                    nodes.GuardIsPointInZone([datafetch.ball_location, datafetch.enemy_half_zone]),
+                    guard.IsPointInZone([datafetch.ball_location, datafetch.enemy_half_zone]),
                     # do
-                    nodes.TaskWait()
+                    task.Wait()
                 ])),
             ]))
             
-        #nodes.TaskGoTo([datafetch.ball_location])
+        #task.GoTowards([datafetch.ball_location])
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
