@@ -15,7 +15,7 @@ def get_car_facing_vector(car):
     
 def steer_correction_smooth(val):
     # increasing the constant will make the correction more smooth
-    smoothness = 0.15
+    smoothness = 0.2
     val = (1 + smoothness) * val / (smoothness + abs(val))
     val = min(max(-1, val), 1)
     

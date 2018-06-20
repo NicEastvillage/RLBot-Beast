@@ -6,6 +6,15 @@ import moves
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
+# sig: None
+class TaskWait(bt.BTNode):
+	def __init__(self):
+		super().__init__()
+		
+	def resolve(self, prev_status, car, packet: GameTickPacket):
+		print("Waiting")
+		return (bt.ACTION, self.parent, SimpleControllerState())
+
 # sig: <point:Vec3Func>
 class TaskGoTo(bt.BTNode):
 	def __init__(self, arguments):
@@ -19,7 +28,7 @@ class TaskGoTo(bt.BTNode):
 
 # sig: <dist:float!> <pointA:Vec3Func> <pointB:Vec3Func>	
 class GuardDistanceLessThan(bt.BTNode):
-	def __init(self, arguments):
+	def __init__(self, arguments):
 		super().__init__()
 		self.dist = arguments[0]
 		self.pointAFunc = arguments[1]
@@ -36,7 +45,7 @@ class GuardDistanceLessThan(bt.BTNode):
 
 # sig: <point:Vec3> <zone:Zone>
 class GuardIsPointInZone(bt.BTNode):
-	def __init(self, arguments):
+	def __init__(self, arguments):
 		super().__init__()
 		self.pointFunc = arguments[0]
 		self.zoneFunc = arguments[1]
@@ -52,7 +61,7 @@ class GuardIsPointInZone(bt.BTNode):
 
 # sig: <point:Vec3> <z:float!>
 class GuardIsPointBelowZ(bt.BTNode):
-	def __init(self, arguments):
+	def __init__(self, arguments):
 		super().__init__()
 		self.pointFunc = arguments[0]
 		self.z = arguments[1]

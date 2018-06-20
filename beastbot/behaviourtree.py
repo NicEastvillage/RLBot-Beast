@@ -89,7 +89,7 @@ class Sequencer(BTNode):
 		self.next = 0
 
 # Selector, aborts on success by returning success
-class Sequencer(BTNode):
+class Selector(BTNode):
 	def __init__(self, children = []):
 		super().__init__(children)
 		self.next = 0

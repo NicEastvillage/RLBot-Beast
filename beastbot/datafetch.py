@@ -32,14 +32,14 @@ def enemy_half_zone(car, packet: GameTickPacket):
 
 # Vec3
 def my_goal_location(car, packet: GameTickPacket):
-	goal_offset = situation.ARENA_LENGTH - 200
+	goal_offset = situation.ARENA_LENGTH2 - 300
 	if car.team == 0:
 		goal_offset *= -1
 	return Vec3(0, goal_offset)
 
 # Vec3
 def enemy_goal_location(car, packet: GameTickPacket):
-	goal_offset = situation.ARENA_LENGTH - 200
+	goal_offset = situation.ARENA_LENGTH2 - 300
 	if car.team == 1:
 		goal_offset *= -1
 	return Vec3(0, goal_offset)
