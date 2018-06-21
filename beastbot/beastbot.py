@@ -34,6 +34,7 @@ class Beast(BaseAgent):
                     # do
                     task.GoTowards([datafetch.my_goal_location, True, False])
                 ])),
+                task.FacePoint([datafetch.ball_location]),
                 bt.RepeatUntilFailure(bt.Sequencer([
                     # while
                     guard.IsPointInZone([datafetch.ball_location, datafetch.enemy_half_zone]),

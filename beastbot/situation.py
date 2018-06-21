@@ -41,5 +41,5 @@ def is_heading_towards(car, point):
 	return is_heading_towards2(ang, dist)
 
 def is_heading_towards2(ang, dist):
-	required_ang = (math.pi / 2) * (dist / ARENA_LENGTH)
+	required_ang = (math.pi / 3) * (dist / ARENA_LENGTH)
 	return ang <= required_ang

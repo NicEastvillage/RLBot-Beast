@@ -20,3 +20,11 @@ def steer_correction_smooth(val):
     val = min(max(-1, val), 1)
     
     return val
+
+def fix_ang(ang):
+    if abs(ang) > math.pi:
+        if ang < 0:
+            ang += 2 * math.pi
+        else:
+            ang -= 2 * math.pi
+    return ang

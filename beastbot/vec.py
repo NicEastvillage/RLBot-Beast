@@ -1,4 +1,5 @@
 import math
+import rlmath
 
 class Vec3:
     def __init__(self, x=0, y=0, z=0):
@@ -51,15 +52,7 @@ class Vec3:
         ideal_in_radians = math.atan2(ideal.y, ideal.x)
 
         diff = ideal_in_radians - current_in_radians
-
-        # Make sure we go the 'short way'
-        if abs(diff) > math.pi:
-            if diff < 0:
-                diff += 2 * math.pi
-            else:
-                diff -= 2 * math.pi
-
-        return diff
+        return rlmath.fix_ang(diff)
 
 class Zone:
     def __init__(self, a, b):
