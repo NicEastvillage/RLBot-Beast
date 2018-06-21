@@ -31,3 +31,15 @@ def get_goal_direction(car, packet:GameTickPacket):
 		return BLUE_DIRECTION
 	else:
 		return ORANGE_DIRECTION
+
+def is_heading_towards(car, point):
+	car_location = Vec3(car.physics.location.x, car.physics.location.y)
+	car_direction = rlmath.get_car_facing_vector(car)
+	car_to_point = point - car_location
+	ang = car_direction.angTo2d(car_to_point)
+	dist = car_to_point.length()
+	return is_heading_towards2(ang, dist)
+
+def is_heading_towards2(ang, dist):
+	required_ang = (math.pi / 2) * (dist / ARENA_LENGTH)
+	return ang <= required_ang

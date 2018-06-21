@@ -39,7 +39,7 @@ class PushBall(bt.BTNode):
 		ball_velocity = Vec3(packet.game_ball.physics.velocity.x, packet.game_ball.physics.velocity.y, packet.game_ball.physics.velocity.z)
 		
 		own_goal_direction = situation.get_goal_direction(car, packet)
-		ball_predicted = ball_location + 0.08 * ball_velocity + Vec3(y=own_goal_direction * 30)
+		ball_predicted = ball_location + 0.08 * ball_velocity + Vec3(y=own_goal_direction * 50)
 		
 		dist = (car_location - ball_predicted.in2D()).length()
 		shouldBoost = dist > 500

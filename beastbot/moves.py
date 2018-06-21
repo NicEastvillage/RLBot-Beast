@@ -34,14 +34,10 @@ def go_towards_point(car, packet: GameTickPacket, point: Vec3, slide=False, boos
 			steer_correction = -1
 	
 	if boost:
-		if is_heading_towards(steer_correction_radians, car_to_point.length()):
+		if situation.is_heading_towards2(steer_correction_radians, car_to_point.length()):
 			controller_state.boost = True
 	
 	controller_state.steer = steer_correction
 	controller_state.throttle = 1.0
 	
 	return controller_state
-
-def is_heading_towards(ang, dist):
-	required_ang = (math.pi / 2) * (dist / situation.ARENA_LENGTH)
-	return ang <= required_ang

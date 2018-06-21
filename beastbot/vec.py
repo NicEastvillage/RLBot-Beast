@@ -39,6 +39,13 @@ class Vec3:
     def lerp(self, other, t):
         return self * (1 - t) + other * t
     
+    def dot(self, other):
+        return self.x*other.x + self.y*other.y + self.z*other.z
+    
+    def angTo(self, ideal):
+        cos_ang = self.dot(ideal) / (self.length() * ideal.length())
+        return math.acos(cos_ang)
+    
     def angTo2d(self, ideal):
         current_in_radians = math.atan2(self.y, self.x)
         ideal_in_radians = math.atan2(ideal.y, ideal.x)
