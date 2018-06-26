@@ -51,7 +51,7 @@ def to_01(low, high, t):
 def lerp(low, high, t):
 	return low + t*(high-low)
 
-def from_01(high, low, t):
+def from_01(low, high, t):
 	return lerp(low, high, t)
 
 def remap(prev_low, prev_high, new_low, new_high, t):

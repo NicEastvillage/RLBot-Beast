@@ -1,4 +1,6 @@
 import math
+import rlmath
+import rlutility
 from vec import Vec3
 import situation
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -22,6 +24,34 @@ def my_half_zone(car, packet: GameTickPacket):
 		return situation.BLUE_HALF_ZONE
 	else:
 		return situation.ORANGE_HALF_ZONE
+
+# float
+def get_possession_score(car, packet):
+	car_loc = Vec3(car.physics.location.x, car.physics.location.y, car.physics.location.z)
+	car_dir = rlmath.get_car_facing_vector(car)
+	ball_loc = Vec3(packet.game_ball.physics.location.x, packet.game_ball.physics.location.y)
+	car_to_ball = ball_loc - car_loc
+	
+	dist = car_to_ball.length()
+	ang = car_dir.angTo(car_to_ball)
+	
+	return rlutility.dist_01(dist)*rlutility.face_ang_01(ang)
+
+# float
+def my_possession_score(car, packet):
+	return get_possession_score(car, packet)
+
+# float
+def enemy_possession_score(car, packet):
+	enemy = packet.game_cars[1 - car.team]
+	return get_possession_score(enemy, packet)
+
+# boolean
+def has_possession(car, packet):
+	return my_possession_score(car, packet) > enemy_possession_score(car, packet)
+
+def has_not_possession(car, packet):
+	return not has_possession(car, packet)
 
 # Zone
 def enemy_half_zone(car, packet: GameTickPacket):

@@ -22,9 +22,17 @@ class UtilitySystem:
 		for i, ch in enumerate(self.choices):
 			self.scores[i] = ch.utility(car, packet)
 			if i == self.best_index:
-				self.scores[i] += 0.25 # was previous best choice bias
+				self.scores[i] += 0.15 # was previous best choice bias
 		
+		prev_best_index = self.best_index
 		self.best_index = self.scores.index(max(self.scores))
+		
+		if prev_best_index != self.best_index:
+			# Check if choice has a reset method, then call it
+			reset_method = getattr(self.choices[prev_best_index], "reset", None)
+			if callable(reset_method):
+				reset_method()
+		
 		return self.choices[self.best_index]
 	
 	def reset(self):

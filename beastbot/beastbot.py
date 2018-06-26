@@ -12,12 +12,14 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 class Beast(BaseAgent):
 
     def initialize_agent(self):
-        ch = []
-        for i, pad in enumerate(self.get_field_info().boost_pads):
-            ch.append(choices.SpecificBoostPad(pad, i))
-        
-        self.ut_system = rlutility.UtilitySystem(ch)
+        self.ut_system = get_offense_system(self)
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
         return self.ut_system.evaluate(car, packet).execute(car, packet)
+
+def get_offense_system(agent):
+    off_choices = []
+    off_choices.append(choices.CollectBoost(agent))
+    off_choices.append(choices.TouchBall())
+    return rlutility.UtilitySystem(off_choices)
