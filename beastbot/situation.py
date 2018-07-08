@@ -25,6 +25,9 @@ ORANGE_DIRECTION = 1
 BLUE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, -ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 ORANGE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 
+BLUE_GOAL_LOCATION = Vec3(y=-ARENA_LENGTH2-100)
+ORANGE_GOAL_LOCATION = Vec3(y=ARENA_LENGTH2+100)
+
 wall_offset = 65
 ARENA_EXCEPT_WALLS_ZONE = Zone(Vec3(-ARENA_WIDTH2+wall_offset, -ARENA_LENGTH2+wall_offset),
                                Vec3(ARENA_WIDTH2-wall_offset, ARENA_LENGTH2-wall_offset, ARENA_HEIGHT))
@@ -34,6 +37,13 @@ def get_goal_direction(car, packet:GameTickPacket):
 		return BLUE_DIRECTION
 	else:
 		return ORANGE_DIRECTION
+
+
+def get_goal_location(car, data):
+	if car.team == 0:
+		return BLUE_GOAL_LOCATION
+	else:
+		return ORANGE_GOAL_LOCATION
 
 
 def is_heading_towards(car, point):
