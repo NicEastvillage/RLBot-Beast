@@ -56,11 +56,12 @@ def get_half_zone(team):
 
 class Car:
 	def __init__(self, game_car):
-		self.team = game_car.team
-		self.location = Vec3(game_car.physics.location)
+		self.team = int(game_car.team)
+		self.location = Vec3().set(game_car.physics.location)
 		self.location_2d = self.location.in2D()
-		self.velocity = Vec3(game_car.physics.velocity)
+		self.velocity = Vec3().set(game_car.physics.velocity)
 		self.orientation = Orientation(game_car.physics.rotation)
+		self.boost = int(game_car.boost)
 
 		# Default values for variables, set by Data
 		self.has_possession = False
@@ -78,13 +79,13 @@ class Car:
 
 
 class Data:
-	def __init__(self, car, packet: GameTickPacket):
+	def __init__(self, index, packet: GameTickPacket):
 		self.packet = packet
-		self.ball_location = packet.game_ball.physics.location
-		self.ball_velocity = Vec3(packet.game_ball.physics.velocity)
+		self.ball_location = Vec3().set(packet.game_ball.physics.location)
+		self.ball_velocity = Vec3().set(packet.game_ball.physics.velocity)
 
-		self.car = Car(car)
-		self.enemy = Car(packet.game_cars[1 - car.team])
+		self.car = Car(packet.game_cars[index])
+		self.enemy = Car(packet.game_cars[1 - index])
 
 		self.car.set_ball_dependent_variables(self.ball_location, self.ball_velocity)
 		self.enemy.set_ball_dependent_variables(self.ball_location, self.ball_velocity)
