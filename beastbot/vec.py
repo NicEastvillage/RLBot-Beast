@@ -65,15 +65,18 @@ class Vec3:
         return (self.x, self.y, self.z)
 
 
+UP = Vec3(0, 0, 1)
+
+
 class Zone:
     def __init__(self, a, b):
         self.low = Vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))
         self.high = Vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z))
     
     def contains(self, point):
-        if self.low.x <= point.x and point.x <= self.high.x:
-            if self.low.y <= point.y and point.y <= self.high.y:
-                if self.low.z <= point.z and point.z <= self.high.z:
+        if self.low.x <= point.x <= self.high.x:
+            if self.low.y <= point.y <= self.high.y:
+                if self.low.z <= point.z <= self.high.z:
                     return True
         return False
 

@@ -29,15 +29,13 @@ class CollectBoost:
 
 	def utility(self, data):
 		boost01 = float(data.car.boost / 100.0)
-		boost01 = 1 - easing.smooth_stop(2, boost01)
+		boost01 = 1 - easing.smooth_stop(4, boost01)
 
 		best_boost = self.collect_boost_system.evaluate(data)
 		time_est = rlmath.estimate_time_to_arrival(data.car, best_boost.location)
-		time01 = 8 ** (-time_est)
+		time01 = 4 ** (-time_est)
 
-		big = 0.20 if best_boost.info.is_full_boost else 0
-
-		return easing.fix(boost01 * time01 + big)
+		return easing.fix(boost01 * time01)
 
 	def execute(self, data):
 		return self.collect_boost_system.evaluate(data).execute(data)
@@ -59,8 +57,9 @@ class SpecificBoostPad:
 		dist = 1 - rlu.dist_01(data.car.location.dist(self.location))
 		ang = rlu.face_ang_01(data.car.orientation.front.angTo2d(car_to_pad))
 		active = state.is_active
+		big = self.info.is_full_boost * 0.5
 
-		return dist * ang * active
+		return easing.fix(dist * ang + big) * active
 
 	def execute(self, data):
 		return moves.go_towards_point(data, self.location, True, self.info.is_full_boost)

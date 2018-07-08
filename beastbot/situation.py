@@ -25,6 +25,9 @@ ORANGE_DIRECTION = 1
 BLUE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, -ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 ORANGE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 
+wall_offset = 65
+ARENA_EXCEPT_WALLS_ZONE = Zone(Vec3(-ARENA_WIDTH2+wall_offset, -ARENA_LENGTH2+wall_offset),
+                               Vec3(ARENA_WIDTH2-wall_offset, ARENA_LENGTH2-wall_offset, ARENA_HEIGHT))
 
 def get_goal_direction(car, packet:GameTickPacket):
 	if car.team == 0:
@@ -60,8 +63,10 @@ class Car:
 		self.location = Vec3().set(game_car.physics.location)
 		self.location_2d = self.location.in2D()
 		self.velocity = Vec3().set(game_car.physics.velocity)
+		self.angular_velocity = Vec3().set(game_car.physics.angular_velocity)
 		self.orientation = Orientation(game_car.physics.rotation)
 		self.boost = int(game_car.boost)
+		self.is_on_wall = not ARENA_EXCEPT_WALLS_ZONE.contains(self.location)
 
 		# Default values for variables, set by Data
 		self.has_possession = False
