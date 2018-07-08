@@ -1,8 +1,9 @@
 import math
 import rlmath
 
+
 class Vec3:
-    def __init__(self, x=0, y=0, z=0):
+    def __init__(self, x: float=0, y: float=0, z: float=0):
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
@@ -63,6 +64,7 @@ class Vec3:
     def tuple(self):
         return (self.x, self.y, self.z)
 
+
 class Zone:
     def __init__(self, a, b):
         self.low = Vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))
@@ -74,3 +76,21 @@ class Zone:
                 if self.low.z <= point.z and point.z <= self.high.z:
                     return True
         return False
+
+
+class Orientation:
+    def __init__(self, rotation):
+        self.yaw = float(rotation.yaw)
+        self.roll = float(rotation.roll)
+        self.pitch = float(rotation.pitch)
+
+        cr = math.cos(self.roll)
+        sr = math.sin(self.roll)
+        cp = math.cos(self.pitch)
+        sp = math.sin(self.pitch)
+        cy = math.cos(self.yaw)
+        sy = math.sin(self.yaw)
+
+        self.front = Vec3(cp*cy, cp*sy, sp)
+        self.left = Vec3(cy*sp*sr-cr*sy, sy*sp*sr+cr*cy, -cp*sr)
+        self.up = Vec3(-cr*cy*sp-sr*sy, -cr*sy*sp+sr*cy, cp*cr)
