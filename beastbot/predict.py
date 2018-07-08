@@ -29,37 +29,29 @@ def get_route(data: Data):
 
 	steps_taken = 0
 	ball_visited = []
-	car_visited = []
+	car_visited = [car_init_loc]
 
-	while steps_taken < 20:
+	while steps_taken < 13:
 		ball_cur_loc = ball_init_loc
 		ball_cur_dir = ball_init_dir
-		car_cur_loc = car_init_loc
-		car_cur_dir = car_init_dir
 
 		ball_visited = [ball_cur_loc]
-		car_visited = [car_cur_loc]
 
-		ang_diff = ball_cur_dir.angTo2d(car_cur_dir)
+		ball_to_car = car_init_loc - ball_cur_loc
+		ang_diff = ball_cur_dir.angTo2d(ball_to_car)
 
 		for i in range(steps_taken):
-			car_to_ball = ball_cur_loc - car_cur_loc
-			ball_miss_ang = ball_cur_dir.angTo2d(-1 * car_to_ball)
-			car_miss_ang = car_cur_dir.angTo2d(car_to_ball)
-			ball_turn_dir = 1 if ball_miss_ang > 0 else -1
-			car_turn_dir = 1 if car_miss_ang > 0 else -1
+			ball_to_car = car_init_loc - ball_cur_loc
+			ang_diff = ball_cur_dir.angTo2d(ball_to_car)
+			ball_turn_dir = 1 if ang_diff > 0 else -1
 
-			ball_cur_dir = ball_cur_dir.rotate_2d(min(max_turn_ang, abs(ball_miss_ang)) * ball_turn_dir)
+			if i > 1:
+				ball_cur_dir = ball_cur_dir.rotate_2d(min(max_turn_ang, abs(ang_diff)) * ball_turn_dir)
 			ball_cur_loc += ball_cur_dir * dist_step_size
-			car_cur_dir = car_cur_dir.rotate_2d(min(max_turn_ang, abs(car_miss_ang)) * car_turn_dir)
-			car_cur_loc += car_cur_dir * dist_step_size
 
 			ball_visited.append(ball_cur_loc)
-			car_visited.append(car_cur_loc)
 
-			ang_diff = ball_cur_dir.angTo2d(car_cur_dir)
-
-		if math.pi - abs(ang_diff) < max_turn_ang:
+		if math.pi - abs(ang_diff) < max_turn_ang or ball_to_car.length2() < dist_step_size*dist_step_size:
 			break
 
 		steps_taken += 1
