@@ -4,57 +4,35 @@ from situation import Data
 from vec import Vec3
 
 
-def draw_route(renderer, data: Data):
-	route = get_route(data)
-
-	renderer.begin_rendering()
-	prev_loc_t = route[0].tuple()
-	for loc in route[1:]:
-		loc_t = loc.tuple()
-		renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255, 255, 255, 0))
-		prev_loc_t = loc_t
-	renderer.end_rendering()
+GRAVITY = Vec3(z=-650)
 
 
-def get_route(data: Data):
-	time_step_size = 0.1
-	dist_step_size = 1350 * time_step_size
-	max_turn_ang = math.pi * 0.1
+def move_body(body, time, gravity=True):
+    acc = GRAVITY if gravity else Vec3()
 
-	ball_init_loc = data.ball_location.in2D()
-	ball_to_goal = (situation.get_goal_location(data.enemy, data) - ball_init_loc)
-	ball_init_dir = ball_to_goal.in2D().normalized()*-1
-	car_init_loc = data.car.location.in2D()
-	car_init_dir = data.car.orientation.front.in2D().normalized()
+    # (1/2 * a * t^2) + (v * t) + p
+    new_loc = 0.5 * time * time * acc + time * body.velocity + body.location
+    new_vel = time * acc + body.velocity
+    body.location = new_loc
+    body.velocity = new_vel
 
-	steps_taken = 0
-	ball_visited = []
-	car_visited = [car_init_loc]
+    return body
 
-	while steps_taken < 13:
-		ball_cur_loc = ball_init_loc
-		ball_cur_dir = ball_init_dir
 
-		ball_visited = [ball_cur_loc]
+def next_wall_hit(body, offset=0):
+    wall_hits = [
+        max((situation.ARENA_WIDTH2-offset - body.location.x) / body.velocity.x, 0) if body.velocity.x != 0 else 1e307,
+        max((situation.ARENA_WIDTH2-offset + body.location.x) / -body.velocity.x, 0) if body.velocity.x != 0 else 1e307,
+        max((situation.ARENA_LENGTH2-offset - body.location.y) / body.velocity.y, 0) if body.velocity.y != 0 else 1e307,
+        max((situation.ARENA_LENGTH2-offset + body.velocity.y) / -body.velocity.y, 0) if body.velocity.y != 0 else 1e307
+    ]
+    wall_index = -1
+    earliest_hit = 1e306
+    for i, hit_time in enumerate(wall_hits):
+        if hit_time <= earliest_hit:
+            earliest_hit = hit_time
+            wall_index = i
 
-		ball_to_car = car_init_loc - ball_cur_loc
-		ang_diff = ball_cur_dir.angTo2d(ball_to_car)
-
-		for i in range(steps_taken):
-			ball_to_car = car_init_loc - ball_cur_loc
-			ang_diff = ball_cur_dir.angTo2d(ball_to_car)
-			ball_turn_dir = 1 if ang_diff > 0 else -1
-
-			if i > 1:
-				ball_cur_dir = ball_cur_dir.rotate_2d(min(max_turn_ang, abs(ang_diff)) * ball_turn_dir)
-			ball_cur_loc += ball_cur_dir * dist_step_size
-
-			ball_visited.append(ball_cur_loc)
-
-		if math.pi - abs(ang_diff) < max_turn_ang or ball_to_car.length2() < dist_step_size*dist_step_size:
-			break
-
-		steps_taken += 1
-
-	car_visited.extend(reversed(ball_visited))
-	return car_visited
+    return dict(hit=wall_index != -1,
+                time=earliest_hit,
+                side=wall_index == 0 or wall_index == 1)
