@@ -21,7 +21,7 @@ def get_route(data: Data):
 	dist_step_size = 1350 * time_step_size
 	max_turn_ang = math.pi * 0.1
 
-	ball_init_loc = data.ball_location.in2D()
+	ball_init_loc = data.ball.location_2d
 	ball_to_goal = (situation.get_goal_location(data.enemy, data) - ball_init_loc)
 	ball_init_dir = ball_to_goal.in2D().normalized()*-1
 	car_init_loc = data.car.location.in2D()

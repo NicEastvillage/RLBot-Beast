@@ -16,7 +16,7 @@ class TouchBall:
 		return easing.lerp(0.15, 0.85, dist01 * possession)
 
 	def execute(self, data):
-		return moves.go_towards_point(data, data.ball_location, True, True)
+		return moves.go_towards_point(data, data.ball.location, True, True)
 
 
 class CollectBoost:
