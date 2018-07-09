@@ -25,6 +25,9 @@ ORANGE_DIRECTION = 1
 BLUE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, -ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 ORANGE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 
+BLUE_GOAL_LOCATION = Vec3(y=-ARENA_LENGTH2-100)
+ORANGE_GOAL_LOCATION = Vec3(y=ARENA_LENGTH2+100)
+
 wall_offset = 65
 ARENA_EXCEPT_WALLS_ZONE = Zone(Vec3(-ARENA_WIDTH2+wall_offset, -ARENA_LENGTH2+wall_offset),
                                Vec3(ARENA_WIDTH2-wall_offset, ARENA_LENGTH2-wall_offset, ARENA_HEIGHT))
@@ -34,6 +37,13 @@ def get_goal_direction(car, packet:GameTickPacket):
 		return BLUE_DIRECTION
 	else:
 		return ORANGE_DIRECTION
+
+
+def get_goal_location(car, data):
+	if car.team == 0:
+		return BLUE_GOAL_LOCATION
+	else:
+		return ORANGE_GOAL_LOCATION
 
 
 def is_heading_towards(car, point):
@@ -57,6 +67,31 @@ def get_half_zone(team):
 		return ORANGE_HALF_ZONE
 
 
+class Ball:
+	def __init__(self):
+		self.location = Vec3()
+		self.location_2d = Vec3()
+		self.velocity = Vec3()
+		self.angular_velocity = Vec3()
+
+	def set_game_ball(self, game_ball):
+		self.location = Vec3().set(game_ball.physics.location)
+		self.location_2d = self.location.in2D()
+		self.velocity = Vec3().set(game_ball.physics.velocity)
+		self.angular_velocity = Vec3().set(game_ball.physics.angular_velocity)
+		return self
+
+	def set(self, other):
+		self.location.set(other.location)
+		self.location_2d = self.location.in2D()
+		self.velocity.set(other.velocity)
+		self.angular_velocity.set(other.angular_velocity)
+		return self
+
+	def copy(self):
+		return Ball().set(self)
+
+
 class Car:
 	def __init__(self, game_car):
 		self.team = int(game_car.team)
@@ -75,10 +110,10 @@ class Car:
 		self.dist_to_ball_2d = 1000
 		self.ang_to_ball_2d = 0
 
-	def set_ball_dependent_variables(self, ball_loc, ball_vel):
-		car_to_ball_2d = ball_loc.in2D() - self.location_2d
+	def set_ball_dependent_variables(self, ball):
+		car_to_ball_2d = ball.location_2d - self.location_2d
 
-		self.dist_to_ball = self.location.dist(ball_loc)
+		self.dist_to_ball = self.location.dist(ball.location)
 		self.dist_to_ball_2d = car_to_ball_2d.length()
 		self.ang_to_ball_2d = self.orientation.front.angTo2d(car_to_ball_2d)
 
@@ -86,14 +121,13 @@ class Car:
 class Data:
 	def __init__(self, index, packet: GameTickPacket):
 		self.packet = packet
-		self.ball_location = Vec3().set(packet.game_ball.physics.location)
-		self.ball_velocity = Vec3().set(packet.game_ball.physics.velocity)
+		self.ball = Ball().set_game_ball(packet.game_ball)
 
 		self.car = Car(packet.game_cars[index])
 		self.enemy = Car(packet.game_cars[1 - index])
 
-		self.car.set_ball_dependent_variables(self.ball_location, self.ball_velocity)
-		self.enemy.set_ball_dependent_variables(self.ball_location, self.ball_velocity)
+		self.car.set_ball_dependent_variables(self.ball)
+		self.enemy.set_ball_dependent_variables(self.ball)
 
 		self.__decide_possession()
 
@@ -104,13 +138,9 @@ class Data:
 		self.enemy.has_possession = not self.car.has_possession
 
 	def __get_possession_score(self, car):
-		car_loc = car.location
-		car_dir = car.orientation.front
-		ball_loc = self.ball_location
-		car_to_ball = ball_loc - car_loc
+		car_to_ball = self.ball.location - car.location
 
 		dist = car_to_ball.length()
-		ang = car_dir.angTo(car_to_ball)
+		ang = car.orientation.front.angTo(car_to_ball)
 
 		return rlutility.dist_01(dist) * rlutility.face_ang_01(ang)
-
