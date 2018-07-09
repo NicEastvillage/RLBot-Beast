@@ -14,10 +14,10 @@ class Beast(BaseAgent):
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = situation.Data(self.index, packet)
+        predict.draw_ball_path(self.renderer, data, 4, 0.15)
         if data.car.team == 0:
             r = route.get_route(data)
             route.draw_route(self.renderer, r)
-            predict.draw_ball_path(self.renderer, data, 6, 0.2)
         return self.ut_system.evaluate(data).execute(data)
 
 

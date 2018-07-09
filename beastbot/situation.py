@@ -75,10 +75,10 @@ class Ball:
 		self.angular_velocity = Vec3()
 
 	def set_game_ball(self, game_ball):
-		self.location = Vec3().set(game_ball.phyhics.location)
+		self.location = Vec3().set(game_ball.physics.location)
 		self.location_2d = self.location.in2D()
-		self.velocity = Vec3().set(game_ball.phyhics.velocity)
-		self.angular_velocity = Vec3().set(game_ball.phyhics.angular_velocity)
+		self.velocity = Vec3().set(game_ball.physics.velocity)
+		self.angular_velocity = Vec3().set(game_ball.physics.angular_velocity)
 		return self
 
 	def set(self, other):

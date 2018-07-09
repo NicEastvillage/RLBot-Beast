@@ -15,7 +15,7 @@ def draw_ball_path(renderer, data, duration, time_step):
         time_passed += time_step
         ball_clone.set(data.ball)
         move_ball(ball_clone, time_passed)
-        locations.append(ball_clone.location)
+        locations.append(ball_clone.location.copy())
 
     renderer.begin_rendering()
     prev_loc_t = locations[0].tuple()
@@ -62,10 +62,10 @@ def move_body(body, time, gravity=True):
 
 def next_wall_hit(body, offset=0.0):
     wall_hits = [
-        max((situation.ARENA_WIDTH2-offset - body.location.x) / body.velocity.x, 0) if body.velocity.x != 0 else 1e307,
-        max((situation.ARENA_WIDTH2-offset + body.location.x) / -body.velocity.x, 0) if body.velocity.x != 0 else 1e307,
-        max((situation.ARENA_LENGTH2-offset - body.location.y) / body.velocity.y, 0) if body.velocity.y != 0 else 1e307,
-        max((situation.ARENA_LENGTH2-offset + body.velocity.y) / -body.velocity.y, 0) if body.velocity.y != 0 else 1e307
+        max((situation.ARENA_WIDTH2-offset - body.location.x) / body.velocity.x, 0) if body.velocity.x > 0 else 1e307,
+        max((situation.ARENA_WIDTH2-offset + body.location.x) / -body.velocity.x, 0) if body.velocity.x < 0 else 1e307,
+        max((situation.ARENA_LENGTH2-offset - body.location.y) / body.velocity.y, 0) if body.velocity.y > 0 else 1e307,
+        max((situation.ARENA_LENGTH2-offset + body.velocity.y) / -body.velocity.y, 0) if body.velocity.y < 0 else 1e307
     ]
     wall_index = -1
     earliest_hit = 1e306
@@ -79,7 +79,7 @@ def next_wall_hit(body, offset=0.0):
 
 def time_of_arrival_at_height(body, height, gravity=True):
     if height == body.location.z:
-        return 0
+        return Prediction(True, 0)
 
     acc = GRAVITY if gravity else Vec3()
     if acc.z == 0:
@@ -93,7 +93,7 @@ def time_of_arrival_at_height_linear(body, height):
         return Prediction(False, 1e307)
 
     time = (height - body.location.z) / body.velocity.z
-    return Prediction(time < 0, time)
+    return Prediction(time >= 0, time)
 
 
 def time_of_arrival_at_height_quadratic(body, height, acc_z):
@@ -121,12 +121,15 @@ def move_ball(ball, time):
         return ball
 
     time_spent = 0
+    limit = 30
 
-    while time_spent <= time:
+    while time_spent <= time and limit != 0:
         time_left = time - time_spent
+        limit -= 1
 
-        wall_hit = next_wall_hit(ball, 92.0)
-        ground_hit = time_of_arrival_at_height(ball, 92.0)
+        wall_hit = next_wall_hit(ball, 92.2)
+        ground_hit = time_of_arrival_at_height(ball, 92.2)
+        # print(time_spent, wall_hit.time, ground_hit.time)
 
         # Check if ball doesn't hits anything
         if ground_hit.happens_after(time_left) and wall_hit.happens_after(time_left):
@@ -141,7 +144,7 @@ def move_ball(ball, time):
             else:
                 ball.velocity.y *= BOUNCINESS
 
-        elif ground_hit.time == 0:
+        elif ground_hit.time == 0.0 and abs(ball.velocity.z * BOUNCINESS) < 2.0:
             # Simulate ball rolling until it hits wall
             ball.velocity.z = 0
 
@@ -163,4 +166,6 @@ def move_ball(ball, time):
             time_spent += ground_hit.time
             ball.velocity.z *= BOUNCINESS
 
+    if limit == 0:
+        print("inf lop!")
     return ball
