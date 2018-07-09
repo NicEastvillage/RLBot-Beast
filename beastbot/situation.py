@@ -68,11 +68,28 @@ def get_half_zone(team):
 
 
 class Ball:
-	def __init__(self, game_ball):
+	def __init__(self):
+		self.location = Vec3()
+		self.location_2d = Vec3()
+		self.velocity = Vec3()
+		self.angular_velocity = Vec3()
+
+	def set_game_ball(self, game_ball):
 		self.location = Vec3().set(game_ball.phyhics.location)
 		self.location_2d = self.location.in2D()
 		self.velocity = Vec3().set(game_ball.phyhics.velocity)
 		self.angular_velocity = Vec3().set(game_ball.phyhics.angular_velocity)
+		return self
+
+	def set(self, other):
+		self.location.set(other.location)
+		self.location_2d = self.location.in2D()
+		self.velocity.set(other.velocity)
+		self.angular_velocity.set(other.angular_velocity)
+		return self
+
+	def copy(self):
+		return Ball().set(self)
 
 
 class Car:
@@ -104,7 +121,7 @@ class Car:
 class Data:
 	def __init__(self, index, packet: GameTickPacket):
 		self.packet = packet
-		self.ball = Ball(packet.game_ball)
+		self.ball = Ball().set_game_ball(packet.game_ball)
 
 		self.car = Car(packet.game_cars[index])
 		self.enemy = Car(packet.game_cars[1 - index])

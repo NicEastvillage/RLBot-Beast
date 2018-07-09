@@ -7,6 +7,25 @@ GRAVITY = Vec3(z=-650)
 BOUNCINESS = -0.6
 
 
+def draw_ball_path(renderer, data, duration, time_step):
+    time_passed = 0
+    ball_clone = situation.Ball()
+    locations = [data.ball.location]
+    while time_passed < duration:
+        time_passed += time_step
+        ball_clone.set(data.ball)
+        move_ball(ball_clone, time_passed)
+        locations.append(ball_clone.location)
+
+    renderer.begin_rendering()
+    prev_loc_t = locations[0].tuple()
+    for loc in locations[1:]:
+        loc_t = loc.tuple()
+        renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255, 255, 0, 0))
+        prev_loc_t = loc_t
+    renderer.end_rendering()
+
+
 class Prediction:
     def __init__(self, happens, time):
         self.happens = happens
