@@ -2,7 +2,8 @@ import moves
 import rlmath
 import rlutility as rlu
 import easing
-import datafetch
+import predict
+import situation
 from vec import Vec3
 
 
@@ -16,7 +17,16 @@ class TouchBall:
 		return easing.lerp(0.15, 0.85, dist01 * possession)
 
 	def execute(self, data):
-		return moves.go_towards_point(data, data.ball.location, True, True)
+		ball_land_eta = max(predict.time_of_arrival_at_height(data.ball, 92.2).time, 0)
+		ball_land_loc = predict.move_ball(data.ball.copy(), ball_land_eta).location
+		drive_eta = ball_land_loc.dist(data.car.location) / 1410
+		if drive_eta < ball_land_eta:
+			bias = (ball_land_loc - situation.get_goal_location(data.enemy, data)).rescale(23)
+			return moves.go_towards_point_with_timing(data, ball_land_loc + bias, ball_land_eta, True)
+		else:
+			ball_loc2 = predict.move_ball(data.ball.copy(), drive_eta).location
+			drive_eta = ball_loc2.dist(data.car.location) / 1410
+			return moves.go_towards_point_with_timing(data, ball_loc2, drive_eta, True)
 
 
 class CollectBoost:
