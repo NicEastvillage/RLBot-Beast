@@ -17,13 +17,11 @@ def draw_ball_path(renderer, data, duration, time_step):
         move_ball(ball_clone, time_passed)
         locations.append(ball_clone.location.copy())
 
-    renderer.begin_rendering()
     prev_loc_t = locations[0].tuple()
     for loc in locations[1:]:
         loc_t = loc.tuple()
         renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255, 255, 0, 0))
         prev_loc_t = loc_t
-    renderer.end_rendering()
 
 
 class Prediction:
@@ -77,6 +75,10 @@ def next_wall_hit(body, offset=0.0):
     return WallHitPrediction(wall_index != -1, earliest_hit, wall_index == 0 or wall_index == 1)
 
 
+def next_ball_ground_hit(ball):
+    return time_of_arrival_at_height(ball, situation.BALL_RADIUS)
+
+
 def time_of_arrival_at_height(body, height, gravity=True):
     if height == body.location.z:
         return Prediction(True, 0)
@@ -127,8 +129,8 @@ def move_ball(ball, time):
         time_left = time - time_spent
         limit -= 1
 
-        wall_hit = next_wall_hit(ball, 92.2)
-        ground_hit = time_of_arrival_at_height(ball, 92.2)
+        wall_hit = next_wall_hit(ball, situation.BALL_RADIUS)
+        ground_hit = next_ball_ground_hit(ball)
         # print(time_spent, wall_hit.time, ground_hit.time)
 
         # Check if ball doesn't hits anything
