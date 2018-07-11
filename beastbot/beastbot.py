@@ -3,6 +3,7 @@ import choices
 import situation
 import predict
 import route
+import moves
 
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -19,9 +20,12 @@ class Beast(BaseAgent):
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
         if data.car.team == 0:
             r = route.find_three_routes(self.renderer, data)
-
-        self.renderer.end_rendering()
-        return self.ut_system.evaluate(data).execute(data)
+            route.draw_route(self.renderer, r)
+            self.renderer.end_rendering()
+            return moves.follow_route(data, r)
+        else:
+            self.renderer.end_rendering()
+            return self.ut_system.evaluate(data).execute(data)
 
 
 def get_offense_system(agent):

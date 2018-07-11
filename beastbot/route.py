@@ -54,9 +54,6 @@ def find_three_routes(renderer, data: Data):
 		get_route(data, time_third)
 	]
 
-	for r in routes:
-		draw_route(renderer, r)
-
 	return routes[0]
 
 
@@ -64,17 +61,16 @@ def draw_route(renderer, route: Route, r=255, g=255, b=0):
 	if len(route.points) < 1:
 		return
 
-	prev_loc_t = route.car_loc.tuple()
-	for loc in route.points:
+	prev_loc_t = route.points[0].tuple()
+	for loc in route.points[1:]:
 		loc_t = loc.tuple()
 		renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255, r, g, b))
 		prev_loc_t = loc_t
 
 
 def get_route(data: Data, time_offset=0):
-	time_step_size = 0.1
-	dist_step_size = 1410 * time_step_size
-	max_turn_ang = math.pi * 0.1
+	dist_step_size = 1410 * 0.5
+	max_turn_ang = math.pi * 0.3
 
 	ball = predict.move_ball(data.ball.copy(), time_offset)
 
@@ -93,20 +89,21 @@ def get_route(data: Data, time_offset=0):
 		ball_visited = [ball_cur_loc]
 
 		ball_to_car = car_init_loc - ball_cur_loc
-		ang_diff = ball_cur_dir.angTo2d(ball_to_car)
 
 		for i in range(steps_taken):
 			ball_to_car = car_init_loc - ball_cur_loc
 			ang_diff = ball_cur_dir.angTo2d(ball_to_car)
 			ball_turn_dir = 1 if ang_diff > 0 else -1
 
-			if i > 1:
-				ball_cur_dir = ball_cur_dir.rotate_2d(min(max_turn_ang, abs(ang_diff)) * ball_turn_dir)
+			if i > 0:
+				ball_cur_dir = ball_cur_dir.rotate_2d(max_turn_ang * ball_turn_dir)
 			ball_cur_loc += ball_cur_dir * dist_step_size
 
 			ball_visited.append(ball_cur_loc)
 
-		if math.pi - abs(ang_diff) < max_turn_ang or ball_to_car.length2() < dist_step_size*dist_step_size:
+		ang_diff = ball_cur_dir.angTo2d(ball_to_car)
+
+		if abs(ang_diff) < max_turn_ang or ball_to_car.length() < dist_step_size:
 			break
 
 		steps_taken += 1

@@ -3,6 +3,7 @@ import rlmath
 import situation
 from situation import Data
 from vec import Vec3,UP
+from route import Route
 from rlbot.agents.base_agent import SimpleControllerState
 
 REQUIRED_SLIDE_ANG = 1.6
@@ -41,7 +42,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
 	return controller_state
 
 
-def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=False):
+def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=False, alpha=1.3):
 	controller_state = SimpleControllerState()
 
 	car_to_point = point - data.car.location
@@ -65,7 +66,6 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
 			controller_state.steer = -1
 
 	vel_f = data.car.velocity.proj_onto(car_to_point).length()
-	alpha = 1.3  # interpolation parameter
 	avg_vel_f = dist / eta
 	target_vel_f = (1.0 - alpha) * vel_f + alpha * avg_vel_f
 
@@ -82,3 +82,11 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
 			controller_state.throttle = -1.0
 
 	return controller_state
+
+
+def follow_route(data: Data, route: Route):
+	point = route.points[0]
+	dist = data.car.location.in2D().dist(point)
+	section_length_01 = dist / route.length
+	section_duration = route.time_offset * section_length_01
+	return go_towards_point_with_timing(data, point, section_duration, alpha=1)
