@@ -71,6 +71,13 @@ class Vec3:
         diff = ideal_in_radians - current_in_radians
         return rlmath.fix_ang(diff)
 
+    def proj_onto(self, other):
+        return (self.dot(other) / other.dot(other)) * other
+
+    def proj_onto_size(self, other):
+        other = other.normalized()
+        return self.dot(other) / other.dot(other)   # can be negative!
+
     def set(self, some):
         self.x = some.x
         self.y = some.y
