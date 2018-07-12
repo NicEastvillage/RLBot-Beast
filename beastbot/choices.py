@@ -24,10 +24,15 @@ class TouchBall:
         drive_eta = ball_land_loc.dist(data.car.location) / 1410
         if drive_eta < ball_land_eta:
             bias = (ball_land_loc - situation.get_goal_location(data.enemy, data)).rescale(23)
-            return moves.go_towards_point_with_timing(data, ball_land_loc + bias, ball_land_eta, True)
+            dest = ball_land_loc + bias
+            data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(),
+                                       data.renderer.create_color(255, 255, 0, 255))
+            return moves.go_towards_point_with_timing(data, dest, ball_land_eta, True)
         else:
             ball_loc2 = predict.move_ball(data.ball.copy(), drive_eta).location
             drive_eta = ball_loc2.dist(data.car.location) / 1410
+            data.renderer.draw_line_3d(data.car.location.tuple(), ball_loc2.tuple(),
+                                       data.renderer.create_color(255, 255, 0, 255))
             return moves.go_towards_point_with_timing(data, ball_loc2, drive_eta, True)
 
 
@@ -57,8 +62,8 @@ class SaveGoal:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-
-            if best_route is None or r.length < best_route.length:
+            route.draw_route(data.renderer, r)
+            if r.good_route and (best_route is None or r.length < best_route.length):
                 best_route = r
 
         if best_route is None:
@@ -110,4 +115,5 @@ class SpecificBoostPad:
         return easing.fix(dist * ang + big) * active
 
     def execute(self, data):
+        data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 255, 0))
         return moves.go_towards_point(data, self.location, True, self.info.is_full_boost)

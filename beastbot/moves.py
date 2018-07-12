@@ -89,4 +89,4 @@ def follow_route(data: Data, route: Route):
 	dist = data.car.location.in2D().dist(point)
 	section_length_01 = dist / route.length
 	section_duration = route.time_offset * section_length_01
-	return go_towards_point_with_timing(data, point, section_duration, alpha=1)
+	return go_towards_point_with_timing(data, point, section_duration, True, alpha=1)

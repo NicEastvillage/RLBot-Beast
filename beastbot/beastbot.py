@@ -15,12 +15,13 @@ class Beast(BaseAgent):
         self.ut_system = get_offense_system(self)
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-        data = situation.Data(self.index, packet)
+        data = situation.Data(self, packet)
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
+        action = self.ut_system.evaluate(data).execute(data)
         self.renderer.end_rendering()
-        return self.ut_system.evaluate(data).execute(data)
+        return action
 
 
 def get_offense_system(agent):

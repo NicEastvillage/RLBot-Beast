@@ -129,12 +129,14 @@ class Car:
 
 
 class Data:
-    def __init__(self, index, packet: GameTickPacket):
+    def __init__(self, agent, packet: GameTickPacket):
+        self.agent = agent
+        self.renderer = agent.renderer
         self.packet = packet
         self.ball = Ball().set_game_ball(packet.game_ball)
 
-        self.car = Car(packet.game_cars[index])
-        self.enemy = Car(packet.game_cars[1 - index])
+        self.car = Car(packet.game_cars[agent.index])
+        self.enemy = Car(packet.game_cars[1 - agent.index])
 
         self.car.set_ball_dependent_variables(self.ball)
         self.enemy.set_ball_dependent_variables(self.ball)

@@ -6,13 +6,14 @@ from vec import Vec3
 
 
 class Route:
-    def __init__(self, points, final_loc, time_offset, expected_vel, car_loc):
+    def __init__(self, points, final_loc, time_offset, expected_vel, car_loc, good_route):
         self.points = points
         self.final_loc = final_loc
         self.time_offset = time_offset
         self.expected_vel = expected_vel
         self.length = self.__find_length(car_loc, points)
         self.car_loc = car_loc
+        self.good_route = good_route
 
     def __find_length(self, car_loc, points):
         if len(points) < 1:
@@ -44,10 +45,10 @@ def draw_route(renderer, route: Route, r=255, g=255, b=0):
     if len(route.points) < 1:
         return
 
-    prev_loc_t = route.points[0].tuple()
-    for loc in route.points[1:]:
+    prev_loc_t = route.car_loc.tuple()
+    for loc in route.points:
         loc_t = loc.tuple()
-        renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255, r, g, b))
+        renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255 if route.good_route else 80, r, g, b))
         prev_loc_t = loc_t
 
 
@@ -97,8 +98,12 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
 
         steps_taken += 1
 
+    good_route = True
+    if steps_taken == 0:
+        good_route = abs(ang_diff) < max_turn_ang
+
     ball_visited.reverse()
-    return Route(ball_visited, ball_init_loc, time_offset, 1410, car_init_loc)
+    return Route(ball_visited, ball_init_loc, time_offset, 1410, car_init_loc, good_route)
 
 
 def get_route(data: Data, destination, look_target):
@@ -138,6 +143,10 @@ def get_route(data: Data, destination, look_target):
             break
 
         steps_taken += 1
+
+    good_route = True
+    if steps_taken == 0:
+        good_route = abs(ang_diff) < max_turn_ang
 
     locs_visited.reverse()
     return Route(locs_visited, destination, 0, 1410, car_init_loc)
