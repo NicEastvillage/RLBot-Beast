@@ -90,6 +90,8 @@ class CollectBoost:
         self.collect_boost_system = rlu.UtilitySystem(boost_choices, 0)
 
     def utility(self, data):
+        if data.car.boost == 0:
+            return -0.5
         boost01 = float(data.car.boost / 100.0)
         boost01 = 1 - easing.smooth_stop(4, boost01)
 
