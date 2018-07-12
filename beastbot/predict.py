@@ -66,7 +66,7 @@ def next_wall_hit(body, offset=0.0):
         max((situation.ARENA_LENGTH2-offset + body.velocity.y) / -body.velocity.y, 0) if body.velocity.y < 0 else 1e307
     ]
     wall_index = -1
-    earliest_hit = 1e306
+    earliest_hit = 1e300
     for i, hit_time in enumerate(wall_hits):
         if hit_time <= earliest_hit:
             earliest_hit = hit_time
@@ -125,13 +125,12 @@ def move_ball(ball, time):
     time_spent = 0
     limit = 30
 
-    while time_spent <= time and limit != 0:
+    while time - time_spent < 0.001 and limit != 0:
         time_left = time - time_spent
         limit -= 1
 
         wall_hit = next_wall_hit(ball, situation.BALL_RADIUS)
         ground_hit = next_ball_ground_hit(ball)
-        # print(time_spent, wall_hit.time, ground_hit.time)
 
         # Check if ball doesn't hits anything
         if ground_hit.happens_after(time_left) and wall_hit.happens_after(time_left):
@@ -152,9 +151,13 @@ def move_ball(ball, time):
 
             if not wall_hit.happens:
                 # The ball is laying still
-                break
+                return ball
 
-            move_body(ball, min(wall_hit.time, time_left), False)
+            if time_left < wall_hit.time:
+                move_body(ball, time_left, False)
+                return ball
+
+            move_body(ball, wall_hit.time, False)
             time_spent += wall_hit.time
 
             if wall_hit.is_side_wall:
@@ -169,5 +172,5 @@ def move_ball(ball, time):
             ball.velocity.z *= BOUNCINESS
 
     if limit == 0:
-        print("inf lop!")
+        print("inf loop!", ball.location.z, ball.velocity.z, time_left)
     return ball
