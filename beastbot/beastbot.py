@@ -5,6 +5,7 @@ import predict
 import route
 import moves
 
+from vec import Vec3
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
@@ -19,7 +20,7 @@ class Beast(BaseAgent):
 
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
         if data.car.team == 0:
-            r = route.find_route_to_next_ball_landing(data)
+            r = route.find_route_to_next_ball_landing(data, Vec3())
             route.draw_route(self.renderer, r)
             self.renderer.end_rendering()
             return moves.follow_route(data, r)
