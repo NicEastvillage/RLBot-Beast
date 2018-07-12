@@ -36,6 +36,15 @@ class TouchBall:
             return moves.go_towards_point_with_timing(data, ball_loc2, drive_eta, True)
 
 
+class KickOff:
+    def utility(self, data):
+        return data.packet.game_info.is_kickoff_pause
+
+    def execute(self, data):
+        data.renderer.draw_line_3d(data.car.location.tuple(), (0,0,0), data.renderer.create_color(255, 255, 255, 255))
+        return moves.go_towards_point(data, Vec3(), False, True)
+
+
 class SaveGoal:
     def __init__(self, agent):
         goal_dir = situation.get_goal_direction(agent, None)

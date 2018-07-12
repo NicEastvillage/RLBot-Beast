@@ -19,7 +19,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     do_smoothing = True
     if slide:
         if car_to_point.length() > 300:
-            if steer_correction_radians > REQUIRED_SLIDE_ANG or steer_correction_radians < -REQUIRED_SLIDE_ANG:
+            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
                 controller_state.handbrake = True
                 do_smoothing = False
 
@@ -32,7 +32,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             controller_state.steer = -1
 
     if boost:
-        if not data.car.is_on_wall and not do_smoothing and data.car.velocity.length() < 2000:
+        if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
             if situation.is_heading_towards2(steer_correction_radians, car_to_point.length()):
                 if data.car.orientation.up.angTo(UP) < math.pi*0.3:
                     controller_state.boost = True
@@ -53,7 +53,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
     do_smoothing = True
     if slide:
         if dist > 300:
-            if steer_correction_radians > REQUIRED_SLIDE_ANG or steer_correction_radians < -REQUIRED_SLIDE_ANG:
+            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
                 controller_state.handbrake = True
                 do_smoothing = False
 
@@ -73,7 +73,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
         controller_state.throttle = 1.0
         # boost?
         if target_vel_f > 1410:
-            if not data.car.is_on_wall and not do_smoothing and data.car.velocity.length() < 2000:
+            if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
                 if situation.is_heading_towards2(steer_correction_radians, dist):
                     if data.car.orientation.up.angTo(UP) < math.pi * 0.3:
                         controller_state.boost = True
@@ -95,7 +95,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     do_smoothing = True
     if slide:
         if dist > 300:
-            if steer_correction_radians > REQUIRED_SLIDE_ANG or steer_correction_radians < -REQUIRED_SLIDE_ANG:
+            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
                 controller_state.handbrake = True
                 do_smoothing = False
 
@@ -117,7 +117,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     controller_state.throttle = min(max(-1, force), 1)
     # boost?
     if force > 1:
-        if not data.car.is_on_wall and not do_smoothing and data.car.velocity.length() < 2000:
+        if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
             if situation.is_heading_towards2(steer_correction_radians, dist):
                 if data.car.orientation.up.angTo(UP) < math.pi * 0.3:
                     controller_state.boost = True

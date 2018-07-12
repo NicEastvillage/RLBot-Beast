@@ -58,8 +58,8 @@ def is_heading_towards(car, point):
 
 
 def is_heading_towards2(ang, dist):
-    required_ang = (math.pi / 3) * (dist / ARENA_LENGTH)
-    return ang <= required_ang
+    required_ang = (math.pi / 3) * (dist / ARENA_LENGTH + 0.05)
+    return abs(ang) <= required_ang
 
 
 def get_half_zone(team):
