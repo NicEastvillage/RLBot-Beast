@@ -19,7 +19,7 @@ class Beast(BaseAgent):
 
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
         if data.car.team == 0:
-            r = route.find_three_routes(self.renderer, data)
+            r = route.find_route_to_next_ball_landing(data)
             route.draw_route(self.renderer, r)
             self.renderer.end_rendering()
             return moves.follow_route(data, r)

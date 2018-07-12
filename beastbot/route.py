@@ -6,9 +6,9 @@ from vec import Vec3
 
 
 class Route:
-	def __init__(self, points, ball_loc, time_offset, expected_vel, car_loc):
+	def __init__(self, points, final_loc, time_offset, expected_vel, car_loc):
 		self.points = points
-		self.ball_loc = ball_loc
+		self.final_loc = final_loc
 		self.time_offset = time_offset
 		self.expected_vel = expected_vel
 		self.length = self.__find_length(car_loc, points)
@@ -25,10 +25,10 @@ class Route:
 		return sum_len
 
 
-def find_three_routes(renderer, data: Data):
+def find_route_to_next_ball_landing(data: Data):
 	car_to_ball = data.ball.location - data.car.location
 	dist = car_to_ball.length()
-	vel_f = data.car.velocity.proj_onto_size(car_to_ball)
+	# vel_f = data.car.velocity.proj_onto_size(car_to_ball)
 	drive_time = dist / 1410
 
 	ball = data.ball.copy()
@@ -36,25 +36,8 @@ def find_three_routes(renderer, data: Data):
 	predict.move_ball(ball, drive_time)
 	time_hit = predict.next_ball_ground_hit(ball).time
 	time_first = drive_time + time_hit
-	ball_first = predict.move_ball(ball, time_hit).copy()
 
-	predict.move_ball(ball, 0.8)
-	time_hit = predict.next_ball_ground_hit(ball).time
-	time_second = drive_time + 0.8 + time_hit
-	ball_second = predict.move_ball(ball, time_hit)
-
-	predict.move_ball(ball, 0.8)
-	time_hit = predict.next_ball_ground_hit(ball).time
-	time_third = time_second + 0.8 + time_hit
-	ball_third = predict.move_ball(ball, time_hit)
-
-	routes = [
-		get_route(data, time_first),
-		get_route(data, time_second),
-		get_route(data, time_third)
-	]
-
-	return routes[0]
+	return get_route_to_ball(data, time_first)
 
 
 def draw_route(renderer, route: Route, r=255, g=255, b=0):
@@ -68,7 +51,7 @@ def draw_route(renderer, route: Route, r=255, g=255, b=0):
 		prev_loc_t = loc_t
 
 
-def get_route(data: Data, time_offset=0):
+def get_route_to_ball(data: Data, time_offset=0):
 	dist_step_size = 1410 * 0.5
 	max_turn_ang = math.pi * 0.3
 
