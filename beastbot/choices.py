@@ -32,8 +32,8 @@ class TouchBall:
 
 
 class SaveGoal:
-    def __init__(self, data):
-        goal_dir = situation.get_goal_direction(data.car, None)
+    def __init__(self, agent):
+        goal_dir = situation.get_goal_direction(agent, None)
         self.aim_corners = [
             Vec3(x=4000),
             Vec3(x=-4000),
@@ -44,7 +44,7 @@ class SaveGoal:
     def utility(self, data):
         ball_soon = predict.move_ball(data.ball.copy(), 1)
         ball_to_goal = situation.get_goal_location(data.car, None) - data.ball.location
-        goal_dir = situation.get_goal_direction(data.car)
+        goal_dir = situation.get_goal_direction(data.car, None)
 
         ang = abs(ball_to_goal.angTo2d(data.ball.velocity))
         ang_01 = easing.fix(easing.lerp(math.pi*0.4, 0, ang))

@@ -19,18 +19,13 @@ class Beast(BaseAgent):
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
-        if data.car.team == 0:
-            r = route.find_route_to_next_ball_landing(data, Vec3())
-            route.draw_route(self.renderer, r)
-            self.renderer.end_rendering()
-            return moves.follow_route(data, r)
-        else:
-            self.renderer.end_rendering()
-            return self.ut_system.evaluate(data).execute(data)
+        self.renderer.end_rendering()
+        return self.ut_system.evaluate(data).execute(data)
 
 
 def get_offense_system(agent):
     off_choices = [
+        choices.SaveGoal(agent),
         choices.CollectBoost(agent),
         choices.TouchBall()
     ]
