@@ -13,7 +13,6 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     controller_state = SimpleControllerState()
 
     car_to_point = point - data.car.location
-
     steer_correction_radians = data.car.orientation.front.angTo2d(car_to_point)
 
     do_smoothing = True
@@ -22,6 +21,15 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
                 controller_state.handbrake = True
                 do_smoothing = False
+
+    vf = data.car.velocity.proj_onto_size(data.car.orientation.front)
+    tr = turn_radius(abs(vf))
+    tr_side = 1 if steer_correction_radians > 0 else -1
+    tr_center = (data.car.location + data.car.orientation.left * tr * tr_side).in2D()
+    too_close = point.in2D().dist2(tr_center) < tr*tr
+    data.renderer.draw_line_3d(data.car.location.tuple(), tr_center.tuple(), data.renderer.create_color(255, 0, 130, 200))
+    if too_close:
+        do_smoothing = False
 
     if do_smoothing:
         controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.car.angular_velocity.y)
@@ -37,7 +45,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
                 if data.car.orientation.up.angTo(UP) < math.pi*0.3:
                     controller_state.boost = True
 
-    controller_state.throttle = 1.0
+    controller_state.throttle = 0.1 if too_close else 1
 
     return controller_state
 
@@ -127,3 +135,24 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
 
 def follow_route(data: Data, route: Route):
     return go_towards_point(data, route.points[0], False, True)
+
+
+def turn_radius(v):
+    if v == 0:
+        return 0
+    return 1.0 / kappa(v)
+
+
+def kappa(v):
+    if 0.0 <= v < 500.0:
+        return 0.006900 - 5.84e-6 * v
+    elif 500.0 <= v < 1000.0:
+        return 0.005610 - 3.26e-6 * v
+    elif 1000.0 <= v < 1500.0:
+        return 0.004300 - 1.95e-6 * v
+    elif 1500.0 <= v < 1750.0:
+        return 0.003025 - 1.10e-6 * v
+    elif 1750.0 <= v < 2500.0:
+        return 0.001800 - 0.40e-6 * v
+    else:
+        return 0.0

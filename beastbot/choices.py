@@ -49,8 +49,8 @@ class ShootAtGoal:
     def __init__(self, agent):
         goal_dir = - situation.get_goal_direction(agent, None)
         self.aim_corners = [
-            Vec3(x=740, y=5100 * goal_dir),
-            Vec3(x=-740, y=5100 * goal_dir),
+            Vec3(x=720, y=5100 * goal_dir),
+            Vec3(x=-720, y=5100 * goal_dir),
             Vec3(y=5200 * goal_dir),
         ]
 
