@@ -16,7 +16,7 @@ class TouchBall:
 
         possession = data.car.possession_score
 
-        return easing.lerp(0.15, 0.85, dist01 * possession)
+        return easing.lerp(0.15, 0.75, dist01 * possession)
 
     def execute(self, data):
         ball_land_eta = max(predict.time_of_arrival_at_height(data.ball, 92.2).time, 0)
@@ -38,11 +38,42 @@ class TouchBall:
 
 class KickOff:
     def utility(self, data):
-        return data.packet.game_info.is_kickoff_pause
+        return data.packet.game_info.is_kickoff_pause * 2
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), (0,0,0), data.renderer.create_color(255, 255, 255, 255))
         return moves.go_towards_point(data, Vec3(), False, True)
+
+
+class ShootAtGoal:
+    def __init__(self, agent):
+        goal_dir = - situation.get_goal_direction(agent, None)
+        self.aim_corners = [
+            Vec3(x=740, y=5100 * goal_dir),
+            Vec3(x=-740, y=5100 * goal_dir),
+            Vec3(y=5200 * goal_dir),
+        ]
+
+    def utility(self, data):
+        ball_soon = predict.move_ball(data.ball.copy(), 1)
+        goal_dir = situation.get_goal_direction(data.car, None)
+
+        own_half_01 = easing.fix(easing.remap(goal_dir*situation.ARENA_LENGTH2, (1-goal_dir)*situation.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
+
+        return own_half_01
+
+    def execute(self, data):
+        best_route = None
+        for target in self.aim_corners:
+            r = route.find_route_to_next_ball_landing(data, target)
+            route.draw_route(data.renderer, r, g=135)
+            if r.good_route and (best_route is None or r.length < best_route.length):
+                best_route = r
+
+        if best_route is None:
+            return moves.go_towards_point(data, data.ball.location, True, True)
+        else:
+            return moves.follow_route(data, best_route)
 
 
 class SaveGoal:

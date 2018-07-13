@@ -27,6 +27,7 @@ class Beast(BaseAgent):
 def get_offense_system(agent):
     off_choices = [
         choices.KickOff(),
+        choices.ShootAtGoal(agent),
         choices.SaveGoal(agent),
         choices.CollectBoost(agent),
         choices.TouchBall()

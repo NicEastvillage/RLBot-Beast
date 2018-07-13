@@ -102,7 +102,7 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
     good_route = True
     if steps_taken == 0:
         ang_diff = ball_init_dir.angTo2d(car_init_loc - ball_init_loc)
-        good_route = abs(ang_diff) < max_turn_ang/2
+        good_route = abs(ang_diff) < max_turn_ang/4
 
     high_end_vel = abs(ball.velocity.z) > 220
 
@@ -151,7 +151,7 @@ def get_route(data: Data, destination, look_target):
     good_route = True
     if steps_taken == 0:
         ang_diff = dest_init_dir.angTo2d(car_init_loc - destination)
-        good_route = abs(ang_diff) < max_turn_ang / 2
+        good_route = abs(ang_diff) < max_turn_ang / 4
 
     locs_visited.reverse()
     return Route(locs_visited, destination, 0, 1410, car_init_loc, good_route, True)
