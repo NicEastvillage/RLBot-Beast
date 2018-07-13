@@ -125,7 +125,7 @@ def move_ball(ball, time):
     time_spent = 0
     limit = 30
 
-    while time - time_spent < 0.001 and limit != 0:
+    while time - time_spent > 0.001 and limit != 0:
         time_left = time - time_spent
         limit -= 1
 
@@ -172,5 +172,5 @@ def move_ball(ball, time):
             ball.velocity.z *= BOUNCINESS
 
     if limit == 0:
-        print("inf loop!", ball.location.z, ball.velocity.z, time_left)
+        print("inf loop!", ball.location.z, ball.velocity.z, time_left, time)
     return ball
