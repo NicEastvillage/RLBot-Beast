@@ -67,13 +67,10 @@ class ShootAtGoal:
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
             route.draw_route(data.renderer, r, g=135)
-            if r.good_route and (best_route is None or r.length < best_route.length):
+            if best_route is None or not best_route.good_route or r.length < best_route.length:
                 best_route = r
 
-        if best_route is None:
-            return moves.go_towards_point(data, data.ball.location, True, True)
-        else:
-            return moves.follow_route(data, best_route)
+        return moves.follow_route(data, best_route)
 
 
 class SaveGoal:
@@ -103,13 +100,10 @@ class SaveGoal:
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
             route.draw_route(data.renderer, r)
-            if r.good_route and (best_route is None or r.length < best_route.length):
+            if best_route is None or not best_route.good_route or r.length < best_route.length:
                 best_route = r
 
-        if best_route is None:
-            return moves.go_towards_point(data, data.ball.location, True, True)
-        else:
-            return moves.follow_route(data, best_route)
+        return moves.follow_route(data, best_route)
 
 
 class CollectBoost:

@@ -68,46 +68,27 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
         ball_to_goal = situation.get_goal_location(data.enemy, data) - ball_init_loc
 
     ball_init_dir = ball_to_goal.in2D().normalized()*-1
-    car_init_loc = data.car.location.in2D()
+    car_loc = data.car.location.in2D()
+    ball_to_car = car_loc - ball_init_loc
 
-    steps_taken = 0
-    ball_visited = []
+    ang = ball_init_dir.angTo2d(ball_to_car)
 
-    while steps_taken < 13:
-        ball_cur_loc = ball_init_loc
-        ball_cur_dir = ball_init_dir
+    good_route = ang < math.pi/2
+    if good_route:
+        bx = ball_init_loc.x
+        by = ball_init_loc.y
+        cx = car_loc.x
+        cy = car_loc.y
+        dx = ball_init_dir.x
+        dy = ball_init_dir.y
 
-        ball_visited = [ball_cur_loc]
+        t = - (bx*bx - 2*bx*cx + by*by - 2*by*cy + cx*cx + cy*cy) / (2*(bx*dx + by*dy - cx*dx - cy*dy))
+        point = ball_init_loc + 1.1*t * ball_init_dir
+        return Route([point, ball_init_loc], ball_init_dir, 1, 1410, car_loc, good_route, False)
 
-        ball_to_car = car_init_loc - ball_cur_loc
-
-        for i in range(steps_taken):
-            ball_to_car = car_init_loc - ball_cur_loc
-            ang_diff = ball_cur_dir.angTo2d(ball_to_car)
-            ball_turn_dir = 1 if ang_diff > 0 else -1
-
-            if i > 0:
-                ball_cur_dir = ball_cur_dir.rotate_2d(max_turn_ang * ball_turn_dir)
-            ball_cur_loc += ball_cur_dir * dist_step_size
-
-            ball_visited.append(ball_cur_loc)
-
-        ang_diff = ball_cur_dir.angTo2d(ball_to_car)
-
-        if abs(ang_diff) < max_turn_ang or ball_to_car.length() < dist_step_size:
-            break
-
-        steps_taken += 1
-
-    good_route = True
-    if steps_taken == 0:
-        ang_diff = ball_init_dir.angTo2d(car_init_loc - ball_init_loc)
-        good_route = abs(ang_diff) < max_turn_ang/4
-
-    high_end_vel = abs(ball.velocity.z) > 220
-
-    ball_visited.reverse()
-    return Route(ball_visited, ball_init_loc, time_offset, 1410, car_init_loc, good_route, high_end_vel)
+    else:
+        point = car_loc + 700 * ball_init_dir
+        return Route([point, ball_init_loc], ball_init_dir, 1, 1410, car_loc, good_route, False)
 
 
 def get_route(data: Data, destination, look_target):
