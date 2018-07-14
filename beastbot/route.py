@@ -73,7 +73,7 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
 
     ang = ball_init_dir.angTo2d(ball_to_car)
 
-    good_route = ang < math.pi/2
+    good_route = abs(ang) < math.pi/2
     if good_route:
         bx = ball_init_loc.x
         by = ball_init_loc.y
@@ -83,7 +83,13 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
         dy = ball_init_dir.y
 
         t = - (bx*bx - 2*bx*cx + by*by - 2*by*cy + cx*cx + cy*cy) / (2*(bx*dx + by*dy - cx*dx - cy*dy))
-        point = ball_init_loc + 1.1*t * ball_init_dir
+        t = min(max(-1400, t), 1400)
+
+        point = ball_init_loc + t * ball_init_dir
+
+        point.x = min(max(-4030, point.x), 4030)
+        point.y = min(max(-5090, point.y), 5090)
+
         return Route([point, ball_init_loc], ball_init_dir, 1, 1410, car_loc, good_route, False)
 
     else:

@@ -45,7 +45,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
                 if data.car.orientation.up.angTo(UP) < math.pi*0.3:
                     controller_state.boost = True
 
-    controller_state.throttle = 0.1 if too_close else 1
+    controller_state.throttle = 0.05 if too_close else 1
 
     return controller_state
 
