@@ -30,8 +30,8 @@ class Route:
 def find_route_to_next_ball_landing(data: Data, look_towards=None):
     car_to_ball = data.ball.location - data.car.location
     dist = car_to_ball.length()
-    # vel_f = data.car.velocity.proj_onto_size(car_to_ball)
-    drive_time = dist / 1410
+    vel_f = data.car.velocity.proj_onto_size(car_to_ball)
+    drive_time = dist / max(1410, vel_f)
 
     ball = data.ball.copy()
 
