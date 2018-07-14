@@ -79,6 +79,10 @@ class SaveGoal:
         self.aim_corners = [
             Vec3(x=4000),
             Vec3(x=-4000),
+            Vec3(x=4000, y=3000*goal_dir),
+            Vec3(x=-4000, y=3000*goal_dir),
+            Vec3(x=1900, y=4900*goal_dir),
+            Vec3(x=-1900, y=4900*goal_dir),
             Vec3(x=4000, y=4900*goal_dir),
             Vec3(x=-4000, y=4900*goal_dir)
         ]
