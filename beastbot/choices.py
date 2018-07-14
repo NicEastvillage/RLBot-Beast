@@ -11,12 +11,20 @@ from vec import Vec3
 
 class TouchBall:
     def utility(self, data):
+        car_to_ball = data.ball.location - data.car.location
+        enemy_dist = data.enemy.location.dist(data.ball.location)
+        enemy_dist01 = rlu.dist_01(enemy_dist)
+
         dist01 = rlu.dist_01(data.car.dist_to_ball)
         dist01 = 1 - easing.smooth_stop(4, dist01)
 
+        above_ang = car_to_ball.angTo(Vec3(z=1))
+        aa01 = easing.fix(1 - 2 * above_ang / math.pi)
+
         possession = data.car.possession_score
 
-        return easing.lerp(0.15, 0.85, dist01 * possession)
+        return 0.8*aa01 + 0.2*enemy_dist01
+        # return easing.lerp(0.15, 0.75, dist01 * possession)
 
     def execute(self, data):
         ball_land_eta = max(predict.time_of_arrival_at_height(data.ball, 92.2).time, 0)
@@ -38,11 +46,80 @@ class TouchBall:
 
 class KickOff:
     def utility(self, data):
-        return data.packet.game_info.is_kickoff_pause
+        return data.packet.game_info.is_kickoff_pause * 2
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), (0,0,0), data.renderer.create_color(255, 255, 255, 255))
         return moves.go_towards_point(data, Vec3(), False, True)
+
+
+class ShootAtGoal:
+    def __init__(self, agent):
+        goal_dir = - situation.get_goal_direction(agent, None)
+        self.aim_corners = [
+            Vec3(x=720, y=5100 * goal_dir),
+            Vec3(x=-720, y=5100 * goal_dir),
+            Vec3(y=5200 * goal_dir),
+            Vec3(y=5700 * goal_dir)
+        ]
+
+    def utility(self, data):
+        ball_soon = predict.move_ball(data.ball.copy(), 1)
+        goal_dir = situation.get_goal_direction(data.car, None)
+
+        own_half_01 = easing.fix(easing.remap(goal_dir*situation.ARENA_LENGTH2, (-1*goal_dir)*situation.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
+
+        return own_half_01
+
+    def execute(self, data):
+        best_route = None
+        for target in self.aim_corners:
+            r = route.find_route_to_next_ball_landing(data, target)
+            route.draw_route(data.renderer, r, g=135)
+            if best_route is None\
+                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
+                    or (r.length < best_route.length and r.good_route):
+
+                best_route = r
+
+        return moves.follow_route(data, best_route)
+
+
+class ClearBall:
+    def __init__(self, agent):
+        goal_dir = - situation.get_goal_direction(agent, None)
+        self.aim_corners = [
+            Vec3(x=4000, y=300*goal_dir),
+            Vec3(x=-4000, y=300*goal_dir),
+            Vec3(x=2000, y=2500*goal_dir),
+            Vec3(x=-2000, y=2500*goal_dir),
+            Vec3(y=5000*goal_dir)
+        ]
+
+    def utility(self, data):
+        my_goal_dir = situation.get_goal_direction(data.car, None)
+        goal_to_ball = data.ball.location - situation.get_goal_location(data.car, None)
+        car_to_ball = data.ball.location - data.car.location
+
+        ang = abs(car_to_ball.angTo2d(goal_to_ball))
+        ang_01 = easing.fix(easing.lerp(math.pi * 0.6, 0, ang))
+        ang_01 = easing.smooth_stop(2, ang_01)
+        own_half_01 = easing.fix(easing.remap((-1*my_goal_dir)*situation.ARENA_LENGTH2, my_goal_dir*situation.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
+
+        return own_half_01 * ang_01
+
+    def execute(self, data):
+        best_route = None
+        for target in self.aim_corners:
+            r = route.find_route_to_next_ball_landing(data, target)
+            route.draw_route(data.renderer, r, r=0, g=240, b=160)
+            if best_route is None\
+                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
+                    or (r.length < best_route.length and r.good_route):
+
+                best_route = r
+
+        return moves.follow_route(data, best_route)
 
 
 class SaveGoal:
@@ -51,6 +128,10 @@ class SaveGoal:
         self.aim_corners = [
             Vec3(x=4000),
             Vec3(x=-4000),
+            Vec3(x=4000, y=3000*goal_dir),
+            Vec3(x=-4000, y=3000*goal_dir),
+            Vec3(x=1900, y=4900*goal_dir),
+            Vec3(x=-1900, y=4900*goal_dir),
             Vec3(x=4000, y=4900*goal_dir),
             Vec3(x=-4000, y=4900*goal_dir)
         ]
@@ -63,22 +144,22 @@ class SaveGoal:
         ang = abs(ball_to_goal.angTo2d(data.ball.velocity))
         ang_01 = easing.fix(easing.lerp(math.pi*0.4, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((1-goal_dir)*situation.ARENA_LENGTH2, goal_dir*situation.ARENA_LENGTH2, 0.2, 1.4, ball_soon.location.y))
+        own_half_01 = easing.fix(easing.remap((-1*goal_dir)*situation.ARENA_LENGTH2, goal_dir*situation.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
 
-        return own_half_01 * ang_01
+        return easing.fix(0.5*own_half_01 + 0.5*own_half_01 * ang_01)
 
     def execute(self, data):
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
             route.draw_route(data.renderer, r)
-            if r.good_route and (best_route is None or r.length < best_route.length):
+            if best_route is None\
+                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
+                    or (r.length < best_route.length and r.good_route):
+
                 best_route = r
 
-        if best_route is None:
-            return moves.go_towards_point(data, data.ball.location, True, True)
-        else:
-            return moves.follow_route(data, best_route)
+        return moves.follow_route(data, best_route)
 
 
 class CollectBoost:
@@ -96,10 +177,8 @@ class CollectBoost:
         boost01 = 1 - easing.smooth_stop(4, boost01)
 
         best_boost = self.collect_boost_system.evaluate(data)
-        time_est = rlmath.estimate_time_to_arrival(data.car, best_boost.location)
-        time01 = 4 ** (-time_est)
 
-        return easing.fix(boost01 * time01)
+        return easing.fix(boost01)
 
     def execute(self, data):
         return self.collect_boost_system.evaluate(data).execute(data)
@@ -126,5 +205,5 @@ class SpecificBoostPad:
         return easing.fix(dist * ang + big) * active
 
     def execute(self, data):
-        data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 255, 0))
+        data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
         return moves.go_towards_point(data, self.location, True, self.info.is_full_boost)

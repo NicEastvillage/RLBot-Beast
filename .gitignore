@@ -109,3 +109,6 @@ ENV/
 
 # Gradle files
 /.gradle
+
+# Documents
+/documents
