@@ -207,3 +207,10 @@ class SpecificBoostPad:
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
         return moves.go_towards_point(data, self.location, True, self.info.is_full_boost)
+
+class FixAirOrientation:
+    def utility(self, data):
+        return not data.car.wheel_contact
+
+    def execute(self, data):
+        return moves.fix_orientation(data)

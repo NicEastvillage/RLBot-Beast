@@ -112,6 +112,7 @@ class Car:
         self.orientation = Orientation(game_car.physics.rotation)
         self.boost = int(game_car.boost)
         self.is_on_wall = not ARENA_EXCEPT_WALLS_ZONE.contains(self.location)
+        self.wheel_contact = game_car.has_wheel_contact
 
         # Default values for variables, set by Data
         self.has_possession = False
