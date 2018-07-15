@@ -137,6 +137,28 @@ def follow_route(data: Data, route: Route):
     return go_towards_point(data, route.points[0], False, True)
 
 
+def fix_orientation(data: Data):
+    controller = SimpleControllerState()
+
+    strength = 0.5
+    ok_angle = 0.3
+
+    ori = data.car.orientation
+    vel = data.car.angular_velocity
+
+    controller.pitch = rlmath.steer_correction_smooth(-ori.pitch * strength, vel.y)
+
+    if abs(ori.roll) > ok_angle:
+        controller.roll = rlmath.steer_correction_smooth(-ori.roll * strength, vel.x)
+    else:
+        # We now land on wheels, so rotate to face the ball
+        car_to_ball = data.ball.location - data.car.location
+        ang = ori.front.angTo2d(car_to_ball)
+        controller.yaw = rlmath.steer_correction_smooth(ang * strength, vel.z)
+
+    return controller
+
+
 def turn_radius(v):
     if v == 0:
         return 0

@@ -16,6 +16,10 @@ class Beast(BaseAgent):
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = situation.Data(self, packet)
+
+        if data.car.location.z > 60 and abs(data.car.location.x) < 3950 and abs(data.car.location.y) < 5000:
+            return moves.fix_orientation(data)
+
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
