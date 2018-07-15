@@ -17,10 +17,9 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
 
     do_smoothing = True
     if slide:
-        if car_to_point.length() > 300:
-            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
-                controller_state.handbrake = True
-                do_smoothing = False
+        if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
+            controller_state.handbrake = True
+            do_smoothing = False
 
     vf = data.car.velocity.proj_onto_size(data.car.orientation.front)
     tr = turn_radius(abs(vf))
@@ -30,6 +29,8 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     data.renderer.draw_line_3d(data.car.location.tuple(), tr_center.tuple(), data.renderer.create_color(255, 0, 130, 200))
     if too_close:
         do_smoothing = False
+        if point.in2D().dist2(tr_center) < tr*tr * 0.3:
+            do_smoothing = True
 
     if do_smoothing:
         controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.car.angular_velocity.y)
