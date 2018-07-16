@@ -132,7 +132,7 @@ class Car:
 class Data:
     def __init__(self, agent, packet: GameTickPacket):
         self.agent = agent
-        self.renderer = agent.renderer
+        #self.renderer = agent.renderer
         self.packet = packet
         self.ball = Ball().set_game_ball(packet.game_ball)
 

@@ -17,11 +17,11 @@ class Beast(BaseAgent):
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = situation.Data(self, packet)
 
-        self.renderer.begin_rendering()
+        #self.renderer.begin_rendering()
 
-        predict.draw_ball_path(self.renderer, data, 4, 0.15)
+        #predict.draw_ball_path(None, data, 4, 0.15)
         action = self.ut_system.evaluate(data).execute(data)
-        self.renderer.end_rendering()
+        #self.renderer.end_rendering()
         return action
 
 
