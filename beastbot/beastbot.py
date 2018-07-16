@@ -16,6 +16,7 @@ class Beast(BaseAgent):
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = situation.Data(self, packet)
+
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4, 0.15)
@@ -27,10 +28,10 @@ class Beast(BaseAgent):
 def get_offense_system(agent):
     off_choices = [
         choices.KickOff(),
+        choices.FixAirOrientation(),
         choices.SaveGoal(agent),
         choices.ClearBall(agent),
         choices.ShootAtGoal(agent),
-        choices.CollectBoost(agent),
-        choices.TouchBall()
+        choices.CollectBoost(agent)
     ]
     return rlutility.UtilitySystem(off_choices, 0)
