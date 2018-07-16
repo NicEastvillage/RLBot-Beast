@@ -171,6 +171,6 @@ def move_ball(ball, time):
             time_spent += ground_hit.time
             ball.velocity.z *= BOUNCINESS
 
-    if limit == 0:
-        print("inf loop!", ball.location.z, ball.velocity.z, time_left, time)
+    #if limit == 0:
+    #    print("inf loop!", ball.location.z, ball.velocity.z, time_left, time)
     return ball
