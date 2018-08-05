@@ -33,14 +33,14 @@ class TouchBall:
         if drive_eta < ball_land_eta:
             bias = (ball_land_loc - situation.get_goal_location(data.enemy, data)).rescale(23)
             dest = ball_land_loc + bias
-            #data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(),
-            #                           data.renderer.create_color(255, 255, 0, 255))
+            data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(),
+                                       data.renderer.create_color(255, 255, 0, 255))
             return moves.go_towards_point_with_timing(data, dest, ball_land_eta, True)
         else:
             ball_loc2 = predict.move_ball(data.ball.copy(), drive_eta).location
             drive_eta = ball_loc2.dist(data.car.location) / 1410
-            #data.renderer.draw_line_3d(data.car.location.tuple(), ball_loc2.tuple(),
-            #                           data.renderer.create_color(255, 255, 0, 255))
+            data.renderer.draw_line_3d(data.car.location.tuple(), ball_loc2.tuple(),
+                                       data.renderer.create_color(255, 255, 0, 255))
             return moves.go_towards_point_with_timing(data, ball_loc2, drive_eta, True)
 
 
@@ -49,7 +49,7 @@ class KickOff:
         return data.packet.game_info.is_kickoff_pause * 2
 
     def execute(self, data):
-        #data.renderer.draw_line_3d(data.car.location.tuple(), (0,0,0), data.renderer.create_color(255, 255, 255, 255))
+        data.renderer.draw_line_3d(data.car.location.tuple(), (0,0,0), data.renderer.create_color(255, 255, 255, 255))
         return moves.go_towards_point(data, Vec3(), False, True)
 
 
@@ -75,7 +75,7 @@ class ShootAtGoal:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-            #route.draw_route(data.renderer, r, g=135)
+            route.draw_route(data.renderer, r, g=135)
             if best_route is None\
                     or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
                     or (r.length < best_route.length and r.good_route):
@@ -112,7 +112,7 @@ class ClearBall:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-            #route.draw_route(data.renderer, r, r=0, g=240, b=160)
+            route.draw_route(data.renderer, r, r=0, g=240, b=160)
             if best_route is None\
                     or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
                     or (r.length < best_route.length and r.good_route):
@@ -152,7 +152,7 @@ class SaveGoal:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-            #route.draw_route(data.renderer, r)
+            route.draw_route(data.renderer, r)
             if best_route is None\
                     or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
                     or (r.length < best_route.length and r.good_route):
@@ -205,7 +205,7 @@ class SpecificBoostPad:
         return easing.fix(dist * ang + big) * active
 
     def execute(self, data):
-        #data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
+        data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
         return moves.go_towards_point(data, self.location, True, self.info.is_full_boost)
 
 class FixAirOrientation:
