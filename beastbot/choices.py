@@ -166,6 +166,8 @@ class CollectBoost:
     def __init__(self, agent):
         boost_choices = []
         for i, pad in enumerate(agent.get_field_info().boost_pads):
+            if i >= agent.get_field_info().num_boosts:
+                break
             boost_choices.append(SpecificBoostPad(pad, i))
 
         self.collect_boost_system = rlu.UtilitySystem(boost_choices, 0)
@@ -176,7 +178,7 @@ class CollectBoost:
         boost01 = float(data.car.boost / 100.0)
         boost01 = 1 - easing.smooth_stop(4, boost01)
 
-        best_boost = self.collect_boost_system.evaluate(data)
+        # best_boost = self.collect_boost_system.evaluate(data)
 
         return easing.fix(boost01)
 
