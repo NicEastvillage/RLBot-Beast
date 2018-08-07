@@ -151,9 +151,12 @@ class Data:
         self.enemy.has_possession = not self.car.has_possession
 
     def __get_possession_score(self, car):
-        car_to_ball = self.ball.location - car.location
+        try:
+            car_to_ball = self.ball.location - car.location
 
-        dist = car_to_ball.length()
-        ang = car.orientation.front.angTo(car_to_ball)
+            dist = car_to_ball.length()
+            ang = car.orientation.front.angTo(car_to_ball)
 
-        return rlutility.dist_01(dist) * rlutility.face_ang_01(ang)
+            return rlutility.dist_01(dist) * rlutility.face_ang_01(ang)
+        except ZeroDivisionError:
+            return 0
