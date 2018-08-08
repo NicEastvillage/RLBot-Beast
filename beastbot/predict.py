@@ -50,6 +50,7 @@ class WallHitPrediction(Prediction):
 class SideWall:
     def __init__(self, x):
         self.wall_x = x
+        self.normal = Vec3(x=rlmath.sign(x))
 
     def get_next_ball_hit(self, ball):
         if ball.velocity.x == 0:
@@ -59,12 +60,13 @@ class SideWall:
         return Prediction(t >= 0, t)
 
     def bounce_ball(self, ball):
-        ball.velocity.x *= BOUNCINESS
+        bounce(ball, self.normal)
 
 
 class BackWall:
     def __init__(self, y):
         self.wall_y = y
+        self.normal = Vec3(y=rlmath.sign(y))
 
     def get_next_ball_hit(self, ball):
         if ball.velocity.y == 0:
@@ -74,7 +76,7 @@ class BackWall:
         return Prediction(t >= 0, t)
 
     def bounce_ball(self, ball):
-        ball.velocity.y *= BOUNCINESS
+        bounce(ball, self.normal)
 
 
 class CornerWall:
@@ -92,8 +94,7 @@ class CornerWall:
         return Prediction(t >= 0, t)
 
     def bounce_ball(self, ball):
-        ball.velocity = ball.velocity - 2 * ball.velocity.dot(self.normal) * self.normal
-        ball.velocity *= -BOUNCINESS
+        bounce(ball, self.normal)
 
 
 SIDE_WALL_POS = SideWall(datalibs.ARENA_WIDTH2)
@@ -176,64 +177,28 @@ def time_of_arrival_at_height_quadratic(body, height, acc_z):
     time = -(vel_z + math.sqrt(2 * acc_z * height - 2 * acc_z * loc_z + vel_z * vel_z)) / acc_z
     return Prediction(True, time)
 
-"""
-def move_ball(ball, time):
-    if time <= 0:
-        return ball
 
-    time_spent = 0
-    limit = 30
+def bounce(ball, normal):
+    # See https://samuelpmish.github.io/notes/RocketLeague/ball_bouncing/
+    MU = 0.285
+    A = 0.0003
 
-    while time - time_spent > 0.001 and limit != 0:
-        time_left = time - time_spent
-        limit -= 1
+    v_perp = ball.velocity.dot(normal) * normal
+    v_para = ball.velocity - v_perp
+    v_spin = datalibs.BALL_RADIUS * normal.cross(ball.angular_velocity)
+    s = v_para + v_spin
 
-        wall_hit = next_wall_hit(ball, datalibs.BALL_RADIUS)
-        ground_hit = next_ball_ground_hit(ball)
+    if s.length() == 0:
+        delta_v_para = Vec3()
+    else:
+        ratio = v_perp.length() / s.length()
+        delta_v_para = - min(1.0, 2.0 * ratio) * MU * s
 
-        # Check if ball doesn't hits anything
-        if ground_hit.happens_after(time_left) and wall_hit.happens_after(time_left):
-            return move_body(ball, time_left)
+    delta_v_perp = - 1.60 * v_perp
 
-        elif wall_hit.happens_before_other(ground_hit):
-            # Simulate until ball it hits wall
-            move_body(ball, wall_hit.time)
-            time_spent += wall_hit.time
-            if wall_hit.is_side_wall:
-                ball.velocity.x *= BOUNCINESS
-            else:
-                ball.velocity.y *= BOUNCINESS
+    ball.velocity += delta_v_perp + delta_v_para
+    ball.angular_velocity += A * datalibs.BALL_RADIUS * delta_v_para.cross(normal)
 
-        elif ground_hit.time == 0.0 and abs(ball.velocity.z * BOUNCINESS) < 2.0:
-            # Simulate ball rolling until it hits wall
-            ball.velocity.z = 0
-
-            if not wall_hit.happens:
-                # The ball is laying still
-                return ball
-
-            if time_left < wall_hit.time:
-                move_body(ball, time_left, False)
-                return ball
-
-            move_body(ball, wall_hit.time, False)
-            time_spent += wall_hit.time
-
-            if wall_hit.is_side_wall:
-                ball.velocity.x *= BOUNCINESS
-            else:
-                ball.velocity.y *= BOUNCINESS
-
-        else:
-            # Simulate until ball it hits ground
-            move_body(ball, ground_hit.time)
-            time_spent += ground_hit.time
-            ball.velocity.z *= BOUNCINESS
-
-    #if limit == 0:
-    #    print("inf loop!", ball.location.z, ball.velocity.z, time_left, time)
-    return ball
-"""
 
 def move_ball(ball, time):
     if time <= 0:
@@ -281,6 +246,6 @@ def move_ball(ball, time):
             # Simulate until ball it hits ground
             move_body(ball, ground_hit.time)
             time_spent += ground_hit.time
-            ball.velocity.z *= BOUNCINESS
+            bounce(ball, Vec3(0, 0, 1))
 
     return ball

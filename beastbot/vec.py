@@ -63,6 +63,13 @@ class Vec3:
     def dot(self, other):
         return self.x*other.x + self.y*other.y + self.z*other.z
 
+    def cross(self, other):
+        return Vec3(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x
+        )
+
     def angTo(self, ideal):
         cos_ang = self.dot(ideal) / (self.length() * ideal.length())
         return math.acos(cos_ang)
