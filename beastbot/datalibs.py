@@ -7,7 +7,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 ARENA_LENGTH = 10280    # y
 ARENA_WIDTH = 8240      # x
-ARENA_HEIGHT = 4100     # z
+ARENA_HEIGHT = 2044     # z
 ARENA_LENGTH2 = ARENA_LENGTH / 2
 ARENA_WIDTH2 = ARENA_WIDTH / 2
 

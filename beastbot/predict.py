@@ -97,6 +97,18 @@ class CornerWall:
         bounce(ball, self.normal)
 
 
+class Ceiling:
+    def __init__(self, z):
+        self.height = z
+        self.normal = Vec3(z=-1)
+
+    def get_next_ball_hit(self, ball):
+        return time_of_arrival_at_height(ball, self.height - datalibs.BALL_RADIUS)
+
+    def bounce_ball(self, ball):
+        bounce(ball, self.normal)
+
+
 SIDE_WALL_POS = SideWall(datalibs.ARENA_WIDTH2)
 SIDE_WALL_NEG = SideWall(-datalibs.ARENA_WIDTH2)
 BACK_WALL_POS = BackWall(datalibs.ARENA_LENGTH2)
@@ -105,6 +117,7 @@ CORNER_WALL_PP = CornerWall(Vec3(3318, 4570), Vec3(1, 1))
 CORNER_WALL_NP = CornerWall(Vec3(-3318, 4570), Vec3(-1, 1))
 CORNER_WALL_PN = CornerWall(Vec3(3318, -4570), Vec3(1, -1))
 CORNER_WALL_NN = CornerWall(Vec3(-3318, -4570), Vec3(-1, -1))
+CEILING = Ceiling(datalibs.ARENA_HEIGHT)
 
 
 def move_body(body, time, gravity=True):
@@ -122,7 +135,8 @@ def move_body(body, time, gravity=True):
 def next_ball_wall_hit(ball):
     walls = [
         SIDE_WALL_POS, SIDE_WALL_NEG, BACK_WALL_POS, BACK_WALL_NEG,
-        CORNER_WALL_PP, CORNER_WALL_PN, CORNER_WALL_NP, CORNER_WALL_NN
+        CORNER_WALL_PP, CORNER_WALL_PN, CORNER_WALL_NP, CORNER_WALL_NN,
+        CEILING
     ]
     wall_index = -1
     earliest_hit_time = 1e300
@@ -172,6 +186,11 @@ def time_of_arrival_at_height_quadratic(body, height, acc_z):
         # Return null if height is never reached, or was in the past
         if turn_point_height < height or turn_time < 0:
             return Prediction(False, 1e307)
+
+        # The height is reached on the way up
+        if loc_z < height:
+            time = (-vel_z + math.sqrt(2 * acc_z * height - 2 * acc_z * loc_z + vel_z * vel_z)) / acc_z
+            return Prediction(True, time)
 
     # See technical documents for this equation : t = -(v + sqrt(2*a*h - 2*a*p + v^2) / a
     time = -(vel_z + math.sqrt(2 * acc_z * height - 2 * acc_z * loc_z + vel_z * vel_z)) / acc_z
