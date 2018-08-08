@@ -2,7 +2,7 @@ import math
 import rlmath
 import rlutility
 from vec import Vec3
-import situation
+import datalibs
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 # Vec3
@@ -21,9 +21,9 @@ def ball_location(car, packet: GameTickPacket):
 # Zone
 def my_half_zone(car, packet: GameTickPacket):
 	if car.team == 0:
-		return situation.BLUE_HALF_ZONE
+		return datalibs.BLUE_HALF_ZONE
 	else:
-		return situation.ORANGE_HALF_ZONE
+		return datalibs.ORANGE_HALF_ZONE
 
 # float
 def get_possession_score(car, packet):
@@ -56,20 +56,20 @@ def has_not_possession(car, packet):
 # Zone
 def enemy_half_zone(car, packet: GameTickPacket):
 	if car.team == 1:
-		return situation.BLUE_HALF_ZONE
+		return datalibs.BLUE_HALF_ZONE
 	else:
-		return situation.ORANGE_HALF_ZONE
+		return datalibs.ORANGE_HALF_ZONE
 
 # Vec3
 def my_goal_location(car, packet: GameTickPacket):
-	goal_offset = situation.ARENA_LENGTH2 - 300
+	goal_offset = datalibs.ARENA_LENGTH2 - 300
 	if car.team == 0:
 		goal_offset *= -1
 	return Vec3(0, goal_offset)
 
 # Vec3
 def enemy_goal_location(car, packet: GameTickPacket):
-	goal_offset = situation.ARENA_LENGTH2 - 300
+	goal_offset = datalibs.ARENA_LENGTH2 - 300
 	if car.team == 1:
 		goal_offset *= -1
 	return Vec3(0, goal_offset)

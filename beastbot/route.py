@@ -1,7 +1,7 @@
 import math
-import situation
+import datalibs
 import predict
-from situation import Data
+from datalibs import Data
 from vec import Vec3
 
 
@@ -58,14 +58,14 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
     max_turn_ang = math.pi * 0.3
 
     if look_towards is None:
-        look_towards = situation.get_goal_location(data.enemy, data)
+        look_towards = datalibs.get_goal_location(data.enemy, data)
 
     ball = predict.move_ball(data.ball.copy(), time_offset)
 
     ball_init_loc = ball.location.in2D()
     ball_to_goal = look_towards - ball_init_loc
     if ball_to_goal.in2D().length2() == 0:
-        ball_to_goal = situation.get_goal_location(data.enemy, data) - ball_init_loc
+        ball_to_goal = datalibs.get_goal_location(data.enemy, data) - ball_init_loc
 
     ball_init_dir = ball_to_goal.in2D().normalized()*-1
     car_loc = data.car.location.in2D()

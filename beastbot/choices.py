@@ -4,7 +4,7 @@ import rlmath
 import rlutility as rlu
 import easing
 import predict
-import situation
+import datalibs
 import route
 from vec import Vec3
 
@@ -31,7 +31,7 @@ class TouchBall:
         ball_land_loc = predict.move_ball(data.ball.copy(), ball_land_eta).location
         drive_eta = ball_land_loc.dist(data.car.location) / 1410
         if drive_eta < ball_land_eta:
-            bias = (ball_land_loc - situation.get_goal_location(data.enemy, data)).rescale(23)
+            bias = (ball_land_loc - datalibs.get_goal_location(data.enemy, data)).rescale(23)
             dest = ball_land_loc + bias
             data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(),
                                        data.renderer.create_color(255, 255, 0, 255))
@@ -55,7 +55,7 @@ class KickOff:
 
 class ShootAtGoal:
     def __init__(self, agent):
-        goal_dir = - situation.get_goal_direction(agent, None)
+        goal_dir = - datalibs.get_goal_direction(agent, None)
         self.aim_corners = [
             Vec3(x=720, y=5100 * goal_dir),
             Vec3(x=-720, y=5100 * goal_dir),
@@ -65,9 +65,9 @@ class ShootAtGoal:
 
     def utility(self, data):
         ball_soon = predict.move_ball(data.ball.copy(), 1)
-        goal_dir = situation.get_goal_direction(data.car, None)
+        goal_dir = datalibs.get_goal_direction(data.car, None)
 
-        own_half_01 = easing.fix(easing.remap(goal_dir*situation.ARENA_LENGTH2, (-1*goal_dir)*situation.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
+        own_half_01 = easing.fix(easing.remap(goal_dir * datalibs.ARENA_LENGTH2, (-1 * goal_dir) * datalibs.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
 
         return own_half_01
 
@@ -87,7 +87,7 @@ class ShootAtGoal:
 
 class ClearBall:
     def __init__(self, agent):
-        goal_dir = - situation.get_goal_direction(agent, None)
+        goal_dir = - datalibs.get_goal_direction(agent, None)
         self.aim_corners = [
             Vec3(x=4000, y=300*goal_dir),
             Vec3(x=-4000, y=300*goal_dir),
@@ -97,14 +97,14 @@ class ClearBall:
         ]
 
     def utility(self, data):
-        my_goal_dir = situation.get_goal_direction(data.car, None)
-        goal_to_ball = data.ball.location - situation.get_goal_location(data.car, None)
+        my_goal_dir = datalibs.get_goal_direction(data.car, None)
+        goal_to_ball = data.ball.location - datalibs.get_goal_location(data.car, None)
         car_to_ball = data.ball.location - data.car.location
 
         ang = abs(car_to_ball.angTo2d(goal_to_ball))
         ang_01 = easing.fix(easing.lerp(math.pi * 0.6, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*my_goal_dir)*situation.ARENA_LENGTH2, my_goal_dir*situation.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
+        own_half_01 = easing.fix(easing.remap((-1*my_goal_dir) * datalibs.ARENA_LENGTH2, my_goal_dir * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
 
         return own_half_01 * ang_01
 
@@ -124,7 +124,7 @@ class ClearBall:
 
 class SaveGoal:
     def __init__(self, agent):
-        goal_dir = situation.get_goal_direction(agent, None)
+        goal_dir = datalibs.get_goal_direction(agent, None)
         self.aim_corners = [
             Vec3(x=4000),
             Vec3(x=-4000),
@@ -138,13 +138,13 @@ class SaveGoal:
 
     def utility(self, data):
         ball_soon = predict.move_ball(data.ball.copy(), 1)
-        ball_to_goal = situation.get_goal_location(data.car, None) - data.ball.location
-        goal_dir = situation.get_goal_direction(data.car, None)
+        ball_to_goal = datalibs.get_goal_location(data.car, None) - data.ball.location
+        goal_dir = datalibs.get_goal_direction(data.car, None)
 
         ang = abs(ball_to_goal.angTo2d(data.ball.velocity))
         ang_01 = easing.fix(easing.lerp(math.pi*0.4, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*goal_dir)*situation.ARENA_LENGTH2, goal_dir*situation.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
+        own_half_01 = easing.fix(easing.remap((-1*goal_dir) * datalibs.ARENA_LENGTH2, goal_dir * datalibs.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
 
         return easing.fix(0.5*own_half_01 + 0.5*own_half_01 * ang_01)
 

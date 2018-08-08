@@ -1,6 +1,6 @@
 import rlutility
 import choices
-import situation
+import datalibs
 import predict
 import route
 import moves
@@ -15,7 +15,7 @@ class Beast(BaseAgent):
         self.ut_system = get_offense_system(self)
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-        data = situation.Data(self, packet)
+        data = datalibs.Data(self, packet)
 
         self.renderer.begin_rendering()
 

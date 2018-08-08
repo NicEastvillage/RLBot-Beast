@@ -2,6 +2,11 @@ import math
 from vec import Vec3
 
 
+# returns sign of x, and 0 if x=0
+def sign(x):
+	return x and (1, -1)[x < 0]
+
+
 def get_car_facing_vector(car):
 	pitch = float(car.physics.rotation.pitch)
 	yaw = float(car.physics.rotation.yaw)

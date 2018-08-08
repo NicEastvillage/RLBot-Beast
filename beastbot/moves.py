@@ -1,7 +1,7 @@
 import math
 import rlmath
-import situation
-from situation import Data
+import datalibs
+from datalibs import Data
 from vec import Vec3,UP
 from route import Route
 from rlbot.agents.base_agent import SimpleControllerState
@@ -42,7 +42,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
 
     if boost:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if situation.is_heading_towards2(steer_correction_radians, car_to_point.length()):
+            if datalibs.is_heading_towards2(steer_correction_radians, car_to_point.length()):
                 if data.car.orientation.up.angTo(UP) < math.pi*0.3:
                     controller_state.boost = True
 
@@ -83,7 +83,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
         # boost?
         if target_vel_f > 1410:
             if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-                if situation.is_heading_towards2(steer_correction_radians, dist):
+                if datalibs.is_heading_towards2(steer_correction_radians, dist):
                     if data.car.orientation.up.angTo(UP) < math.pi * 0.3:
                         controller_state.boost = True
     else:
@@ -127,7 +127,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     # boost?
     if force > 1:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if situation.is_heading_towards2(steer_correction_radians, dist):
+            if datalibs.is_heading_towards2(steer_correction_radians, dist):
                 if data.car.orientation.up.angTo(UP) < math.pi * 0.3:
                     controller_state.boost = True
 

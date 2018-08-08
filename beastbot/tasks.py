@@ -3,7 +3,7 @@ import rlmath
 from vec import Vec3,Zone
 import behaviourtree as bt
 import moves
-import situation
+import datalibs
 
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -39,7 +39,7 @@ class PushBall(bt.BTNode):
 		ball_location = Vec3(packet.game_ball.physics.location.x, packet.game_ball.physics.location.y, packet.game_ball.physics.location.z)
 		ball_velocity = Vec3(packet.game_ball.physics.velocity.x, packet.game_ball.physics.velocity.y, packet.game_ball.physics.velocity.z)
 		
-		own_goal_direction = situation.get_goal_direction(car, packet)
+		own_goal_direction = datalibs.get_goal_direction(car, packet)
 		ball_predicted = ball_location + 0.08 * ball_velocity + Vec3(y=own_goal_direction * 50)
 		
 		dist = (car_location - ball_predicted.in2D()).length()

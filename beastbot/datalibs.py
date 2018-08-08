@@ -76,7 +76,6 @@ def on_my_half(team, point):
         return point.y >= 0
 
 
-
 class Ball:
     def __init__(self):
         self.location = Vec3()
