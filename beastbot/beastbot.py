@@ -19,7 +19,7 @@ class Beast(BaseAgent):
 
         self.renderer.begin_rendering()
 
-        predict.draw_ball_path(self.renderer, data, 4, 0.15)
+        predict.draw_ball_path(self.renderer, data, 4.5, 0.11)
         action = self.ut_system.evaluate(data).execute(data)
         self.renderer.end_rendering()
         return action

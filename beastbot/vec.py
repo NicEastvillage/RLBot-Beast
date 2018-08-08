@@ -48,6 +48,9 @@ class Vec3:
     def rescale(self, new_len):
         return new_len * self.normalized()
 
+    def mul_components(self, other):
+        return Vec3(self.x*other.x, self.y*other.y, self.z*other.z)
+
     def rotate_2d(self, ang):
         c = math.cos(ang)
         s = math.sin(ang)

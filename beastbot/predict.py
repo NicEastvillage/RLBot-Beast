@@ -77,10 +77,33 @@ class BackWall:
         ball.velocity.y *= BOUNCINESS
 
 
+class CornerWall:
+    def __init__(self, anchor, normal):
+        self.anchor = anchor
+        self.normal = normal.normalized()
+
+    def get_next_ball_hit(self, ball):
+        dot = ball.velocity.dot(self.normal)
+        if dot == 0:
+            return Prediction(False, 1e307)
+        # t = (self.normal.x * ball.location.x - self.normal.x * self.anchor.x + self.normal.y ) / -dot
+        scaled = self.normal.mul_components(ball.location - self.anchor)
+        t = (scaled.x + scaled.y) / -dot
+        return Prediction(t >= 0, t)
+
+    def bounce_ball(self, ball):
+        ball.velocity = ball.velocity - 2 * ball.velocity.dot(self.normal) * self.normal
+        ball.velocity *= -BOUNCINESS
+
+
 SIDE_WALL_POS = SideWall(datalibs.ARENA_WIDTH2)
 SIDE_WALL_NEG = SideWall(-datalibs.ARENA_WIDTH2)
 BACK_WALL_POS = BackWall(datalibs.ARENA_LENGTH2)
 BACK_WALL_NEG = BackWall(-datalibs.ARENA_LENGTH2)
+CORNER_WALL_PP = CornerWall(Vec3(3318, 4570), Vec3(1, 1))
+CORNER_WALL_NP = CornerWall(Vec3(-3318, 4570), Vec3(-1, 1))
+CORNER_WALL_PN = CornerWall(Vec3(3318, -4570), Vec3(1, -1))
+CORNER_WALL_NN = CornerWall(Vec3(-3318, -4570), Vec3(-1, -1))
 
 
 def move_body(body, time, gravity=True):
@@ -96,7 +119,10 @@ def move_body(body, time, gravity=True):
 
 
 def next_ball_wall_hit(ball):
-    walls = [SIDE_WALL_POS, SIDE_WALL_NEG, BACK_WALL_POS, BACK_WALL_NEG]
+    walls = [
+        SIDE_WALL_POS, SIDE_WALL_NEG, BACK_WALL_POS, BACK_WALL_NEG,
+        CORNER_WALL_PP, CORNER_WALL_PN, CORNER_WALL_NP, CORNER_WALL_NN
+    ]
     wall_index = -1
     earliest_hit_time = 1e300
     for i, w in enumerate(walls):
