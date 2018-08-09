@@ -8,6 +8,8 @@ import datalibs
 import route
 from vec import Vec3
 
+from rlbot.agents.base_agent import SimpleControllerState
+
 
 class Dribbling:
     def utility(self, data):
@@ -166,6 +168,10 @@ class SaveGoal:
 
 class CollectBoost:
     def __init__(self, agent):
+        self.collect_boost_system = None
+        self.init_array(agent)
+
+    def init_array(self, agent):
         boost_choices = []
         for i, pad in enumerate(agent.get_field_info().boost_pads):
             if i >= agent.get_field_info().num_boosts:
@@ -185,7 +191,11 @@ class CollectBoost:
         return easing.fix(boost01)
 
     def execute(self, data):
-        return self.collect_boost_system.evaluate(data).execute(data)
+        try:
+            return self.collect_boost_system.evaluate(data).execute(data)
+        except ValueError:
+            self.init_array(data.agent)
+            return SimpleControllerState()
 
     def reset(self):
         self.collect_boost_system.reset()
