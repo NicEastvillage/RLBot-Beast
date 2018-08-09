@@ -43,14 +43,20 @@ class TouchBall:
                                        data.renderer.create_color(255, 255, 0, 255))
             return moves.go_towards_point_with_timing(data, ball_loc2, drive_eta, True)
 
+    def __str__(self):
+        return "Touch/Dribble"
+
 
 class KickOff:
     def utility(self, data):
         return data.packet.game_info.is_kickoff_pause * 2
 
     def execute(self, data):
-        data.renderer.draw_line_3d(data.car.location.tuple(), (0,0,0), data.renderer.create_color(255, 255, 255, 255))
+        data.renderer.draw_line_3d(data.car.location.tuple(), (0, 0, 0), data.renderer.create_color(255, 255, 255, 255))
         return moves.go_towards_point(data, Vec3(), False, True)
+
+    def __str__(self):
+        return "KickOff"
 
 
 class ShootAtGoal:
@@ -75,7 +81,6 @@ class ShootAtGoal:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-            route.draw_route(data.renderer, r, g=135)
             if best_route is None\
                     or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
                     or (r.length < best_route.length and r.good_route):
@@ -84,6 +89,8 @@ class ShootAtGoal:
 
         return moves.follow_route(data, best_route)
 
+    def __str__(self):
+        return "ShootAtGoal"
 
 class ClearBall:
     def __init__(self, agent):
@@ -112,7 +119,6 @@ class ClearBall:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-            route.draw_route(data.renderer, r, r=0, g=240, b=160)
             if best_route is None\
                     or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
                     or (r.length < best_route.length and r.good_route):
@@ -120,6 +126,9 @@ class ClearBall:
                 best_route = r
 
         return moves.follow_route(data, best_route)
+
+    def __str__(self):
+        return "ClearBall"
 
 
 class SaveGoal:
@@ -152,7 +161,6 @@ class SaveGoal:
         best_route = None
         for target in self.aim_corners:
             r = route.find_route_to_next_ball_landing(data, target)
-            route.draw_route(data.renderer, r)
             if best_route is None\
                     or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
                     or (r.length < best_route.length and r.good_route):
@@ -160,6 +168,9 @@ class SaveGoal:
                 best_route = r
 
         return moves.follow_route(data, best_route)
+
+    def __str__(self):
+        return "SaveGoal"
 
 
 class CollectBoost:
@@ -187,6 +198,9 @@ class CollectBoost:
 
     def reset(self):
         self.collect_boost_system.reset()
+
+    def __str__(self):
+        return "CollectBoost"
 
 
 class SpecificBoostPad:
@@ -216,3 +230,6 @@ class FixAirOrientation:
 
     def execute(self, data):
         return moves.fix_orientation(data)
+
+    def __str__(self):
+        return "LandOnWheels"

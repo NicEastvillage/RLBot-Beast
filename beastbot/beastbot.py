@@ -13,6 +13,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 class Beast(BaseAgent):
     def initialize_agent(self):
         self.ut_system = get_offense_system(self)
+        self.last_task = None
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = datalibs.Data(self, packet)
@@ -20,8 +21,15 @@ class Beast(BaseAgent):
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4.5, 0.11)
-        action = self.ut_system.evaluate(data).execute(data)
+        task = self.ut_system.evaluate(data)
+        action = task.execute(data)
+
         self.renderer.end_rendering()
+
+        if self.last_task != task:
+            print("Beast", self.index, "status:", str(task))
+        self.last_task = task
+
         return action
 
 
