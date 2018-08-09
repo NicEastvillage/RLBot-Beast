@@ -33,7 +33,7 @@ def get_possession_score(car, packet):
 	car_to_ball = ball_loc - car_loc
 	
 	dist = car_to_ball.length()
-	ang = car_dir.angTo(car_to_ball)
+	ang = car_dir.ang_to(car_to_ball)
 	
 	return rlutility.dist_01(dist)*rlutility.face_ang_01(ang)
 

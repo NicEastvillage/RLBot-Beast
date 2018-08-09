@@ -62,16 +62,16 @@ def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
 
     ball = predict.move_ball(data.ball.copy(), time_offset)
 
-    ball_init_loc = ball.location.in2D()
+    ball_init_loc = ball.location.flat()
     ball_to_goal = look_towards - ball_init_loc
-    if ball_to_goal.in2D().length2() == 0:
+    if ball_to_goal.flat().length2() == 0:
         ball_to_goal = datalibs.get_goal_location(data.enemy, data) - ball_init_loc
 
-    ball_init_dir = ball_to_goal.in2D().normalized()*-1
-    car_loc = data.car.location.in2D()
+    ball_init_dir = ball_to_goal.flat().normalized() * -1
+    car_loc = data.car.location.flat()
     ball_to_car = car_loc - ball_init_loc
 
-    ang = ball_init_dir.angTo2d(ball_to_car)
+    ang = ball_init_dir.ang_to_flat(ball_to_car)
 
     good_route = abs(ang) < math.pi/2
     if good_route:
@@ -101,10 +101,10 @@ def get_route(data: Data, destination, look_target):
     dist_step_size = 1410 * 0.5
     max_turn_ang = math.pi * 0.3
 
-    destination = destination.in2D()
-    dest_to_target = look_target.in2D() - destination
+    destination = destination.flat()
+    dest_to_target = look_target.flat() - destination
     dest_init_dir = dest_to_target.normalized() * -1
-    car_init_loc = data.car.location.in2D()
+    car_init_loc = data.car.location.flat()
 
     steps_taken = 0
     locs_visited = []
@@ -119,7 +119,7 @@ def get_route(data: Data, destination, look_target):
 
         for i in range(steps_taken):
             dest_to_car = car_init_loc - cur_loc
-            ang_diff = cur_dir.angTo2d(dest_to_car)
+            ang_diff = cur_dir.ang_to_flat(dest_to_car)
             turn_sgn = 1 if ang_diff > 0 else -1
 
             if i > 0:
@@ -128,7 +128,7 @@ def get_route(data: Data, destination, look_target):
 
             locs_visited.append(cur_loc)
 
-        ang_diff = cur_dir.angTo2d(dest_to_car)
+        ang_diff = cur_dir.ang_to_flat(dest_to_car)
 
         if abs(ang_diff) < max_turn_ang or dest_to_car.length() < dist_step_size:
             break
@@ -137,7 +137,7 @@ def get_route(data: Data, destination, look_target):
 
     good_route = True
     if steps_taken == 0:
-        ang_diff = dest_init_dir.angTo2d(car_init_loc - destination)
+        ang_diff = dest_init_dir.ang_to_flat(car_init_loc - destination)
         good_route = abs(ang_diff) < max_turn_ang / 4
 
     locs_visited.reverse()

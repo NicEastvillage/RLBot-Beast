@@ -8,7 +8,7 @@ class Vec3:
         self.y = float(y)
         self.z = float(z)
 
-    def in2D(self):
+    def flat(self):
         return Vec3(self.x, self.y, 0)
 
     def __add__(self, other):
@@ -70,11 +70,11 @@ class Vec3:
             self.x * other.y - self.y * other.x
         )
 
-    def angTo(self, ideal):
+    def ang_to(self, ideal):
         cos_ang = self.dot(ideal) / (self.length() * ideal.length())
         return math.acos(cos_ang)
 
-    def angTo2d(self, ideal):
+    def ang_to_flat(self, ideal):
         current_in_radians = math.atan2(self.y, self.x)
         ideal_in_radians = math.atan2(ideal.y, ideal.x)
 

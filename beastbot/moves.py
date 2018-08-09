@@ -13,7 +13,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     controller_state = SimpleControllerState()
 
     car_to_point = point - data.car.location
-    steer_correction_radians = data.car.orientation.front.angTo2d(car_to_point)
+    steer_correction_radians = data.car.orientation.front.ang_to_flat(car_to_point)
 
     do_smoothing = True
     if slide:
@@ -24,12 +24,12 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     vf = data.car.velocity.proj_onto_size(data.car.orientation.front)
     tr = turn_radius(abs(vf))
     tr_side = 1 if steer_correction_radians > 0 else -1
-    tr_center = (data.car.location + data.car.orientation.left * tr * tr_side).in2D()
-    too_close = point.in2D().dist2(tr_center) < tr*tr
+    tr_center = (data.car.location + data.car.orientation.left * tr * tr_side).flat()
+    too_close = point.flat().dist2(tr_center) < tr * tr
     data.renderer.draw_line_3d(data.car.location.tuple(), tr_center.tuple(), data.renderer.create_color(255, 0, 130, 200))
     if too_close:
         do_smoothing = False
-        if point.in2D().dist2(tr_center) < tr*tr * 0.3:
+        if point.flat().dist2(tr_center) < tr*tr * 0.3:
             do_smoothing = True
 
     if do_smoothing:
@@ -43,7 +43,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     if boost:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
             if datalibs.is_heading_towards2(steer_correction_radians, car_to_point.length()):
-                if data.car.orientation.up.angTo(UP) < math.pi*0.3:
+                if data.car.orientation.up.ang_to(UP) < math.pi*0.3:
                     controller_state.boost = True
 
     controller_state.throttle = 0.05 if too_close else 1
@@ -57,7 +57,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
     car_to_point = point - data.car.location
     dist = car_to_point.length()
 
-    steer_correction_radians = data.car.orientation.front.angTo2d(car_to_point)
+    steer_correction_radians = data.car.orientation.front.ang_to_flat(car_to_point)
 
     do_smoothing = True
     if slide:
@@ -84,7 +84,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
         if target_vel_f > 1410:
             if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
                 if datalibs.is_heading_towards2(steer_correction_radians, dist):
-                    if data.car.orientation.up.angTo(UP) < math.pi * 0.3:
+                    if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                         controller_state.boost = True
     else:
         if (vel_f - target_vel_f) > 75:
@@ -96,10 +96,10 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
 def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: float, slide=False):
     controller_state = SimpleControllerState()
 
-    car_to_point = point.in2D() - data.car.location
+    car_to_point = point.flat() - data.car.location
     dist = car_to_point.length()
 
-    steer_correction_radians = data.car.orientation.front.angTo2d(car_to_point)
+    steer_correction_radians = data.car.orientation.front.ang_to_flat(car_to_point)
 
     do_smoothing = True
     if slide:
@@ -128,7 +128,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     if force > 1:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
             if datalibs.is_heading_towards2(steer_correction_radians, dist):
-                if data.car.orientation.up.angTo(UP) < math.pi * 0.3:
+                if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                     controller_state.boost = True
 
     return controller_state
@@ -154,7 +154,7 @@ def fix_orientation(data: Data):
     else:
         # We now land on wheels, so rotate to face the ball
         car_to_ball = data.ball.location - data.car.location
-        ang = ori.front.angTo2d(car_to_ball)
+        ang = ori.front.ang_to_flat(car_to_ball)
         controller.yaw = rlmath.steer_correction_smooth(ang * strength, vel.z)
 
     return controller

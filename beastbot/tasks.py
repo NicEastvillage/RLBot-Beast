@@ -42,7 +42,7 @@ class PushBall(bt.BTNode):
 		own_goal_direction = datalibs.get_goal_direction(car, packet)
 		ball_predicted = ball_location + 0.08 * ball_velocity + Vec3(y=own_goal_direction * 50)
 		
-		dist = (car_location - ball_predicted.in2D()).length()
+		dist = (car_location - ball_predicted.flat()).length()
 		shouldBoost = dist > 500
 		
 		controller = moves.go_towards_point(car, packet, ball_predicted, slide=True, boost=shouldBoost)
@@ -62,8 +62,8 @@ class FacePoint(bt.BTNode):
 		car_velocity = Vec3(car.physics.velocity.x, car.physics.velocity.y)
 		car_to_point = point - car_location
 		
-		steer_correction_radians = rlmath.fix_ang(car_direction.angTo2d(car_to_point) + yaw_velocity * 0.2)
-		velocity_correction_radians = car_velocity.angTo2d(car_to_point)
+		steer_correction_radians = rlmath.fix_ang(car_direction.ang_to_flat(car_to_point) + yaw_velocity * 0.2)
+		velocity_correction_radians = car_velocity.ang_to_flat(car_to_point)
 		
 		controller = SimpleControllerState()
 		

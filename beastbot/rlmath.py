@@ -37,7 +37,7 @@ def fix_ang(ang):
 
 
 def estimate_time_to_arrival(car, point, boost=False):
-	car_to_point = point.in2D() - car.location
+	car_to_point = point.flat() - car.location
 
 	if boost:
 		time = car_to_point.length() / 2300

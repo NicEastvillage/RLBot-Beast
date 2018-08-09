@@ -18,7 +18,7 @@ class TouchBall:
         dist01 = rlu.dist_01(data.car.dist_to_ball)
         dist01 = 1 - easing.smooth_stop(4, dist01)
 
-        above_ang = car_to_ball.angTo(Vec3(z=1))
+        above_ang = car_to_ball.ang_to(Vec3(z=1))
         aa01 = easing.fix(1 - 2 * above_ang / math.pi)
 
         possession = data.car.possession_score
@@ -108,7 +108,7 @@ class ClearBall:
         goal_to_ball = data.ball.location - datalibs.get_goal_location(data.car, None)
         car_to_ball = data.ball.location - data.car.location
 
-        ang = abs(car_to_ball.angTo2d(goal_to_ball))
+        ang = abs(car_to_ball.ang_to_flat(goal_to_ball))
         ang_01 = easing.fix(easing.lerp(math.pi * 0.6, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
         own_half_01 = easing.fix(easing.remap((-1*my_goal_dir) * datalibs.ARENA_LENGTH2, my_goal_dir * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
@@ -150,7 +150,7 @@ class SaveGoal:
         ball_to_goal = datalibs.get_goal_location(data.car, None) - data.ball.location
         goal_dir = datalibs.get_goal_direction(data.car, None)
 
-        ang = abs(ball_to_goal.angTo2d(data.ball.velocity))
+        ang = abs(ball_to_goal.ang_to_flat(data.ball.velocity))
         ang_01 = easing.fix(easing.lerp(math.pi*0.4, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
         own_half_01 = easing.fix(easing.remap((-1*goal_dir) * datalibs.ARENA_LENGTH2, goal_dir * datalibs.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
@@ -214,7 +214,7 @@ class SpecificBoostPad:
         state = data.packet.game_boosts[self.index]
 
         dist = 1 - rlu.dist_01(data.car.location.dist(self.location))
-        ang = rlu.face_ang_01(data.car.orientation.front.angTo2d(car_to_pad))
+        ang = rlu.face_ang_01(data.car.orientation.front.ang_to_flat(car_to_pad))
         active = state.is_active
         big = self.info.is_full_boost * 0.5
 

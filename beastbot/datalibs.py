@@ -52,7 +52,7 @@ def is_heading_towards(car, point):
     car_location = Vec3(car.physics.location.x, car.physics.location.y)
     car_direction = rlmath.get_car_facing_vector(car)
     car_to_point = point - car_location
-    ang = car_direction.angTo2d(car_to_point)
+    ang = car_direction.ang_to_flat(car_to_point)
     dist = car_to_point.length()
     return is_heading_towards2(ang, dist)
 
@@ -85,14 +85,14 @@ class Ball:
 
     def set_game_ball(self, game_ball):
         self.location = Vec3().set(game_ball.physics.location)
-        self.location_2d = self.location.in2D()
+        self.location_2d = self.location.flat()
         self.velocity = Vec3().set(game_ball.physics.velocity)
         self.angular_velocity = Vec3().set(game_ball.physics.angular_velocity)
         return self
 
     def set(self, other):
         self.location.set(other.location)
-        self.location_2d = self.location.in2D()
+        self.location_2d = self.location.flat()
         self.velocity.set(other.velocity)
         self.angular_velocity.set(other.angular_velocity)
         return self
@@ -105,7 +105,7 @@ class Car:
     def __init__(self, game_car):
         self.team = int(game_car.team)
         self.location = Vec3().set(game_car.physics.location)
-        self.location_2d = self.location.in2D()
+        self.location_2d = self.location.flat()
         self.velocity = Vec3().set(game_car.physics.velocity)
         self.angular_velocity = Vec3().set(game_car.physics.angular_velocity)
         self.orientation = Orientation(game_car.physics.rotation)
@@ -125,7 +125,7 @@ class Car:
 
         self.dist_to_ball = self.location.dist(ball.location)
         self.dist_to_ball_2d = car_to_ball_2d.length()
-        self.ang_to_ball_2d = self.orientation.front.angTo2d(car_to_ball_2d)
+        self.ang_to_ball_2d = self.orientation.front.ang_to_flat(car_to_ball_2d)
 
 
 class Data:
@@ -154,7 +154,7 @@ class Data:
             car_to_ball = self.ball.location - car.location
 
             dist = car_to_ball.length()
-            ang = car.orientation.front.angTo(car_to_ball)
+            ang = car.orientation.front.ang_to(car_to_ball)
 
             return rlutility.dist_01(dist) * rlutility.face_ang_01(ang)
         except ZeroDivisionError:
