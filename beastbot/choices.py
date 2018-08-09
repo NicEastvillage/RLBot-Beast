@@ -9,42 +9,33 @@ import route
 from vec import Vec3
 
 
-class TouchBall:
+class Dribbling:
     def utility(self, data):
-        car_to_ball = data.ball.location - data.car.location
+        # every 1500 is 0.1
         enemy_dist = data.enemy.location.dist(data.ball.location)
-        enemy_dist01 = rlu.dist_01(enemy_dist)
+        enemy_dist_u = enemy_dist * 0.00006
 
         dist01 = rlu.dist_01(data.car.dist_to_ball)
         dist01 = 1 - easing.smooth_stop(4, dist01)
 
+        car_to_ball = data.ball.location - data.car.location
         above_ang = car_to_ball.ang_to(Vec3(z=1))
-        aa01 = easing.fix(1 - 2 * above_ang / math.pi)
+        aa01 = easing.fix(1 - 1.5 * above_ang / math.pi)
 
-        possession = data.car.possession_score
-
-        return 0.8*aa01 + 0.2*enemy_dist01
-        # return easing.lerp(0.15, 0.75, dist01 * possession)
+        return easing.fix(0.76 * aa01 + enemy_dist_u) * (data.ball.location.z > 25)
 
     def execute(self, data):
-        ball_land_eta = max(predict.time_of_arrival_at_height(data.ball, 92.2).time, 0)
+        ball_land_eta = max(predict.time_of_arrival_at_height(data.ball, datalibs.BALL_RADIUS + 1).time, 0)
         ball_land_loc = predict.move_ball(data.ball.copy(), ball_land_eta).location
-        drive_eta = ball_land_loc.dist(data.car.location) / 1410
-        if drive_eta < ball_land_eta:
-            bias = (ball_land_loc - datalibs.get_goal_location(data.enemy, data)).rescale(23)
-            dest = ball_land_loc + bias
-            data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(),
-                                       data.renderer.create_color(255, 255, 0, 255))
-            return moves.go_towards_point_with_timing(data, dest, ball_land_eta, True)
-        else:
-            ball_loc2 = predict.move_ball(data.ball.copy(), drive_eta).location
-            drive_eta = ball_loc2.dist(data.car.location) / 1410
-            data.renderer.draw_line_3d(data.car.location.tuple(), ball_loc2.tuple(),
-                                       data.renderer.create_color(255, 255, 0, 255))
-            return moves.go_towards_point_with_timing(data, ball_loc2, drive_eta, True)
+
+        bias = (ball_land_loc - datalibs.get_goal_location(data.enemy, data)).rescale(20)
+        dest = ball_land_loc + bias
+        data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(), data.renderer.create_color(255, 255, 0, 255))
+        data.renderer.draw_line_3d(data.ball.location.tuple(), dest.tuple(), data.renderer.create_color(255, 255, 0, 255))
+        return moves.go_towards_point_with_timing(data, dest, ball_land_eta, True)
 
     def __str__(self):
-        return "Touch/Dribble"
+        return "Dribble"
 
 
 class KickOff:

@@ -40,6 +40,7 @@ def get_offense_system(agent):
         choices.SaveGoal(agent),
         choices.ClearBall(agent),
         choices.ShootAtGoal(agent),
-        choices.CollectBoost(agent)
+        choices.CollectBoost(agent),
+        choices.Dribbling()
     ]
-    return rlutility.UtilitySystem(off_choices, 0)
+    return rlutility.UtilitySystem(off_choices, 0.1)

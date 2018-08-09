@@ -7,6 +7,10 @@ def sign(x):
 	return x and (1, -1)[x < 0]
 
 
+def lerp(a, b, t):
+	return (1 - t) * a + t * b
+
+
 def get_car_facing_vector(car):
 	pitch = float(car.physics.rotation.pitch)
 	yaw = float(car.physics.rotation.yaw)

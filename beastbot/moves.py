@@ -76,7 +76,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
 
     vel_f = data.car.velocity.proj_onto(car_to_point).length()
     avg_vel_f = dist / eta
-    target_vel_f = (1.0 - alpha) * vel_f + alpha * avg_vel_f
+    target_vel_f = rlmath.lerp(vel_f, avg_vel_f, alpha)
 
     if vel_f < target_vel_f:
         controller_state.throttle = 1.0
@@ -86,9 +86,10 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
                 if datalibs.is_heading_towards2(steer_correction_radians, dist):
                     if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                         controller_state.boost = True
-    else:
-        if (vel_f - target_vel_f) > 75:
-            controller_state.throttle = -1.0
+    elif (vel_f - target_vel_f) > 80:
+        controller_state.throttle = -0.6
+    elif (vel_f - target_vel_f) > 100:
+        controller_state.throttle = -1.0
 
     return controller_state
 
