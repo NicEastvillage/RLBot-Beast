@@ -11,13 +11,14 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 
 class Beast(BaseAgent):
+    def __init__(self, name, team, index):
+        super().__init__(name, team, index)
+        self.ut_system = None
+        self.last_task = None
+        self.pid = moves.PIDControl()
+
     def initialize_agent(self):
         self.ut_system = get_offense_system(self)
-        self.last_task = None
-        self.last_steer_error = 0
-        self.last_yaw_error = 0
-        self.last_pitch_error = 0
-        self.last_roll_error = 0
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = datalibs.Data(self, packet)

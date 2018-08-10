@@ -9,6 +9,13 @@ from rlbot.agents.base_agent import SimpleControllerState
 REQUIRED_SLIDE_ANG = 1.6
 
 
+class PIDControl:
+    def __init__(self):
+        self.last_steer_error = 0
+        self.last_yaw_error = 0
+        self.last_pitch_error = 0
+        self.last_roll_error = 0
+
 def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleControllerState:
     controller_state = SimpleControllerState()
 
@@ -33,8 +40,8 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             do_smoothing = True
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.last_steer_error)
-        data.agent.last_steer_error = steer_correction_radians
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
+        data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
             controller_state.steer = 1
@@ -68,7 +75,8 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
                 do_smoothing = False
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.car.angular_velocity.y)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
+        data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
             controller_state.steer = 1
@@ -111,7 +119,8 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
                 do_smoothing = False
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.car.angular_velocity.y)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
+        data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
             controller_state.steer = 1
@@ -148,23 +157,24 @@ def fix_orientation(data: Data, point = None):
 
     ori = data.car.orientation
 
-    if point is None:
+    if point is None and data.car.velocity.flat().length2() != 0:
         point = data.car.location + data.car.velocity.flat().rescale(500)
 
     pitch_error = -ori.pitch * strength
-    controller.pitch = rlmath.steer_correction_smooth(pitch_error, data.agent.last_pitch_error)
-    data.agent.last_pitch_error = pitch_error
+    controller.pitch = rlmath.steer_correction_smooth(pitch_error, data.agent.pid.last_pitch_error)
+    data.agent.pid.last_pitch_error = pitch_error
 
     roll_error = -ori.roll * strength
-    controller.roll = rlmath.steer_correction_smooth(roll_error, data.agent.last_roll_error)
-    data.agent.last_roll_error = roll_error
+    controller.roll = rlmath.steer_correction_smooth(roll_error, data.agent.pid.last_roll_error)
+    data.agent.pid.last_roll_error = roll_error
 
-    # yaw rotation can f up the other's so we scale it down until we are more confident about landing on the wheels
-    land_on_wheels01 = 1 - ori.up.ang_to(UP) / (math.pi * 2)
-    car_to_point = point - data.car.location
-    yaw_error = ori.front.ang_to_flat(car_to_point) * strength * 1.5
-    controller.yaw = rlmath.steer_correction_smooth(yaw_error, data.agent.last_yaw_error) * (land_on_wheels01**6)
-    data.agent.last_yaw_error = yaw_error
+    if point is not None:
+        # yaw rotation can f up the other's so we scale it down until we are more confident about landing on the wheels
+        car_to_point = point - data.car.location
+        yaw_error = ori.front.ang_to_flat(car_to_point) * strength * 1.5
+        land_on_wheels01 = 1 - ori.up.ang_to(UP) / (math.pi * 2)
+        controller.yaw = rlmath.steer_correction_smooth(yaw_error, data.agent.pid.last_yaw_error) * (land_on_wheels01**6)
+        data.agent.pid.last_yaw_error = yaw_error
 
     # !
     controller.throttle = 1
