@@ -2,7 +2,7 @@ import math
 import rlmath
 import datalibs
 from datalibs import Data
-from vec import Vec3,UP
+from vec import Vec3, UP
 from route import Route
 from rlbot.agents.base_agent import SimpleControllerState
 
@@ -33,7 +33,8 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             do_smoothing = True
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.car.angular_velocity.y)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.last_steer_error)
+        data.agent.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
             controller_state.steer = 1
@@ -142,21 +143,28 @@ def follow_route(data: Data, route: Route):
 def fix_orientation(data: Data):
     controller = SimpleControllerState()
 
-    strength = 0.5
-    ok_angle = 0.3
+    strength = 0.22
+    ok_angle = 0.25
 
     ori = data.car.orientation
-    vel = data.car.angular_velocity
 
-    controller.pitch = rlmath.steer_correction_smooth(-ori.pitch * strength, vel.y)
+    pitch_error = -ori.pitch * strength
+    controller.pitch = rlmath.steer_correction_smooth(pitch_error, data.agent.last_pitch_error)
+    data.agent.last_pitch_error = pitch_error
 
-    if abs(ori.roll) > ok_angle:
-        controller.roll = rlmath.steer_correction_smooth(-ori.roll * strength, vel.x)
-    else:
-        # We now land on wheels, so rotate to face the ball
-        car_to_ball = data.ball.location - data.car.location
-        ang = ori.front.ang_to_flat(car_to_ball)
-        controller.yaw = rlmath.steer_correction_smooth(ang * strength, vel.z)
+    roll_error = -ori.roll * strength
+    controller.roll = rlmath.steer_correction_smooth(roll_error, data.agent.last_roll_error)
+    data.agent.last_roll_error = roll_error
+
+    # yaw rotation can f up the other's so we scale it down until we are more confident about landing on the wheels
+    land_on_wheels01 = 1 - ori.up.ang_to(UP) / (math.pi * 2)
+    car_to_ball = data.ball.location - data.car.location
+    yaw_error = ori.front.ang_to_flat(car_to_ball) * strength * 1.5
+    controller.yaw = rlmath.steer_correction_smooth(yaw_error, data.agent.last_yaw_error) * (land_on_wheels01**6)
+    data.agent.last_yaw_error = yaw_error
+
+    # !
+    controller.throttle = 1
 
     return controller
 

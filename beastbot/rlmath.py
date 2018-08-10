@@ -21,14 +21,10 @@ def get_car_facing_vector(car):
 	return Vec3(facing_x, facing_y)
 
 
-def steer_correction_smooth(rad, yaw_vel):
-	# increasing the constant will make the correction more smooth
-	smoothness = 0.25
-	val = (1 + smoothness / 2) * rad / (smoothness + abs(rad))
-	val += yaw_vel * -0.06
-	val = min(max(-1, val), 1)
-
-	return val
+def steer_correction_smooth(rad, last_rad):
+	derivative = rad - last_rad
+	val = rad - 5 * derivative + rad**3
+	return min(max(-1, val), 1)
 
 
 def fix_ang(ang):
