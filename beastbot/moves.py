@@ -140,13 +140,16 @@ def follow_route(data: Data, route: Route):
     return go_towards_point(data, route.points[0], False, True)
 
 
-def fix_orientation(data: Data):
+def fix_orientation(data: Data, point = None):
     controller = SimpleControllerState()
 
     strength = 0.22
     ok_angle = 0.25
 
     ori = data.car.orientation
+
+    if point is None:
+        point = data.car.location + data.car.velocity.flat().rescale(500)
 
     pitch_error = -ori.pitch * strength
     controller.pitch = rlmath.steer_correction_smooth(pitch_error, data.agent.last_pitch_error)
@@ -158,8 +161,8 @@ def fix_orientation(data: Data):
 
     # yaw rotation can f up the other's so we scale it down until we are more confident about landing on the wheels
     land_on_wheels01 = 1 - ori.up.ang_to(UP) / (math.pi * 2)
-    car_to_ball = data.ball.location - data.car.location
-    yaw_error = ori.front.ang_to_flat(car_to_ball) * strength * 1.5
+    car_to_point = point - data.car.location
+    yaw_error = ori.front.ang_to_flat(car_to_point) * strength * 1.5
     controller.yaw = rlmath.steer_correction_smooth(yaw_error, data.agent.last_yaw_error) * (land_on_wheels01**6)
     data.agent.last_yaw_error = yaw_error
 
