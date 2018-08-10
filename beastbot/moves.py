@@ -1,6 +1,7 @@
 import math
 import rlmath
 import datalibs
+import time
 from datalibs import Data
 from vec import Vec3, UP
 from route import Route
@@ -15,6 +16,83 @@ class PIDControl:
         self.last_yaw_error = 0
         self.last_pitch_error = 0
         self.last_roll_error = 0
+
+
+class DodgeControl:
+    def __init__(self):
+        self.is_dodging = False
+        self.target = None
+        self.last_start_time = time.time()
+        self.last_end_time = time.time()
+
+        self._t_first_unjump = 0.14
+        self._t_aim = 0.22
+        self._t_second_jump = 0.28
+        self._t_second_unjump = 0.38
+        self._t_wait_flip = 0.46
+        self._t_finishing = 1.0  # fix orientation until lands on ground
+
+        self._t_ready = 0.33  # time on ground before ready again
+
+    def can_dodge(self, data):
+        return time.time() >= self.last_end_time + self._t_ready and data.car.wheel_contact and not self.is_dodging
+
+    def begin_dodge(self, data, target_point):
+        if not self.can_dodge(data):
+            return None
+
+        self.is_dodging = True
+        self.last_start_time = time.time()
+        self.target = target_point
+
+    def continue_dodge(self, data):
+        ct = time.time()
+        controller = SimpleControllerState()
+        if ct >= self.last_start_time + self._t_finishing:
+            if data.car.wheel_contact:
+                self.end_dodge()
+            print("D: finish")
+            return fix_orientation(data)
+
+        elif ct >= self.last_start_time + self._t_wait_flip:
+            print("D: wait flip")
+            controller.throttle = 1
+
+        elif ct >= self.last_start_time + self._t_second_unjump:
+            print("D: 2. unjump")
+            controller.throttle = 1
+
+        elif ct >= self.last_start_time + self._t_aim:
+            if ct >= self.last_start_time + self._t_second_jump:
+                print("D: 2. jump")
+                controller.jump = 1
+            else:
+                print("D: Aim")
+
+            controller.throttle = 1
+            # car_to_point = self.target - data.car.location
+            # car_to_point = car_to_point.flat().normalized()
+            # car_to_point_rel = car_to_point.rotate_2d(data.car.orientation.front.ang())
+            # controller.pitch = car_to_point_rel.x
+            # controller.yaw = car_to_point.y
+            controller.pitch = -1
+
+        elif ct >= self.last_start_time + self._t_first_unjump:
+            print("D: 1. unjump")
+            controller.throttle = 1
+
+        elif ct >= self.last_start_time:
+            print("D: 1. jump")
+            controller.jump = 1
+            controller.throttle = 1
+
+        return controller
+
+    def end_dodge(self):
+        self.last_end_time = time.time()
+        self.is_dodging = False
+        self.target = None
+
 
 def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleControllerState:
     controller_state = SimpleControllerState()

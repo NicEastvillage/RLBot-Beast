@@ -16,6 +16,7 @@ class Beast(BaseAgent):
         self.ut_system = None
         self.last_task = None
         self.pid = moves.PIDControl()
+        self.dodge_control = moves.DodgeControl()
 
     def initialize_agent(self):
         self.ut_system = get_offense_system(self)
@@ -23,6 +24,17 @@ class Beast(BaseAgent):
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = datalibs.Data(self, packet)
 
+        if self.dodge_control.can_dodge(data):
+            self.dodge_control.begin_dodge(data, data.ball.location)
+
+        if self.dodge_control.is_dodging:
+            return self.dodge_control.continue_dodge(data)
+
+        controller = SimpleControllerState()
+        controller.throttle = 1
+        return controller
+
+        """"
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4.5, 0.11)
@@ -36,7 +48,7 @@ class Beast(BaseAgent):
         self.last_task = task
 
         return action
-
+        """
 
 def get_offense_system(agent):
     off_choices = [
