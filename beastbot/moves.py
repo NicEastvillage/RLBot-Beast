@@ -21,7 +21,7 @@ class PIDControl:
 class DodgeControl:
     def __init__(self):
         self.is_dodging = False
-        self.target = None
+        self.target_func = None
         self.last_start_time = time.time()
         self.last_end_time = time.time()
 
@@ -37,13 +37,13 @@ class DodgeControl:
     def can_dodge(self, data):
         return time.time() >= self.last_end_time + self._t_ready and data.car.wheel_contact and not self.is_dodging
 
-    def begin_dodge(self, data, target_point):
+    def begin_dodge(self, data, target_func):
         if not self.can_dodge(data):
             return None
 
         self.is_dodging = True
         self.last_start_time = time.time()
-        self.target = target_point
+        self.target_func = target_func
 
     def continue_dodge(self, data):
         ct = time.time()
@@ -64,7 +64,8 @@ class DodgeControl:
                 controller.jump = 1
 
             controller.throttle = 1
-            car_to_point = self.target - data.car.location
+            target = self.target_func(data)
+            car_to_point = target - data.car.location
             car_to_point = car_to_point.flat().normalized()
             car_to_point_rel = car_to_point.rotate_2d(-data.car.orientation.front.ang())
             controller.pitch = -car_to_point_rel.x
@@ -82,7 +83,7 @@ class DodgeControl:
     def end_dodge(self):
         self.last_end_time = time.time()
         self.is_dodging = False
-        self.target = None
+        self.target_func = None
 
 
 def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleControllerState:

@@ -27,7 +27,7 @@ class Beast(BaseAgent):
         self.renderer.begin_rendering()
 
         if self.dodge_control.can_dodge(data) and data.car.velocity.length() > 1000:
-            self.dodge_control.begin_dodge(data, data.ball.location)
+            self.dodge_control.begin_dodge(data, lambda d: d.ball.location)
 
         if self.dodge_control.is_dodging:
             return self.dodge_control.continue_dodge(data)
