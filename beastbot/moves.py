@@ -26,9 +26,9 @@ class DodgeControl:
         self.last_end_time = time.time()
 
         self._t_first_unjump = 0.14
-        self._t_aim = 0.22
-        self._t_second_jump = 0.28
-        self._t_second_unjump = 0.38
+        self._t_aim = 0.21
+        self._t_second_jump = 0.25
+        self._t_second_unjump = 0.35
         self._t_wait_flip = 0.46
         self._t_finishing = 1.0  # fix orientation until lands on ground
 
@@ -51,38 +51,29 @@ class DodgeControl:
         if ct >= self.last_start_time + self._t_finishing:
             if data.car.wheel_contact:
                 self.end_dodge()
-            print("D: finish")
             return fix_orientation(data)
 
         elif ct >= self.last_start_time + self._t_wait_flip:
-            print("D: wait flip")
             controller.throttle = 1
 
         elif ct >= self.last_start_time + self._t_second_unjump:
-            print("D: 2. unjump")
             controller.throttle = 1
 
         elif ct >= self.last_start_time + self._t_aim:
             if ct >= self.last_start_time + self._t_second_jump:
-                print("D: 2. jump")
                 controller.jump = 1
-            else:
-                print("D: Aim")
 
             controller.throttle = 1
-            # car_to_point = self.target - data.car.location
-            # car_to_point = car_to_point.flat().normalized()
-            # car_to_point_rel = car_to_point.rotate_2d(data.car.orientation.front.ang())
-            # controller.pitch = car_to_point_rel.x
-            # controller.yaw = car_to_point.y
-            controller.pitch = -1
+            car_to_point = self.target - data.car.location
+            car_to_point = car_to_point.flat().normalized()
+            car_to_point_rel = car_to_point.rotate_2d(-data.car.orientation.front.ang())
+            controller.pitch = -car_to_point_rel.x
+            controller.yaw = car_to_point_rel.y
 
         elif ct >= self.last_start_time + self._t_first_unjump:
-            print("D: 1. unjump")
             controller.throttle = 1
 
         elif ct >= self.last_start_time:
-            print("D: 1. jump")
             controller.jump = 1
             controller.throttle = 1
 

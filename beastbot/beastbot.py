@@ -24,16 +24,19 @@ class Beast(BaseAgent):
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = datalibs.Data(self, packet)
 
-        if self.dodge_control.can_dodge(data):
+        self.renderer.begin_rendering()
+
+        if self.dodge_control.can_dodge(data) and data.car.velocity.length() > 1000:
             self.dodge_control.begin_dodge(data, data.ball.location)
 
         if self.dodge_control.is_dodging:
             return self.dodge_control.continue_dodge(data)
 
-        controller = SimpleControllerState()
-        controller.throttle = 1
-        return controller
+        action = moves.go_towards_point(data, data.ball.location, True, True)
 
+        self.renderer.end_rendering()
+
+        return action
         """"
         self.renderer.begin_rendering()
 
