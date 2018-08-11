@@ -16,6 +16,7 @@ class Beast(BaseAgent):
         self.ut_system = None
         self.last_task = None
         self.pid = moves.PIDControl()
+        self.dodge_control = moves.DodgeControl()
 
     def initialize_agent(self):
         self.ut_system = get_offense_system(self)
@@ -36,7 +37,6 @@ class Beast(BaseAgent):
         self.last_task = task
 
         return action
-
 
 def get_offense_system(agent):
     off_choices = [

@@ -70,6 +70,9 @@ class Vec3:
             self.x * other.y - self.y * other.x
         )
 
+    def ang(self):
+        return rlmath.fix_ang(math.atan2(self.y, self.x))
+
     def ang_to(self, ideal):
         cos_ang = self.dot(ideal) / (self.length() * ideal.length())
         return math.acos(cos_ang)
