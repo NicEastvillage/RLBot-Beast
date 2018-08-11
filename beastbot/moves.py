@@ -34,6 +34,8 @@ class DodgeControl:
         self._t_finishing = 1.0  # fix orientation until lands on ground
 
         self._t_ready = 0.33  # time on ground before ready again
+        self._max_speed = 1900
+        self._boost_ang_req = 0.3
 
     def can_dodge(self, data):
         return time.time() >= self.last_end_time + self._t_ready and data.car.wheel_contact and not self.is_dodging
@@ -50,6 +52,17 @@ class DodgeControl:
     def continue_dodge(self, data):
         ct = time.time()
         controller = SimpleControllerState()
+
+        # target is allowed to be a function that takes data as a parameter. Check what it is
+        if callable(self.target):
+            target = self.target(data)
+        else:
+            target = self.target
+        car_to_point = target - data.car.location
+        vel = data.car.velocity.proj_onto_size(car_to_point)
+        face_ang = car_to_point.ang_to(data.car.orientation.front)
+        controller.boost = self.boost and face_ang < self._boost_ang_req and vel < self._max_speed
+
         if ct >= self.last_start_time + self._t_finishing:
             if data.car.wheel_contact:
                 self.end_dodge()
@@ -67,15 +80,8 @@ class DodgeControl:
 
             controller.throttle = 1
 
-            # target is allowed to be a function that takes data as a parameter. Check what it is
-            if callable(self.target):
-                target = self.target(data)
-            else:
-                target = self.target
-
-            car_to_point = target - data.car.location
-            car_to_point = car_to_point.flat().normalized()
-            car_to_point_rel = car_to_point.rotate_2d(-data.car.orientation.front.ang())
+            car_to_point_u = car_to_point.flat().normalized()
+            car_to_point_rel = car_to_point_u.rotate_2d(-data.car.orientation.front.ang())
             controller.pitch = -car_to_point_rel.x
             controller.yaw = car_to_point_rel.y
 
@@ -92,6 +98,7 @@ class DodgeControl:
         self.last_end_time = time.time()
         self.is_dodging = False
         self.target = None
+        self.boost = False
 
 
 def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleControllerState:
