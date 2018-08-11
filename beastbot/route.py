@@ -142,3 +142,28 @@ def get_route(data: Data, destination, look_target):
 
     locs_visited.reverse()
     return Route(locs_visited, destination, 0, 1410, car_init_loc, good_route, True)
+
+
+class AimCone:
+    def __init__(self, right_most_ang, left_most_ang):
+        self.right_ang = right_most_ang
+        self.left_ang = left_most_ang
+
+    def contains_direction(self, direction):
+        ang = direction.ang()
+        if self.right_ang > self.left_ang:
+            return self.right_ang <= ang or ang <= self.left_ang
+        else:
+            return self.right_ang <= ang <= self.left_ang
+
+    def draw(self, renderer, center, arm_len=500, arm_count=5):
+
+        c_tup = center.tuple()
+        ang_step = abs(self.left_ang - self.right_ang) / (arm_count - 1)
+
+        for i in range(arm_count):
+            ang = self.right_ang + ang_step * i
+            arm_dir = Vec3(math.cos(ang), math.sin(ang))
+            end = center + arm_dir * arm_len
+            renderer.draw_line_3d(c_tup, end.tuple(),
+                                  renderer.create_color(255 if i == 0 or i == arm_count - 1 else 110, 255, 255, 0))
