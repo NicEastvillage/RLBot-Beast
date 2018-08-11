@@ -26,20 +26,6 @@ class Beast(BaseAgent):
 
         self.renderer.begin_rendering()
 
-        if self.dodge_control.can_dodge(data) and data.car.velocity.length() > 1000:
-            self.dodge_control.begin_dodge(data, lambda d: d.ball.location, True)
-
-        if self.dodge_control.is_dodging:
-            return self.dodge_control.continue_dodge(data)
-
-        action = moves.go_towards_point(data, data.ball.location, True, True)
-
-        self.renderer.end_rendering()
-
-        return action
-        """"
-        self.renderer.begin_rendering()
-
         predict.draw_ball_path(self.renderer, data, 4.5, 0.11)
         task = self.ut_system.evaluate(data)
         action = task.execute(data)
@@ -51,7 +37,6 @@ class Beast(BaseAgent):
         self.last_task = task
 
         return action
-        """
 
 def get_offense_system(agent):
     off_choices = [
