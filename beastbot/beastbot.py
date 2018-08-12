@@ -30,9 +30,6 @@ class Beast(BaseAgent):
         task = self.ut_system.evaluate(data)
         action = task.execute(data)
 
-        if self.team == 0:
-            route.debug_aim_cone(data)
-
         self.renderer.end_rendering()
 
         if self.last_task != task:
