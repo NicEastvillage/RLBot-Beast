@@ -39,10 +39,13 @@ class Dribbling:
     def __str__(self):
         return "Dribble"
 
+    def color(self, r):
+        return r.create_color(255, 255, 0, 255)
+
 
 class KickOff:
     def utility(self, data):
-        return data.packet.game_info.is_kickoff_pause * 2
+        return (data.packet.game_info.is_kickoff_pause or (data.ball.location.x == 0 and data.ball.location.y == 0)) * 2
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), (0, 0, 0), data.renderer.create_color(255, 255, 255, 255))
@@ -50,6 +53,9 @@ class KickOff:
 
     def __str__(self):
         return "KickOff"
+
+    def color(self, r):
+        return r.create_color(255, 255, 255, 255)
 
 
 class ShootAtGoal:
@@ -84,6 +90,9 @@ class ShootAtGoal:
 
     def __str__(self):
         return "ShootAtGoal"
+
+    def color(self, r):
+        return r.create_color(255, 255, 255, 0)
 
 class ClearBall:
     def __init__(self, agent):
@@ -122,6 +131,9 @@ class ClearBall:
 
     def __str__(self):
         return "ClearBall"
+
+    def color(self, r):
+        return r.create_color(255, 0, 170, 255)
 
 
 class SaveGoal:
@@ -165,6 +177,9 @@ class SaveGoal:
     def __str__(self):
         return "SaveGoal"
 
+    def color(self, r):
+        return r.create_color(255, 255, 0, 0)
+
 
 class CollectBoost:
     def __init__(self, agent):
@@ -203,6 +218,9 @@ class CollectBoost:
     def __str__(self):
         return "CollectBoost"
 
+    def color(self, r):
+        return r.create_color(255, 0, 255, 0)
+
 
 class SpecificBoostPad:
     def __init__(self, info, index):
@@ -235,3 +253,6 @@ class FixAirOrientation:
 
     def __str__(self):
         return "LandOnWheels"
+
+    def color(self, r):
+        return r.create_color(255, 150, 130, 20)

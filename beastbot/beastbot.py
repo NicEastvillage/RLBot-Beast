@@ -30,6 +30,8 @@ class Beast(BaseAgent):
         task = self.ut_system.evaluate(data)
         action = task.execute(data)
 
+        self.draw_status(data)
+
         self.renderer.end_rendering()
 
         if self.last_task != task:
@@ -37,6 +39,10 @@ class Beast(BaseAgent):
         self.last_task = task
 
         return action
+
+    def draw_status(self, data):
+        if self.last_task is not None:
+            data.renderer.draw_string_3d(data.car.location.tuple(), 1, 1, str(self.last_task), self.last_task.color(data.renderer))
 
 def get_offense_system(agent):
     off_choices = [
