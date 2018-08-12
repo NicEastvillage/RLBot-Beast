@@ -11,6 +11,10 @@ def lerp(a, b, t):
 	return (1 - t) * a + t * b
 
 
+def inv_lerp(a, b, t):
+	return a if b - a == 0 else (t - a) / (b - a)
+
+
 def get_car_facing_vector(car):
 	pitch = float(car.physics.rotation.pitch)
 	yaw = float(car.physics.rotation.yaw)
@@ -28,7 +32,7 @@ def steer_correction_smooth(rad, last_rad):
 
 
 def fix_ang(ang):
-	if abs(ang) > math.pi:
+	while abs(ang) > math.pi:
 		if ang < 0:
 			ang += 2 * math.pi
 		else:
