@@ -1,4 +1,5 @@
 import math
+import rlmath
 import datalibs
 import predict
 from datalibs import Data
@@ -142,3 +143,66 @@ def get_route(data: Data, destination, look_target):
 
     locs_visited.reverse()
     return Route(locs_visited, destination, 0, 1410, car_init_loc, good_route, True)
+
+
+class AimCone:
+    def __init__(self, right_most_ang, left_most_ang):
+        self.right_ang = rlmath.fix_ang(right_most_ang)
+        self.left_ang = rlmath.fix_ang(left_most_ang)
+
+    def contains_direction(self, direction):
+        # If you stand in blue goal and look at orange goal. positive y is forwards and positive x is left
+        # This f up angles too, so all < or > are probably the opposite of what you would expect
+        # Also, I don't know why both is not'ed
+        ang = direction.ang()
+        if self.right_ang < self.left_ang:
+            return not (self.right_ang >= ang or ang >= self.left_ang)
+        else:
+            return not (self.right_ang >= ang >= self.left_ang)
+
+    def span_size(self):
+        if self.right_ang < self.left_ang:
+            return math.tau + self.right_ang - self.left_ang
+        else:
+            return self.right_ang - self.left_ang
+
+    def draw(self, renderer, center, arm_len=500, arm_count=5, r=255, g=255, b=255):
+        center = center.flat()
+        c_tup = center.tuple()
+        ang_step = self.span_size() / (arm_count - 1)
+
+        for i in range(arm_count):
+            ang = self.right_ang - ang_step * i
+            arm_dir = Vec3(math.cos(ang), math.sin(ang))
+            end = center + arm_dir * arm_len
+            renderer.draw_line_3d(c_tup, end.tuple(),
+                                  renderer.create_color(255 if i == 0 or i == arm_count - 1 else 110, r, g, b))
+
+
+def debug_aim_cone(data):
+    ball_loc = data.ball.location
+    own_post_right, own_post_left = datalibs.get_goal_posts(data.car, data)
+    enemy_post_right, enemy_post_left = datalibs.get_goal_posts(data.enemy, data)
+
+    enemy_post_right_ang = (enemy_post_right - ball_loc).ang()
+    enemy_post_left_ang = (enemy_post_left - ball_loc).ang()
+
+    if data.car.team == 0:
+        stress01 = rlmath.inv_lerp(datalibs.ARENA_LENGTH2, -datalibs.ARENA_LENGTH2, ball_loc.y - 500)
+    else:
+        stress01 = rlmath.inv_lerp(-datalibs.ARENA_LENGTH2, datalibs.ARENA_LENGTH2, ball_loc.y + 500)
+    stress01 = min(max(0, stress01), 1)
+
+    right_aim_ang = enemy_post_right_ang + 2 * stress01
+    left_aim_ang = enemy_post_left_ang - 2 * stress01
+
+    right_aim_ang = rlmath.fix_ang(right_aim_ang)
+    left_aim_ang = rlmath.fix_ang(left_aim_ang)
+
+    aim_cone_dyn = AimCone(right_aim_ang, left_aim_ang)
+    aim_cone_dyn.draw(data.renderer, ball_loc, arm_count=7, b=0)
+
+    car_to_ball = (ball_loc - data.car.location)
+    good = aim_cone_dyn.contains_direction(car_to_ball)
+    data.renderer.draw_line_3d(data.car.location.tuple(), ball_loc.tuple(),
+                               data.renderer.create_color(255, 255 if good else 0, 140 if good else 255, 0))

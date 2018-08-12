@@ -5,6 +5,8 @@ from vec import Vec3, Zone, Orientation
 
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
+# If you stand in blue goal and look at orange goal. positive y is forwards and positive x is left
+
 ARENA_LENGTH = 10280    # y
 ARENA_WIDTH = 8240      # x
 ARENA_HEIGHT = 2044     # z
@@ -29,6 +31,10 @@ ORANGE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0
 
 BLUE_GOAL_LOCATION = Vec3(y=-ARENA_LENGTH2-100)
 ORANGE_GOAL_LOCATION = Vec3(y=ARENA_LENGTH2+100)
+BLUE_GOAL_POST_RIGHT = Vec3(893, -ARENA_LENGTH2)
+BLUE_GOAL_POST_LEFT = Vec3(-893, -ARENA_LENGTH2)
+ORANGE_GOAL_POST_RIGHT = Vec3(-893, ARENA_LENGTH2)
+ORANGE_GOAL_POST_LEFT = Vec3(893, ARENA_LENGTH2)
 
 wall_offset = 65
 ARENA_EXCEPT_WALLS_ZONE = Zone(Vec3(-ARENA_WIDTH2+wall_offset, -ARENA_LENGTH2+wall_offset),
@@ -46,6 +52,13 @@ def get_goal_location(car, data):
         return BLUE_GOAL_LOCATION
     else:
         return ORANGE_GOAL_LOCATION
+
+
+def get_goal_posts(car, data):
+    if car.team == 0:
+        return BLUE_GOAL_POST_RIGHT, BLUE_GOAL_POST_LEFT
+    else:
+        return ORANGE_GOAL_POST_RIGHT, ORANGE_GOAL_POST_LEFT
 
 
 def is_heading_towards(car, point):
