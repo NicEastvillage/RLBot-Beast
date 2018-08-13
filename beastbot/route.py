@@ -174,10 +174,10 @@ class AimCone:
         return Vec3(math.cos(ang), math.sin(ang))
 
     def get_goto_point(self, data, point):
-        point = point.z = 0
+        point = point.flat()
         desired_dir = self.get_center_dir()
 
-        desired_dir_inv = desired_dir * -1
+        desired_dir_inv = -1 * desired_dir
         car_loc = data.car.location.flat()
         point_to_car = car_loc - point
         dist = point_to_car.length()
@@ -203,9 +203,11 @@ class AimCone:
 
             goto = point + t * desired_dir_inv
 
-            goto.x = min(max(-4030, point.x), 4030)
-            goto.y = min(max(-5090, point.y), 5090)
+            goto.x = min(max(-4030, goto.x), 4030)
+            goto.y = min(max(-5090, goto.y), 5090)
 
+            data.renderer.draw_line_3d(data.car.location.tuple(), goto.tuple(), data.renderer.create_color(255, 150, 150, 150))
+            data.renderer.draw_line_3d(point.tuple(), goto.tuple(), data.renderer.create_color(255, 150, 150, 150))
             return goto
         else:
             return None

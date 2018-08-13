@@ -27,18 +27,25 @@ class Beast(BaseAgent):
         self.renderer.begin_rendering()
 
         predict.draw_ball_path(self.renderer, data, 4.5, 0.11)
-        task = self.ut_system.evaluate(data)
-        action = task.execute(data)
 
-        self.draw_status(data)
+        if self.dodge_control.is_dodging:
 
-        self.renderer.end_rendering()
+            self.draw_status(data)
+            self.renderer.end_rendering()
 
-        if self.last_task != task:
-            print("Beast", self.index, "status:", str(task))
-        self.last_task = task
+            return self.dodge_control.continue_dodge(data)
+        else:
+            task = self.ut_system.evaluate(data)
+            action = task.execute(data)
 
-        return action
+            self.draw_status(data)
+            self.renderer.end_rendering()
+
+            if self.last_task != task:
+                print("Beast", self.index, "status:", str(task))
+            self.last_task = task
+
+            return action
 
     def draw_status(self, data):
         if self.last_task is not None:
@@ -54,4 +61,4 @@ def get_offense_system(agent):
         choices.CollectBoost(agent),
         choices.Dribbling()
     ]
-    return rlutility.UtilitySystem(off_choices, 0.1)
+    return rlutility.UtilitySystem(off_choices, 0.2)

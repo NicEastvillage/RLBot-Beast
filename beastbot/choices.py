@@ -61,12 +61,11 @@ class KickOff:
 class ShootAtGoal:
     def __init__(self, agent):
         goal_dir = - datalibs.get_goal_direction(agent, None)
-        self.aim_corners = [
-            Vec3(x=720, y=5100 * goal_dir),
-            Vec3(x=-720, y=5100 * goal_dir),
-            Vec3(y=5200 * goal_dir),
-            Vec3(y=5700 * goal_dir)
-        ]
+        self.enemy_goal_right = Vec3(x=-820 * goal_dir, y=5120 * goal_dir)
+        self.enemy_goal_left = Vec3(x=820 * goal_dir, y=5120 * goal_dir)
+        self.aim_cone = None
+        self.ball_to_goal_right = None
+        self.ball_to_goal_left = None
 
     def utility(self, data):
         ball_soon = predict.move_ball(data.ball.copy(), 1)
@@ -74,19 +73,38 @@ class ShootAtGoal:
 
         own_half_01 = easing.fix(easing.remap(goal_dir * datalibs.ARENA_LENGTH2, (-1 * goal_dir) * datalibs.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
 
-        return own_half_01
+        self.ball_to_goal_right = self.enemy_goal_right - data.ball_when_hit.location
+        self.ball_to_goal_left = self.enemy_goal_left - data.ball_when_hit.location
+        self.aim_cone = route.AimCone(self.ball_to_goal_right.ang(), self.ball_to_goal_left.ang())
+        car_to_ball = data.ball_when_hit.location - data.car.location
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+
+        return easing.fix(own_half_01 + 0.06 * in_position)
 
     def execute(self, data):
-        best_route = None
-        for target in self.aim_corners:
-            r = route.find_route_to_next_ball_landing(data, target)
-            if best_route is None\
-                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
-                    or (r.length < best_route.length and r.good_route):
+        car_to_ball = data.ball_when_hit.location - data.car.location
 
-                best_route = r
+        # Check dodge. A dodge happens after 0.25 sec
+        ball_soon = predict.move_ball(data.ball.copy(), 0.25).location
+        car_soon = predict.move_ball(datalibs.Ball().set(data.car), 0.25).location
+        car_to_ball_soon = ball_soon - car_soon
+        # Aim cone was calculated in utility
+        if car_to_ball_soon.length() < 100+92 and self.aim_cone.contains_direction(car_to_ball_soon):
+            if data.agent.dodge_control.can_dodge(data):
+                data.agent.dodge_control.begin_dodge(data, lambda d: d.ball.location, True)
+                data.agent.dodge_control.continue_dodge(data)
 
-        return moves.follow_route(data, best_route)
+        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+
+        self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
+        if goto is None:
+            goal = datalibs.get_goal_location(data.enemy, data)
+            goal_to_ball = (data.ball_when_hit.location - goal).normalized()
+            offset_ball = data.ball_when_hit.location + goal_to_ball * 92
+            data.renderer.draw_line_3d(data.car.location.tuple(), offset_ball.tuple(), self.color(data.renderer))
+            return moves.go_towards_point(data, offset_ball, False, True)
+        else:
+            return moves.go_towards_point(data, goto, True, True)
 
     def __str__(self):
         return "ShootAtGoal"
