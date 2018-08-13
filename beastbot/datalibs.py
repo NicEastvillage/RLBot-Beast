@@ -1,6 +1,7 @@
 import math
 import rlmath
 import rlutility
+import predict
 from vec import Vec3, Zone, Orientation
 
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -155,6 +156,10 @@ class Data:
         self.enemy.set_ball_dependent_variables(self.ball)
 
         self.__decide_possession()
+
+        # predictions
+        self.time_till_hit = predict.time_till_reach_ball(self.ball, self.car)
+        self.ball_when_hit = predict.move_ball(self.ball.copy(), self.time_till_hit)
 
     def __decide_possession(self):
         self.car.possession_score = self.__get_possession_score(self.car)
