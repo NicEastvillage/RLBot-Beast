@@ -25,9 +25,9 @@ def get_car_facing_vector(car):
 	return Vec3(facing_x, facing_y)
 
 
-def steer_correction_smooth(rad, last_rad):
+def steer_correction_smooth(rad, last_rad, d_scale=5):
 	derivative = rad - last_rad
-	val = rad - 0 * derivative + rad**3
+	val = rad - d_scale * derivative + rad ** 3
 	return min(max(-1, val), 1)
 
 

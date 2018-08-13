@@ -124,7 +124,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             do_smoothing = True
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_scale=0)
         data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
@@ -159,7 +159,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
                 do_smoothing = False
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_scale=0)
         data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
@@ -203,7 +203,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
                 do_smoothing = False
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_scale=0)
         data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
