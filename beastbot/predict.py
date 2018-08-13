@@ -109,15 +109,15 @@ class Ceiling:
         bounce(ball, self.normal)
 
 
-SIDE_WALL_POS = SideWall(datalibs.ARENA_WIDTH2)
-SIDE_WALL_NEG = SideWall(-datalibs.ARENA_WIDTH2)
-BACK_WALL_POS = BackWall(datalibs.ARENA_LENGTH2)
-BACK_WALL_NEG = BackWall(-datalibs.ARENA_LENGTH2)
+SIDE_WALL_POS = SideWall(4120)
+SIDE_WALL_NEG = SideWall(-4120)
+BACK_WALL_POS = BackWall(5140)
+BACK_WALL_NEG = BackWall(-5140)
 CORNER_WALL_PP = CornerWall(Vec3(3318, 4570), Vec3(1, 1))
 CORNER_WALL_NP = CornerWall(Vec3(-3318, 4570), Vec3(-1, 1))
 CORNER_WALL_PN = CornerWall(Vec3(3318, -4570), Vec3(1, -1))
 CORNER_WALL_NN = CornerWall(Vec3(-3318, -4570), Vec3(-1, -1))
-CEILING = Ceiling(datalibs.ARENA_HEIGHT)
+CEILING = Ceiling(2044)
 
 
 def move_body(body, time, gravity=True):
