@@ -27,7 +27,7 @@ def get_car_facing_vector(car):
 
 def steer_correction_smooth(rad, last_rad):
 	derivative = rad - last_rad
-	val = rad - 5 * derivative + rad**3
+	val = rad - 0 * derivative + rad**3
 	return min(max(-1, val), 1)
 
 
