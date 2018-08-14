@@ -89,7 +89,8 @@ class ShootAtGoal:
         car_soon = predict.move_ball(datalibs.Ball().set(data.car), 0.25).location
         car_to_ball_soon = ball_soon - car_soon
         # Aim cone was calculated in utility
-        if car_to_ball_soon.length() < 100+92 and self.aim_cone.contains_direction(car_to_ball_soon):
+        print(car_to_ball_soon.length())
+        if car_to_ball_soon.length() < 220+92 and self.aim_cone.contains_direction(car_to_ball_soon):
             if data.agent.dodge_control.can_dodge(data):
                 data.agent.dodge_control.begin_dodge(data, lambda d: d.ball.location, True)
                 data.agent.dodge_control.continue_dodge(data)
@@ -98,11 +99,17 @@ class ShootAtGoal:
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
         if goto is None:
-            goal = datalibs.get_goal_location(data.enemy, data)
-            goal_to_ball = (data.ball_when_hit.location - goal).normalized()
-            offset_ball = data.ball_when_hit.location + goal_to_ball * 92
-            data.renderer.draw_line_3d(data.car.location.tuple(), offset_ball.tuple(), self.color(data.renderer))
-            return moves.go_towards_point(data, offset_ball, False, True)
+            own_goal_sgn = datalibs.get_goal_direction(data.car, None)
+            if (data.car.location.y - data.ball_when_hit.y) * own_goal_sgn > 0:
+                # car's y is on the correct side of the ball
+                enemy_goal = datalibs.get_goal_location(data.enemy, None)
+                goal_to_ball = (data.ball_when_hit.location - enemy_goal).normalized()
+                offset_ball = data.ball_when_hit.location + goal_to_ball * 92
+                data.renderer.draw_line_3d(data.car.location.tuple(), offset_ball.tuple(), self.color(data.renderer))
+                return moves.go_towards_point(data, offset_ball, False, True)
+            else:
+                own_goal = datalibs.get_goal_location(data.car, None)
+                return moves.go_towards_point(data, own_goal, True, False)
         else:
             return moves.go_towards_point(data, goto, True, True)
 
