@@ -15,7 +15,10 @@ class Beast(BaseAgent):
         super().__init__(name, team, index)
         self.ut_system = None
         self.last_task = None
-        self.pid = moves.PIDControl()
+
+        self.pid_yaw = moves.PIDControl()
+        self.pid_pitch = moves.PIDControl()
+        self.pid_roll = moves.PIDControl()
         self.dodge_control = moves.DodgeControl()
 
     def initialize_agent(self):

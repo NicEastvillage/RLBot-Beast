@@ -12,10 +12,13 @@ REQUIRED_SLIDE_ANG = 1.6
 
 class PIDControl:
     def __init__(self):
-        self.last_steer_error = 0
-        self.last_yaw_error = 0
-        self.last_pitch_error = 0
-        self.last_roll_error = 0
+        self.last_error = 0
+
+    def calc(self, error, p_strength=1, d_strength=5):
+        derivative = error - self.last_error
+        val = p_strength * error - d_strength * derivative + error ** 3
+        self.last_error = error
+        return min(max(-1, val), 1)
 
 
 class DodgeControl:
@@ -101,6 +104,9 @@ class DodgeControl:
         self.boost = False
 
 
+# ----------------------------------- Executors ---------------------------------------
+
+
 def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleControllerState:
     controller_state = SimpleControllerState()
 
@@ -125,13 +131,9 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             do_smoothing = True
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_strength=0)
-        data.agent.pid.last_steer_error = steer_correction_radians
+        controller_state.steer = smooth_steer(steer_correction_radians)
     else:
-        if steer_correction_radians > 0:
-            controller_state.steer = 1
-        elif steer_correction_radians < 0:
-            controller_state.steer = -1
+        set_hard_steer(controller_state, steer_correction_radians)
 
     if boost:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
@@ -152,21 +154,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
     steer_correction_radians = point_rel.ang()
     dist = car_to_point.length()
 
-    do_smoothing = True
-    if slide:
-        if dist > 300:
-            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
-                controller_state.handbrake = True
-                do_smoothing = False
-
-    if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_strength=0)
-        data.agent.pid.last_steer_error = steer_correction_radians
-    else:
-        if steer_correction_radians > 0:
-            controller_state.steer = 1
-        elif steer_correction_radians < 0:
-            controller_state.steer = -1
+    set_normal_steering_and_slide(controller_state, steer_correction_radians, dist, slide)
 
     vel_f = data.car.velocity.proj_onto(car_to_point).length()
     avg_vel_f = dist / eta
@@ -196,21 +184,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     steer_correction_radians = point_rel.ang()
     dist = car_to_point.length()
 
-    do_smoothing = True
-    if slide:
-        if dist > 300:
-            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
-                controller_state.handbrake = True
-                do_smoothing = False
-
-    if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_strength=0)
-        data.agent.pid.last_steer_error = steer_correction_radians
-    else:
-        if steer_correction_radians > 0:
-            controller_state.steer = 1
-        elif steer_correction_radians < 0:
-            controller_state.steer = -1
+    set_normal_steering_and_slide(controller_state, steer_correction_radians, dist, slide)
 
     vel_f = data.car.velocity.proj_onto(car_to_point).length()
     acc_f = -2 * (2*vel_f*eta + eta*vel_d - 3*dist) / (eta*eta)
@@ -244,25 +218,51 @@ def fix_orientation(data: Data, point = None):
         point = data.car.location + data.car.velocity.flat().rescale(500)
 
     pitch_error = -ori.pitch * strength
-    controller.pitch = rlmath.steer_correction_smooth(pitch_error, data.agent.pid.last_pitch_error)
-    data.agent.pid.last_pitch_error = pitch_error
+    controller.pitch = data.agent.pid_pitch.calc(pitch_error)
 
     roll_error = -ori.roll * strength
-    controller.roll = rlmath.steer_correction_smooth(roll_error, data.agent.pid.last_roll_error)
-    data.agent.pid.last_roll_error = roll_error
+    controller.roll = data.agent.pid_roll.calc(roll_error)
 
     if point is not None:
         # yaw rotation can f up the other's so we scale it down until we are more confident about landing on the wheels
         car_to_point = point - data.car.location
         yaw_error = ori.front.ang_to_flat(car_to_point) * strength * 1.5
         land_on_wheels01 = 1 - ori.up.ang_to(UP) / (math.pi * 2)
-        controller.yaw = rlmath.steer_correction_smooth(yaw_error, data.agent.pid.last_yaw_error) * (land_on_wheels01**6)
-        data.agent.pid.last_yaw_error = yaw_error
+        controller.yaw = data.agent.pid_yaw.calc(yaw_error) * (land_on_wheels01**6)
 
     # !
     controller.throttle = 1
-
     return controller
+
+
+# ----------------------------------------- Helper functions --------------------------------
+
+
+def smooth_steer(radians):
+    val = radians + radians ** 3
+    return min(max(-1, val), 1)
+
+
+def set_normal_steering_and_slide(controller_state, steer_correction_radians, distance, slide=True):
+    do_smoothing = True
+    if slide:
+        if distance > 300:
+            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
+                controller_state.handbrake = True
+                do_smoothing = False
+
+    if do_smoothing:
+        controller_state.steer = smooth_steer(steer_correction_radians)
+    else:
+        set_hard_steer(controller_state, steer_correction_radians)
+
+
+def set_hard_steer(controller_state, steer_correction_radians):
+    controller_state.steer = 0
+    if steer_correction_radians > 0:
+        controller_state.steer = 1
+    elif steer_correction_radians < 0:
+        controller_state.steer = -1
 
 
 def turn_radius(v):
