@@ -105,7 +105,8 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     controller_state = SimpleControllerState()
 
     car_to_point = point - data.car.location
-    steer_correction_radians = data.car.orientation.front.ang_to_flat(car_to_point)
+    point_rel = data.car.relative_location(point)
+    steer_correction_radians = point_rel.ang()
 
     do_smoothing = True
     if slide:
@@ -116,7 +117,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     vf = data.car.velocity.proj_onto_size(data.car.orientation.front)
     tr = turn_radius(abs(vf))
     tr_side = 1 if steer_correction_radians > 0 else -1
-    tr_center = (data.car.location + data.car.orientation.left * tr * tr_side).flat()
+    tr_center = (data.car.location + data.car.orientation.right * tr * tr_side).flat()
     too_close = point.flat().dist2(tr_center) < tr * tr
     if too_close:
         do_smoothing = False
@@ -147,9 +148,9 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
     controller_state = SimpleControllerState()
 
     car_to_point = point - data.car.location
+    point_rel = data.car.relative_location(point)
+    steer_correction_radians = point_rel.ang()
     dist = car_to_point.length()
-
-    steer_correction_radians = data.car.orientation.front.ang_to_flat(car_to_point)
 
     do_smoothing = True
     if slide:
@@ -191,9 +192,9 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     controller_state = SimpleControllerState()
 
     car_to_point = point.flat() - data.car.location
+    point_rel = data.car.relative_location(point)
+    steer_correction_radians = point_rel.ang()
     dist = car_to_point.length()
-
-    steer_correction_radians = data.car.orientation.front.ang_to_flat(car_to_point)
 
     do_smoothing = True
     if slide:

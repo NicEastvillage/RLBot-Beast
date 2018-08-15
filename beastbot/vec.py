@@ -71,7 +71,7 @@ class Vec3:
         )
 
     def ang(self):
-        return rlmath.fix_ang(math.atan2(self.y, self.x))
+        return math.atan2(self.y, self.x)
 
     def ang_to(self, ideal):
         cos_ang = self.dot(ideal) / (self.length() * ideal.length())
@@ -134,5 +134,13 @@ class Orientation:
         sy = math.sin(self.yaw)
 
         self.front = Vec3(cp*cy, cp*sy, sp)
-        self.left = Vec3(cy*sp*sr-cr*sy, sy*sp*sr+cr*cy, -cp*sr)
+        self.right = Vec3(cy*sp*sr-cr*sy, sy*sp*sr+cr*cy, -cp*sr)
         self.up = Vec3(-cr*cy*sp-sr*sy, -cr*sy*sp+sr*cy, cp*cr)
+
+
+# x are how far in front of center, y is how far right of center, and z is how far above
+def relative_location(center, target, ori):
+    x = (target - center).dot(ori.front)
+    y = (target - center).dot(ori.right)
+    z = (target - center).dot(ori.up)
+    return Vec3(x, y, z)
