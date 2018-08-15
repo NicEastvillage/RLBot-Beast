@@ -1,52 +1,42 @@
 import math
-from vec import Vec3
 
 
 # returns sign of x, and 0 if x=0
 def sign(x):
-	return x and (1, -1)[x < 0]
+    return x and (1, -1)[x < 0]
 
 
 def lerp(a, b, t):
-	return (1 - t) * a + t * b
+    return (1 - t) * a + t * b
 
 
 def inv_lerp(a, b, t):
-	return a if b - a == 0 else (t - a) / (b - a)
+    return a if b - a == 0 else (t - a) / (b - a)
 
 
-def get_car_facing_vector(car):
-	pitch = float(car.physics.rotation.pitch)
-	yaw = float(car.physics.rotation.yaw)
-
-	facing_x = math.cos(pitch) * math.cos(yaw)
-	facing_y = math.cos(pitch) * math.sin(yaw)
-
-	return Vec3(facing_x, facing_y)
-
-
-def steer_correction_smooth(rad, last_rad, d_scale=5):
-	derivative = rad - last_rad
-	val = rad - d_scale * derivative + rad ** 3
-	return min(max(-1, val), 1)
+def steer_correction_smooth(rad, last_rad, d_strength=5):
+    derivative = rad - last_rad
+    val = rad - d_strength * derivative + rad ** 3
+    return min(max(-1, val), 1)
 
 
 def fix_ang(ang):
-	while abs(ang) > math.pi:
-		if ang < 0:
-			ang += 2 * math.pi
-		else:
-			ang -= 2 * math.pi
-	return ang
+    while abs(ang) > math.pi:
+        if ang < 0:
+            ang += 2 * math.pi
+        else:
+            ang -= 2 * math.pi
+    return ang
 
 
-def estimate_time_to_arrival(car, point, boost=False):
-	car_to_point = point.flat() - car.location
+def is_heading_towards(car, point):
+    car_direction = car.orientation.front
+    car_to_point = point - car.location
+    ang = car_direction.ang_to_flat(car_to_point)
+    dist = car_to_point.length()
+    return is_heading_towards2(ang, dist)
 
-	if boost:
-		time = car_to_point.length() / 2300
-	else:
-		time = car_to_point.length() / 1400
 
-	time += car.location.z / 400  # gravity is 650, but our velocity could be upwards. TODO: Make better!
-	return time
+def is_heading_towards2(ang, dist):
+    required_ang = (math.pi / 3) * (dist / 10420 + 0.05)
+    return abs(ang) <= required_ang

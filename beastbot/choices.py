@@ -30,7 +30,7 @@ class Dribbling:
         ball_land_eta = max(predict.time_of_arrival_at_height(data.ball, datalibs.BALL_RADIUS + 1).time, 0)
         ball_land_loc = predict.move_ball(data.ball.copy(), ball_land_eta).location
 
-        bias = (ball_land_loc - datalibs.get_goal_location(data.enemy, data)).rescale(20)
+        bias = (ball_land_loc - datalibs.get_goal_location(data.enemy.team)).rescale(20)
         dest = ball_land_loc + bias
         data.renderer.draw_line_3d(data.car.location.tuple(), dest.tuple(), data.renderer.create_color(255, 255, 0, 255))
         data.renderer.draw_line_3d(data.ball.location.tuple(), dest.tuple(), data.renderer.create_color(255, 255, 0, 255))
@@ -60,18 +60,18 @@ class KickOff:
 
 class ShootAtGoal:
     def __init__(self, agent):
-        goal_dir = - datalibs.get_goal_direction(agent, None)
-        self.enemy_goal_right = Vec3(x=-820 * goal_dir, y=5120 * goal_dir)
-        self.enemy_goal_left = Vec3(x=820 * goal_dir, y=5120 * goal_dir)
+        team_sign = - datalibs.team_sign(agent.team)
+        self.enemy_goal_right = Vec3(x=-820 * team_sign, y=5120 * team_sign)
+        self.enemy_goal_left = Vec3(x=820 * team_sign, y=5120 * team_sign)
         self.aim_cone = None
         self.ball_to_goal_right = None
         self.ball_to_goal_left = None
 
     def utility(self, data):
         ball_soon = predict.move_ball(data.ball.copy(), 1)
-        goal_dir = datalibs.get_goal_direction(data.car, None)
+        team_sign = datalibs.team_sign(data.car.team)
 
-        own_half_01 = easing.fix(easing.remap(goal_dir * datalibs.ARENA_LENGTH2, (-1 * goal_dir) * datalibs.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
+        own_half_01 = easing.fix(easing.remap(team_sign * datalibs.ARENA_LENGTH2, (-1 * team_sign) * datalibs.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
 
         self.ball_to_goal_right = self.enemy_goal_right - data.ball_when_hit.location
         self.ball_to_goal_left = self.enemy_goal_left - data.ball_when_hit.location
@@ -99,16 +99,16 @@ class ShootAtGoal:
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
         if goto is None:
-            own_goal_sgn = datalibs.get_goal_direction(data.car, None)
-            if (data.car.location.y - data.ball_when_hit.y) * own_goal_sgn > 0:
+            team_sign = datalibs.team_sign(data.car.team)
+            if (data.car.location.y - data.ball_when_hit.y) * team_sign > 0:
                 # car's y is on the correct side of the ball
-                enemy_goal = datalibs.get_goal_location(data.enemy, None)
+                enemy_goal = datalibs.get_goal_location(data.enemy.team)
                 goal_to_ball = (data.ball_when_hit.location - enemy_goal).normalized()
                 offset_ball = data.ball_when_hit.location + goal_to_ball * 92
                 data.renderer.draw_line_3d(data.car.location.tuple(), offset_ball.tuple(), self.color(data.renderer))
                 return moves.go_towards_point(data, offset_ball, False, True)
             else:
-                own_goal = datalibs.get_goal_location(data.car, None)
+                own_goal = datalibs.get_goal_location(data.car.team)
                 return moves.go_towards_point(data, own_goal, True, False)
         else:
             return moves.go_towards_point(data, goto, True, True)
@@ -121,24 +121,24 @@ class ShootAtGoal:
 
 class ClearBall:
     def __init__(self, agent):
-        goal_dir = - datalibs.get_goal_direction(agent, None)
+        team_sign = - datalibs.team_sign(agent.team)
         self.aim_corners = [
-            Vec3(x=4000, y=300*goal_dir),
-            Vec3(x=-4000, y=300*goal_dir),
-            Vec3(x=2000, y=2500*goal_dir),
-            Vec3(x=-2000, y=2500*goal_dir),
-            Vec3(y=5000*goal_dir)
+            Vec3(x=4000, y=300*team_sign),
+            Vec3(x=-4000, y=300*team_sign),
+            Vec3(x=2000, y=2500*team_sign),
+            Vec3(x=-2000, y=2500*team_sign),
+            Vec3(y=5000*team_sign)
         ]
 
     def utility(self, data):
-        my_goal_dir = datalibs.get_goal_direction(data.car, None)
-        goal_to_ball = data.ball.location - datalibs.get_goal_location(data.car, None)
+        team_sign = datalibs.team_sign(data.car.team)
+        goal_to_ball = data.ball.location - datalibs.get_goal_location(data.car.team)
         car_to_ball = data.ball.location - data.car.location
 
         ang = abs(car_to_ball.ang_to_flat(goal_to_ball))
         ang_01 = easing.fix(easing.lerp(math.pi * 0.6, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*my_goal_dir) * datalibs.ARENA_LENGTH2, my_goal_dir * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
+        own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
 
         return own_half_01 * ang_01
 
@@ -163,27 +163,27 @@ class ClearBall:
 
 class SaveGoal:
     def __init__(self, agent):
-        goal_dir = datalibs.get_goal_direction(agent, None)
+        team_sign = datalibs.team_sign(agent.team)
         self.aim_corners = [
             Vec3(x=4000),
             Vec3(x=-4000),
-            Vec3(x=4000, y=3000*goal_dir),
-            Vec3(x=-4000, y=3000*goal_dir),
-            Vec3(x=1900, y=4900*goal_dir),
-            Vec3(x=-1900, y=4900*goal_dir),
-            Vec3(x=4000, y=4900*goal_dir),
-            Vec3(x=-4000, y=4900*goal_dir)
+            Vec3(x=4000, y=3000*team_sign),
+            Vec3(x=-4000, y=3000*team_sign),
+            Vec3(x=1900, y=4900*team_sign),
+            Vec3(x=-1900, y=4900*team_sign),
+            Vec3(x=4000, y=4900*team_sign),
+            Vec3(x=-4000, y=4900*team_sign)
         ]
 
     def utility(self, data):
         ball_soon = predict.move_ball(data.ball.copy(), 1)
-        ball_to_goal = datalibs.get_goal_location(data.car, None) - data.ball.location
-        goal_dir = datalibs.get_goal_direction(data.car, None)
+        ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
+        team_sign = datalibs.team_sign(data.car.team)
 
         ang = abs(ball_to_goal.ang_to_flat(data.ball.velocity))
         ang_01 = easing.fix(easing.lerp(math.pi*0.4, 0, ang))
         ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*goal_dir) * datalibs.ARENA_LENGTH2, goal_dir * datalibs.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
+        own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
 
         return easing.fix(0.5*own_half_01 + 0.5*own_half_01 * ang_01)
 

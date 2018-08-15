@@ -15,7 +15,7 @@ ARENA_LENGTH2 = ARENA_LENGTH / 2
 ARENA_WIDTH2 = ARENA_WIDTH / 2
 
 GOAL_LENGTH = 650
-GOAL_WIDTH = 1550
+GOAL_WIDTH = 1900
 GOAL_HEIGHT = 615
 
 CAR_LENGTH = 118
@@ -23,9 +23,6 @@ CAR_WIDTH = 84
 CAR_HEIGHT = 36
 
 BALL_RADIUS = 91.21
-
-BLUE_DIRECTION = -1
-ORANGE_DIRECTION = 1
 
 BLUE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, -ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 ORANGE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
@@ -41,46 +38,20 @@ wall_offset = 65
 ARENA_EXCEPT_WALLS_ZONE = Zone(Vec3(-ARENA_WIDTH2+wall_offset, -ARENA_LENGTH2+wall_offset),
                                Vec3(ARENA_WIDTH2-wall_offset, ARENA_LENGTH2-wall_offset, ARENA_HEIGHT))
 
-def get_goal_direction(car, packet:GameTickPacket):
-    if car.team == 0:
-        return BLUE_DIRECTION
-    else:
-        return ORANGE_DIRECTION
+
+def get_goal_location(team):
+    return (BLUE_GOAL_LOCATION, ORANGE_GOAL_LOCATION)[team]
 
 
-def get_goal_location(car, data):
-    if car.team == 0:
-        return BLUE_GOAL_LOCATION
-    else:
-        return ORANGE_GOAL_LOCATION
-
-
-def get_goal_posts(car, data):
-    if car.team == 0:
-        return BLUE_GOAL_POST_RIGHT, BLUE_GOAL_POST_LEFT
-    else:
+def get_goal_posts(team):
+    if team:
         return ORANGE_GOAL_POST_RIGHT, ORANGE_GOAL_POST_LEFT
-
-
-def is_heading_towards(car, point):
-    car_location = Vec3(car.physics.location.x, car.physics.location.y)
-    car_direction = rlmath.get_car_facing_vector(car)
-    car_to_point = point - car_location
-    ang = car_direction.ang_to_flat(car_to_point)
-    dist = car_to_point.length()
-    return is_heading_towards2(ang, dist)
-
-
-def is_heading_towards2(ang, dist):
-    required_ang = (math.pi / 3) * (dist / ARENA_LENGTH + 0.05)
-    return abs(ang) <= required_ang
+    else:
+        return BLUE_GOAL_POST_RIGHT, BLUE_GOAL_POST_LEFT
 
 
 def get_half_zone(team):
-    if team == 0:
-        return BLUE_HALF_ZONE
-    else:
-        return ORANGE_HALF_ZONE
+    return (BLUE_HALF_ZONE, ORANGE_HALF_ZONE)[team]
 
 
 def on_my_half(team, point):
@@ -88,6 +59,11 @@ def on_my_half(team, point):
         return point.y <= 0
     else:
         return point.y >= 0
+
+
+# returns -1 for blue (team 0) and 1 for orange (team 1)
+def team_sign(team):
+    return (-1, 1)[team]
 
 
 class Ball:

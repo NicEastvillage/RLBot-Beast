@@ -124,7 +124,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
             do_smoothing = True
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_scale=0)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_strength=0)
         data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
@@ -134,7 +134,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
 
     if boost:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if datalibs.is_heading_towards2(steer_correction_radians, car_to_point.length()):
+            if rlmath.is_heading_towards2(steer_correction_radians, car_to_point.length()):
                 if data.car.orientation.up.ang_to(UP) < math.pi*0.3:
                     controller_state.boost = True
 
@@ -159,7 +159,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
                 do_smoothing = False
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_scale=0)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_strength=0)
         data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
@@ -176,7 +176,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
         # boost?
         if target_vel_f > 1410:
             if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-                if datalibs.is_heading_towards2(steer_correction_radians, dist):
+                if rlmath.is_heading_towards2(steer_correction_radians, dist):
                     if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                         controller_state.boost = True
     elif (vel_f - target_vel_f) > 80:
@@ -203,7 +203,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
                 do_smoothing = False
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_scale=0)
+        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, 0, d_strength=0)
         data.agent.pid.last_steer_error = steer_correction_radians
     else:
         if steer_correction_radians > 0:
@@ -222,7 +222,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     # boost?
     if force > 1:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if datalibs.is_heading_towards2(steer_correction_radians, dist):
+            if rlmath.is_heading_towards2(steer_correction_radians, dist):
                 if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                     controller_state.boost = True
 
@@ -237,8 +237,6 @@ def fix_orientation(data: Data, point = None):
     controller = SimpleControllerState()
 
     strength = 0.22
-    ok_angle = 0.25
-
     ori = data.car.orientation
 
     if point is None and data.car.velocity.flat().length2() != 0:
