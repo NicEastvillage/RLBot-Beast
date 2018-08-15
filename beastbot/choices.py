@@ -49,6 +49,20 @@ class KickOff:
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), (0, 0, 0), data.renderer.create_color(255, 255, 255, 255))
+
+        car_to_ball = -1 * data.car.location
+        dist = car_to_ball.length()
+        vel_f = data.car.velocity.proj_onto_size(car_to_ball)
+
+        # a dodge is strong around 0.25 secs in
+        if dist - 190 < vel_f * 0.3 and data.agent.dodge_control.can_dodge(data):
+            data.agent.dodge_control.begin_dodge(data, Vec3(), True)
+            return data.agent.dodge_control.continue_dodge(data)
+        # make two dodges when spawn far back
+        elif dist > 3900 and vel_f > 700 and data.agent.dodge_control.can_dodge(data):
+            data.agent.dodge_control.begin_dodge(data, Vec3(), True)
+            return data.agent.dodge_control.continue_dodge(data)
+
         return moves.go_towards_point(data, Vec3(), False, True)
 
     def __str__(self):
