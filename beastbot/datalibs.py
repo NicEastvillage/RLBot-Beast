@@ -1,7 +1,7 @@
 import math
 import rlmath
 import rlutility
-from vec import Vec3, Zone, Orientation
+from vec import *
 
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
@@ -140,6 +140,8 @@ class Car:
         self.dist_to_ball_2d = car_to_ball_2d.length()
         self.ang_to_ball_2d = self.orientation.front.ang_to_flat(car_to_ball_2d)
 
+    def relative_location(self, location):
+        return relative_location(self.location, location, self.orientation)
 
 class Data:
     def __init__(self, agent, packet: GameTickPacket):

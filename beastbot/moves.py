@@ -116,7 +116,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     vf = data.car.velocity.proj_onto_size(data.car.orientation.front)
     tr = turn_radius(abs(vf))
     tr_side = 1 if steer_correction_radians > 0 else -1
-    tr_center = (data.car.location + data.car.orientation.left * tr * tr_side).flat()
+    tr_center = (data.car.location + data.car.orientation.right * tr * tr_side).flat()
     too_close = point.flat().dist2(tr_center) < tr * tr
     data.renderer.draw_line_3d(data.car.location.tuple(), tr_center.tuple(), data.renderer.create_color(255, 0, 130, 200))
     if too_close:
