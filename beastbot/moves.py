@@ -26,10 +26,10 @@ class DodgeControl:
         self.last_start_time = time.time()
         self.last_end_time = time.time()
 
-        self._t_first_unjump = 0.14
-        self._t_aim = 0.21
-        self._t_second_jump = 0.25
-        self._t_second_unjump = 0.35
+        self._t_first_unjump = 0.10
+        self._t_aim = 0.13
+        self._t_second_jump = 0.18
+        self._t_second_unjump = 0.3
         self._t_wait_flip = 0.46
         self._t_finishing = 1.0  # fix orientation until lands on ground
 

@@ -58,10 +58,15 @@ class KickOff:
         if dist - 190 < vel_f * 0.3 and data.agent.dodge_control.can_dodge(data):
             data.agent.dodge_control.begin_dodge(data, Vec3(), True)
             return data.agent.dodge_control.continue_dodge(data)
-        # make two dodges when spawn far back
-        elif dist > 3900 and vel_f > 700 and data.agent.dodge_control.can_dodge(data):
+        # make two dodges when spawning far back
+        elif dist > 3900 and vel_f > 730 and data.agent.dodge_control.can_dodge(data):
             data.agent.dodge_control.begin_dodge(data, Vec3(), True)
             return data.agent.dodge_control.continue_dodge(data)
+        # pickup boost when spawning back corner
+        elif abs(data.car.location.x) > 200 and abs(data.car.location.y) > 2880:
+            # The pads exact location is (0, 2816)
+            pad_loc = Vec3(0, datalibs.team_sign(data.car.team) * 2790, 0)
+            return moves.go_towards_point(data, pad_loc, False, True)
 
         return moves.go_towards_point(data, Vec3(), False, True)
 
