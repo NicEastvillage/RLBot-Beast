@@ -89,8 +89,7 @@ class ShootAtGoal:
         car_soon = predict.move_ball(datalibs.Ball().set(data.car), 0.25).location
         car_to_ball_soon = ball_soon - car_soon
         # Aim cone was calculated in utility
-        print(car_to_ball_soon.length())
-        if car_to_ball_soon.length() < 220+92 and self.aim_cone.contains_direction(car_to_ball_soon):
+        if car_to_ball_soon.length() < 240+92 and self.aim_cone.contains_direction(car_to_ball_soon):
             if data.agent.dodge_control.can_dodge(data):
                 data.agent.dodge_control.begin_dodge(data, lambda d: d.ball.location, True)
                 data.agent.dodge_control.continue_dodge(data)
@@ -100,7 +99,7 @@ class ShootAtGoal:
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
         if goto is None:
             team_sign = datalibs.team_sign(data.car.team)
-            if (data.car.location.y - data.ball_when_hit.y) * team_sign > 0:
+            if (data.car.location.y - data.ball_when_hit.location.y) * team_sign > 0:
                 # car's y is on the correct side of the ball
                 enemy_goal = datalibs.get_goal_location(data.enemy.team)
                 goal_to_ball = (data.ball_when_hit.location - enemy_goal).normalized()
