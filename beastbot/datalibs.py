@@ -66,6 +66,10 @@ def team_sign(team):
     return (-1, 1)[team]
 
 
+# returns true if point is closer to the goal belong to specified team than the other point
+def is_point_closer_to_goal(point, other, team):
+    return (point.y - other.y) * team_sign(team) > 0
+
 class Ball:
     def __init__(self):
         self.location = Vec3()

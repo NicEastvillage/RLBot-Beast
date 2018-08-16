@@ -278,9 +278,12 @@ class SpecificBoostPad:
         dist = 1 - rlu.dist_01(data.car.location.dist(self.location))
         ang = rlu.face_ang_01(data.car.orientation.front.ang_to_flat(car_to_pad))
         active = state.is_active
-        big = self.info.is_full_boost * 0.5
+        big = 1 if self.info.is_full_boost else 0.6
 
-        return easing.fix(dist * ang + big) * active
+        between_car_and_goal = datalibs.is_point_closer_to_goal(self.location, data.car.location, data.car.team)
+        btcg = 1 if between_car_and_goal else 0.95
+
+        return easing.fix(dist * ang * big * btcg) * active
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
