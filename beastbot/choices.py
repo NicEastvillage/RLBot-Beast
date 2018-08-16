@@ -127,6 +127,8 @@ class ShootAtGoal:
                 return moves.go_towards_point(data, offset_ball, False, True)
             else:
                 own_goal = datalibs.get_goal_location(data.car.team)
+                if moves.consider_dodge(data, own_goal):
+                    return data.agent.dodge_control.continue_dodge(data)
                 return moves.go_towards_point(data, own_goal, True, False)
         else:
             return moves.go_towards_point(data, goto, True, True)

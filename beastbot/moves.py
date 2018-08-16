@@ -235,6 +235,23 @@ def fix_orientation(data: Data, point = None):
     return controller
 
 
+def consider_dodge(data: Data, point):
+    if data.agent.dodge_control.can_dodge(data):
+        car_to_point = point - data.car.location
+        point_rel = data.car.relative_location(point)
+        ang = point_rel.ang()
+        vel_f = data.car.velocity.proj_onto_size(car_to_point)
+        dist = car_to_point.length()
+        req_dist = max(1000, vel_f * 1.2)
+
+        if point_rel.x > 0 and 400 < vel_f < 2000 and dist > req_dist and is_heading_towards2(ang, dist):
+            boost = data.car.boost > 40 and dist > 4000
+            data.agent.dodge_control.begin_dodge(data, point, boost)
+            return True
+
+    return False
+
+
 # ----------------------------------------- Partial executors --------------------------------
 
 
