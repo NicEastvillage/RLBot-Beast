@@ -71,4 +71,4 @@ def get_offense_system(agent):
         choices.ShootAtGoal(agent),
         choices.Dribbling()
     ]
-    return rlutility.UtilitySystem(off_choices, 0.2)
+    return rlutility.UtilitySystem(off_choices, 0.25)
