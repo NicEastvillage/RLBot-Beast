@@ -137,7 +137,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
 
     if boost:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if rlmath.is_heading_towards2(steer_correction_radians, car_to_point.length()):
+            if is_heading_towards2(steer_correction_radians, car_to_point.length()):
                 if data.car.orientation.up.ang_to(UP) < math.pi*0.3:
                     controller_state.boost = True
 
@@ -165,7 +165,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
         # boost?
         if target_vel_f > 1410:
             if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-                if rlmath.is_heading_towards2(steer_correction_radians, dist):
+                if is_heading_towards2(steer_correction_radians, dist):
                     if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                         controller_state.boost = True
     elif (vel_f - target_vel_f) > 80:
@@ -197,7 +197,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     # boost?
     if force > 1:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if rlmath.is_heading_towards2(steer_correction_radians, dist):
+            if is_heading_towards2(steer_correction_radians, dist):
                 if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                     controller_state.boost = True
 
@@ -235,7 +235,7 @@ def fix_orientation(data: Data, point = None):
     return controller
 
 
-# ----------------------------------------- Helper functions --------------------------------
+# ----------------------------------------- Partial executors --------------------------------
 
 
 def smooth_steer(radians):
@@ -263,6 +263,22 @@ def set_hard_steer(controller_state, steer_correction_radians):
         controller_state.steer = 1
     elif steer_correction_radians < 0:
         controller_state.steer = -1
+
+
+# ----------------------------------------- Helper functions --------------------------------
+
+
+def is_heading_towards(car, point):
+    car_direction = car.orientation.front
+    car_to_point = point - car.location
+    ang = car_direction.ang_to_flat(car_to_point)
+    dist = car_to_point.length()
+    return is_heading_towards2(ang, dist)
+
+
+def is_heading_towards2(ang, dist):
+    required_ang = (math.pi / 3) * (dist / 10420 + 0.05)
+    return abs(ang) <= required_ang
 
 
 def turn_radius(v):
