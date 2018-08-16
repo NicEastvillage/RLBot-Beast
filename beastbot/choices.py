@@ -36,6 +36,9 @@ class Dribbling:
         data.renderer.draw_line_3d(data.ball.location.tuple(), dest.tuple(), data.renderer.create_color(255, 255, 0, 255))
         return moves.go_towards_point_with_timing(data, dest, ball_land_eta, True)
 
+    def get_point_of_interest(self, data):
+        return None
+
     def __str__(self):
         return "Dribble"
 
@@ -69,6 +72,9 @@ class KickOff:
             return moves.go_towards_point(data, pad_loc, False, True)
 
         return moves.go_towards_point(data, Vec3(), False, True)
+
+    def get_point_of_interest(self, data):
+        return data.ball.location
 
     def __str__(self):
         return "KickOff"
@@ -133,6 +139,9 @@ class ShootAtGoal:
         else:
             return moves.go_towards_point(data, goto, True, True)
 
+    def get_point_of_interest(self, data):
+        return data.ball.location
+
     def __str__(self):
         return "ShootAtGoal"
 
@@ -173,6 +182,9 @@ class ClearBall:
                 best_route = r
 
         return moves.follow_route(data, best_route)
+
+    def get_point_of_interest(self, data):
+        return data.ball.location
 
     def __str__(self):
         return "ClearBall"
@@ -219,6 +231,9 @@ class SaveGoal:
 
         return moves.follow_route(data, best_route)
 
+    def get_point_of_interest(self, data):
+        return datalibs.get_goal_location(data.car.team)
+
     def __str__(self):
         return "SaveGoal"
 
@@ -241,18 +256,19 @@ class CollectBoost:
         self.collect_boost_system = rlu.UtilitySystem(boost_choices, 0)
 
     def utility(self, data):
-        if data.car.boost == 0:
+        if data.car.boost == 100:
             return -0.5
-        boost01 = float(data.car.boost / 100.0)
+        boost01 = data.car.boost / 100.0
         boost01 = 1 - easing.smooth_stop(4, boost01)
 
         # best_boost = self.collect_boost_system.evaluate(data)
 
-        return easing.fix(boost01)
+        return easing.inv_lerp(0, 0.78, boost01)
 
     def execute(self, data):
         try:
-            return self.collect_boost_system.evaluate(data).execute(data)
+            best, score = self.collect_boost_system.evaluate(data)
+            return best.execute(data)
         except ValueError:
             self.init_array(data.agent)
             return SimpleControllerState()
@@ -276,16 +292,29 @@ class SpecificBoostPad:
     def utility(self, data):
         car_to_pad = self.location - data.car.location_2d
         state = data.packet.game_boosts[self.index]
+        if not state.is_active:
+            return 0
 
+        # consider distance, angle, and size
         dist = 1 - rlu.dist_01(data.car.location.dist(self.location))
         ang = rlu.face_ang_01(data.car.orientation.front.ang_to_flat(car_to_pad))
-        active = state.is_active
-        big = 1 if self.info.is_full_boost else 0.6
+        big = 1 if self.info.is_full_boost else 0.65
 
+        # prefer those closer to own goal
         between_car_and_goal = datalibs.is_point_closer_to_goal(self.location, data.car.location, data.car.team)
-        btcg = 1 if between_car_and_goal else 0.95
+        btcg = 1 if between_car_and_goal else 0.7
 
-        return easing.fix(dist * ang * big * btcg) * active
+        if data.agent.point_of_interest is not None:
+            # prefer those between car and point of interest
+            car_to_pot_dist = data.car.location.dist(data.agent.point_of_interest)
+            pad_to_car_dist = data.car.location.dist(self.location)
+            pad_to_pot_dist = data.agent.point_of_interest.dist(self.location)
+            off_dist_01 = rlu.dist_01(pad_to_car_dist + pad_to_pot_dist - car_to_pot_dist)
+            off_dist_01 = 1 - off_dist_01**2
+        else:
+            off_dist_01 = 1
+
+        return easing.fix(dist * ang * big * btcg * off_dist_01)
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
@@ -298,6 +327,9 @@ class FixAirOrientation:
 
     def execute(self, data):
         return moves.fix_orientation(data)
+
+    def get_point_of_interest(self, data):
+        return None
 
     def __str__(self):
         return "LandOnWheels"

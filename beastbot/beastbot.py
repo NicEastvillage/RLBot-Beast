@@ -15,6 +15,8 @@ class Beast(BaseAgent):
         super().__init__(name, team, index)
         self.ut_system = None
         self.last_task = None
+        self.collect_boost = None
+        self.point_of_interest = Vec3()
 
         self.pid_yaw = moves.PIDControl()
         self.pid_pitch = moves.PIDControl()
@@ -23,6 +25,7 @@ class Beast(BaseAgent):
 
     def initialize_agent(self):
         self.ut_system = get_offense_system(self)
+        self.collect_boost = choices.CollectBoost(self)
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = datalibs.Data(self, packet)
@@ -38,8 +41,13 @@ class Beast(BaseAgent):
 
             return self.dodge_control.continue_dodge(data)
         else:
-            task = self.ut_system.evaluate(data)
-            action = task.execute(data)
+            task, score = self.ut_system.evaluate(data)
+            if score < self.collect_boost.utility(data):
+                # collect boost has higher utility, bot keep the other task in mind
+                self.point_of_interest = task.get_point_of_interest(data)
+                action = self.collect_boost.execute(data)
+            else:
+                action = task.execute(data)
 
             self.draw_status(data)
             self.renderer.end_rendering()
@@ -61,7 +69,6 @@ def get_offense_system(agent):
         choices.SaveGoal(agent),
         choices.ClearBall(agent),
         choices.ShootAtGoal(agent),
-        choices.CollectBoost(agent),
         choices.Dribbling()
     ]
     return rlutility.UtilitySystem(off_choices, 0.2)
