@@ -1,5 +1,6 @@
 import math
 import moves
+import time
 import rlmath
 import rlutility as rlu
 import easing
@@ -193,6 +194,50 @@ class ClearBall:
         return r.create_color(255, 0, 170, 255)
 
 
+class DefendGoal:
+    def __init__(self):
+        pass
+
+    def utility(self, data):
+        team_sign = datalibs.team_sign(data.car.team)
+
+        ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
+        ball_vel_g = data.ball.velocity.proj_onto_size(ball_to_goal)
+        if ball_vel_g > 0:
+            vel_g_01 = easing.fix(ball_vel_g / 1000 + 0.5)
+        else:
+            vel_g_01 = easing.fix(0.5 + ball_vel_g / 3000)
+
+        ball_on_my_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0, 1.6, data.ball.location.y))
+        enemy_on_my_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0.5, 1.1, data.ball.location.y))
+
+        return easing.fix(ball_on_my_half_01 * enemy_on_my_half_01 * vel_g_01)
+
+    def execute(self, data):
+        own_goal = datalibs.get_goal_location(data.car.team)
+        dist = own_goal.dist(data.car.location)
+        if dist > 800:
+            data.renderer.draw_line_3d(data.car.location.tuple(), own_goal.tuple(), self.color(data.renderer))
+            return moves.go_towards_point(data, own_goal, True, True)
+        else:
+            return moves.jump_to_face(data, data.ball.location)
+
+        # team_sign = datalibs.team_sign(data.car.team)
+        # def_pos = Vec3(data.ball.location.x / 4.8, team_sign * 4950)
+        #
+        # return moves...go_to_stop_and_face?()
+
+    def get_point_of_interest(self, data):
+        return datalibs.get_goal_location(data.car.team)
+
+    def __str__(self):
+        return "DefendGoal"
+
+    def color(self, r):
+        return r.create_color(255, 190, 170, 255)
+
+
+
 class SaveGoal:
     def __init__(self, agent):
         team_sign = datalibs.team_sign(agent.team)
@@ -208,16 +253,21 @@ class SaveGoal:
         ]
 
     def utility(self, data):
-        ball_soon = predict.move_ball(data.ball.copy(), 1)
-        ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
         team_sign = datalibs.team_sign(data.car.team)
 
-        ang = abs(ball_to_goal.ang_to_flat(data.ball.velocity))
-        ang_01 = easing.fix(easing.lerp(math.pi*0.4, 0, ang))
-        ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0, 1.4, data.ball.location.y))
+        ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
+        ball_vel_g = data.ball.velocity.proj_onto_size(ball_to_goal)
+        if ball_vel_g > 0:
+            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.8)
+        else:
+            vel_g_01 = easing.fix(0.5 + ball_vel_g / 3000)
 
-        return easing.fix(0.5*own_half_01 + 0.5*own_half_01 * ang_01)
+        ang = abs(ball_to_goal.ang_to_flat(data.ball.velocity))
+        ang_01 = 1 - easing.fix(easing.lerp(0, math.pi*0.5, ang))**2
+
+        ball_on_own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0.0, 0.5, data.ball.location.y))
+
+        return easing.fix(vel_g_01 * ang_01 + ball_on_own_half_01)
 
     def execute(self, data):
         best_route = None
@@ -323,7 +373,7 @@ class SpecificBoostPad:
 
 class FixAirOrientation:
     def utility(self, data):
-        return not data.car.wheel_contact
+        return not data.car.wheel_contact and time.time() > data.agent.ignore_ori_till
 
     def execute(self, data):
         return moves.fix_orientation(data)

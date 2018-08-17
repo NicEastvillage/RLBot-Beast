@@ -22,6 +22,7 @@ class Beast(BaseAgent):
         self.pid_pitch = moves.PIDControl()
         self.pid_roll = moves.PIDControl()
         self.dodge_control = moves.DodgeControl()
+        self.ignore_ori_till = 0
 
     def initialize_agent(self):
         self.ut_system = get_offense_system(self)
@@ -66,6 +67,7 @@ def get_offense_system(agent):
     off_choices = [
         choices.KickOff(),
         choices.FixAirOrientation(),
+        choices.DefendGoal(),
         choices.SaveGoal(agent),
         choices.ClearBall(agent),
         choices.ShootAtGoal(agent),

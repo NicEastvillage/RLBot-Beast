@@ -51,6 +51,7 @@ class DodgeControl:
         self.last_start_time = time.time()
         self.target = target
         self.boost = boost
+        data.agent.ignore_ori_till = self.last_start_time + self._t_finishing
 
     def continue_dodge(self, data):
         ct = time.time()
@@ -250,6 +251,37 @@ def consider_dodge(data: Data, point):
             return True
 
     return False
+
+
+def stop_moving(data: Data):
+    if not data.car.wheel_contact:
+        fix_orientation(data)
+
+    controller_state = SimpleControllerState()
+
+    # We are on the ground. Now negate all velocity
+    vel_f = data.car.orientation.front.proj_onto_size(data.car.velocity)
+    if abs(vel_f) > 100:
+        controller_state.throttle = -rlmath.sign(vel_f)
+
+    return controller_state
+
+
+def jump_to_face(data: Data, point, angle=0.7, stop=True):
+    if stop and data.car.velocity.flat().length() > 50:
+        return stop_moving(data)
+
+    car_to_point = point - data.car.location
+    if data.car.orientation.front.ang_to_flat(car_to_point) < angle:
+        return SimpleControllerState()
+
+    if data.agent.dodge_control.can_dodge(data):
+        data.agent.ignore_ori_till = time.time() + 0.7
+        controller_state = SimpleControllerState()
+        controller_state.jump = 1
+        return controller_state
+
+    return fix_orientation(data, point)
 
 
 # ----------------------------------------- Partial executors --------------------------------
