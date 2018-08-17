@@ -109,15 +109,15 @@ class Ceiling:
         bounce(ball, self.normal)
 
 
-SIDE_WALL_POS = SideWall(datalibs.ARENA_WIDTH2)
-SIDE_WALL_NEG = SideWall(-datalibs.ARENA_WIDTH2)
-BACK_WALL_POS = BackWall(datalibs.ARENA_LENGTH2)
-BACK_WALL_NEG = BackWall(-datalibs.ARENA_LENGTH2)
+SIDE_WALL_POS = SideWall(4120)
+SIDE_WALL_NEG = SideWall(-4120)
+BACK_WALL_POS = BackWall(5140)
+BACK_WALL_NEG = BackWall(-5140)
 CORNER_WALL_PP = CornerWall(Vec3(3318, 4570), Vec3(1, 1))
 CORNER_WALL_NP = CornerWall(Vec3(-3318, 4570), Vec3(-1, 1))
 CORNER_WALL_PN = CornerWall(Vec3(3318, -4570), Vec3(1, -1))
 CORNER_WALL_NN = CornerWall(Vec3(-3318, -4570), Vec3(-1, -1))
-CEILING = Ceiling(datalibs.ARENA_HEIGHT)
+CEILING = Ceiling(2044)
 
 
 def move_body(body, time, gravity=True):
@@ -268,3 +268,15 @@ def move_ball(ball, time):
             bounce(ball, Vec3(0, 0, 1))
 
     return ball
+
+
+def time_till_reach_ball(ball, car):
+    car_to_ball = (ball.location - car.location).flat()
+    dist = car_to_ball.length() - datalibs.BALL_RADIUS - 25
+    vel_c_f = car.velocity.proj_onto_size(car_to_ball)
+    vel_b_f = ball.velocity.proj_onto_size(car_to_ball)
+    vel_c_amp = rlmath.lerp(vel_c_f, car.velocity.length(), 0.6)
+    vel_f = vel_c_amp - vel_b_f
+    time = dist / max(300, vel_f)
+
+    return time

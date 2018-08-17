@@ -12,10 +12,13 @@ REQUIRED_SLIDE_ANG = 1.6
 
 class PIDControl:
     def __init__(self):
-        self.last_steer_error = 0
-        self.last_yaw_error = 0
-        self.last_pitch_error = 0
-        self.last_roll_error = 0
+        self.last_error = 0
+
+    def calc(self, error, p_strength=1, d_strength=5):
+        derivative = error - self.last_error
+        val = p_strength * error - d_strength * derivative + error ** 3
+        self.last_error = error
+        return min(max(-1, val), 1)
 
 
 class DodgeControl:
@@ -26,10 +29,10 @@ class DodgeControl:
         self.last_start_time = time.time()
         self.last_end_time = time.time()
 
-        self._t_first_unjump = 0.14
-        self._t_aim = 0.21
-        self._t_second_jump = 0.25
-        self._t_second_unjump = 0.35
+        self._t_first_unjump = 0.10
+        self._t_aim = 0.13
+        self._t_second_jump = 0.18
+        self._t_second_unjump = 0.3
         self._t_wait_flip = 0.46
         self._t_finishing = 1.0  # fix orientation until lands on ground
 
@@ -48,6 +51,7 @@ class DodgeControl:
         self.last_start_time = time.time()
         self.target = target
         self.boost = boost
+        data.agent.ignore_ori_till = self.last_start_time + self._t_finishing
 
     def continue_dodge(self, data):
         ct = time.time()
@@ -101,6 +105,9 @@ class DodgeControl:
         self.boost = False
 
 
+# ----------------------------------- Executors ---------------------------------------
+
+
 def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleControllerState:
     controller_state = SimpleControllerState()
 
@@ -119,24 +126,19 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     tr_side = 1 if steer_correction_radians > 0 else -1
     tr_center = (data.car.location + data.car.orientation.right * tr * tr_side).flat()
     too_close = point.flat().dist2(tr_center) < tr * tr
-    data.renderer.draw_line_3d(data.car.location.tuple(), tr_center.tuple(), data.renderer.create_color(255, 0, 130, 200))
     if too_close:
         do_smoothing = False
         if point.flat().dist2(tr_center) < tr*tr * 0.3:
             do_smoothing = True
 
     if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
-        data.agent.pid.last_steer_error = steer_correction_radians
+        controller_state.steer = smooth_steer(steer_correction_radians)
     else:
-        if steer_correction_radians > 0:
-            controller_state.steer = 1
-        elif steer_correction_radians < 0:
-            controller_state.steer = -1
+        set_hard_steer(controller_state, steer_correction_radians)
 
     if boost:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if datalibs.is_heading_towards2(steer_correction_radians, car_to_point.length()):
+            if is_heading_towards2(steer_correction_radians, car_to_point.length()):
                 if data.car.orientation.up.ang_to(UP) < math.pi*0.3:
                     controller_state.boost = True
 
@@ -153,21 +155,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
     steer_correction_radians = point_rel.ang()
     dist = car_to_point.length()
 
-    do_smoothing = True
-    if slide:
-        if dist > 300:
-            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
-                controller_state.handbrake = True
-                do_smoothing = False
-
-    if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
-        data.agent.pid.last_steer_error = steer_correction_radians
-    else:
-        if steer_correction_radians > 0:
-            controller_state.steer = 1
-        elif steer_correction_radians < 0:
-            controller_state.steer = -1
+    set_normal_steering_and_slide(controller_state, steer_correction_radians, dist, slide)
 
     vel_f = data.car.velocity.proj_onto(car_to_point).length()
     avg_vel_f = dist / eta
@@ -178,7 +166,7 @@ def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=Fals
         # boost?
         if target_vel_f > 1410:
             if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-                if datalibs.is_heading_towards2(steer_correction_radians, dist):
+                if is_heading_towards2(steer_correction_radians, dist):
                     if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                         controller_state.boost = True
     elif (vel_f - target_vel_f) > 80:
@@ -197,21 +185,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     steer_correction_radians = point_rel.ang()
     dist = car_to_point.length()
 
-    do_smoothing = True
-    if slide:
-        if dist > 300:
-            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
-                controller_state.handbrake = True
-                do_smoothing = False
-
-    if do_smoothing:
-        controller_state.steer = rlmath.steer_correction_smooth(steer_correction_radians, data.agent.pid.last_steer_error)
-        data.agent.pid.last_steer_error = steer_correction_radians
-    else:
-        if steer_correction_radians > 0:
-            controller_state.steer = 1
-        elif steer_correction_radians < 0:
-            controller_state.steer = -1
+    set_normal_steering_and_slide(controller_state, steer_correction_radians, dist, slide)
 
     vel_f = data.car.velocity.proj_onto(car_to_point).length()
     acc_f = -2 * (2*vel_f*eta + eta*vel_d - 3*dist) / (eta*eta)
@@ -224,7 +198,7 @@ def reach_point_with_timing_and_vel(data: Data, point: Vec3, eta: float, vel_d: 
     # boost?
     if force > 1:
         if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
-            if datalibs.is_heading_towards2(steer_correction_radians, dist):
+            if is_heading_towards2(steer_correction_radians, dist):
                 if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
                     controller_state.boost = True
 
@@ -239,33 +213,147 @@ def fix_orientation(data: Data, point = None):
     controller = SimpleControllerState()
 
     strength = 0.22
-    ok_angle = 0.25
-
     ori = data.car.orientation
 
     if point is None and data.car.velocity.flat().length2() != 0:
         point = data.car.location + data.car.velocity.flat().rescale(500)
 
     pitch_error = -ori.pitch * strength
-    controller.pitch = rlmath.steer_correction_smooth(pitch_error, data.agent.pid.last_pitch_error)
-    data.agent.pid.last_pitch_error = pitch_error
+    controller.pitch = data.agent.pid_pitch.calc(pitch_error)
 
     roll_error = -ori.roll * strength
-    controller.roll = rlmath.steer_correction_smooth(roll_error, data.agent.pid.last_roll_error)
-    data.agent.pid.last_roll_error = roll_error
+    controller.roll = data.agent.pid_roll.calc(roll_error)
 
     if point is not None:
         # yaw rotation can f up the other's so we scale it down until we are more confident about landing on the wheels
         car_to_point = point - data.car.location
         yaw_error = ori.front.ang_to_flat(car_to_point) * strength * 1.5
         land_on_wheels01 = 1 - ori.up.ang_to(UP) / (math.pi * 2)
-        controller.yaw = rlmath.steer_correction_smooth(yaw_error, data.agent.pid.last_yaw_error) * (land_on_wheels01**6)
-        data.agent.pid.last_yaw_error = yaw_error
+        controller.yaw = data.agent.pid_yaw.calc(yaw_error) * (land_on_wheels01**6)
 
     # !
     controller.throttle = 1
-
     return controller
+
+
+def consider_dodge(data: Data, point):
+    if data.agent.dodge_control.can_dodge(data):
+        car_to_point = point - data.car.location
+        point_rel = data.car.relative_location(point)
+        ang = point_rel.ang()
+        vel_f = data.car.velocity.proj_onto_size(car_to_point)
+        dist = car_to_point.length()
+        req_dist = max(1000, vel_f * 1.2)
+
+        if point_rel.x > 0 and 400 < vel_f < 2000 and dist > req_dist and is_heading_towards2(ang, dist):
+            boost = data.car.boost > 40 and dist > 4000
+            data.agent.dodge_control.begin_dodge(data, point, boost)
+            return True
+
+    return False
+
+
+def go_to_and_stop(data: Data, point, boost=True, slide=True):
+    controller_state = SimpleControllerState()
+
+    car_to_point = point - data.car.location
+    point_rel = data.car.relative_location(point)
+    dist = car_to_point.length()
+    steer_correction_radians = point_rel.ang()
+
+    set_normal_steering_and_slide(controller_state, steer_correction_radians, dist, slide)
+
+    vel_f = data.car.velocity.proj_onto_size(data.car.orientation.front)
+    ex_brake_dist = (vel_f**2) / 2800
+    if dist > ex_brake_dist * 1.05:
+        controller_state.throttle = 1
+        if dist > ex_brake_dist * 1.5 and boost:
+            if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
+                if is_heading_towards2(steer_correction_radians, car_to_point.length()):
+                    if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
+                        controller_state.boost = True
+    elif dist < ex_brake_dist:
+        controller_state.throttle = -1
+
+    return controller_state
+
+def stop_moving(data: Data):
+    if not data.car.wheel_contact:
+        fix_orientation(data)
+
+    controller_state = SimpleControllerState()
+
+    # TODO Not sure if this works
+    # We are on the ground. Now negate all velocity
+    vel_f = data.car.orientation.front.proj_onto_size(data.car.velocity)
+    if abs(vel_f) > 300:
+        controller_state.throttle = -rlmath.sign(vel_f)
+
+    return controller_state
+
+
+# TODO Not sure if this works
+def jump_to_face(data: Data, point, angle=0.7, stop=True):
+    if stop and data.car.velocity.flat().length() > 50:
+        return stop_moving(data)
+
+    car_to_point = point - data.car.location
+    if data.car.orientation.front.ang_to_flat(car_to_point) < angle:
+        return SimpleControllerState()
+
+    if data.agent.dodge_control.can_dodge(data):
+        data.agent.ignore_ori_till = time.time() + 0.7
+        controller_state = SimpleControllerState()
+        controller_state.jump = 1
+        return controller_state
+
+    return fix_orientation(data, point)
+
+
+# ----------------------------------------- Partial executors --------------------------------
+
+
+def smooth_steer(radians):
+    val = radians + radians ** 3
+    return min(max(-1, val), 1)
+
+
+def set_normal_steering_and_slide(controller_state, steer_correction_radians, distance, slide=True):
+    do_smoothing = True
+    if slide:
+        if distance > 300:
+            if abs(steer_correction_radians) > REQUIRED_SLIDE_ANG:
+                controller_state.handbrake = True
+                do_smoothing = False
+
+    if do_smoothing:
+        controller_state.steer = smooth_steer(steer_correction_radians)
+    else:
+        set_hard_steer(controller_state, steer_correction_radians)
+
+
+def set_hard_steer(controller_state, steer_correction_radians):
+    controller_state.steer = 0
+    if steer_correction_radians > 0:
+        controller_state.steer = 1
+    elif steer_correction_radians < 0:
+        controller_state.steer = -1
+
+
+# ----------------------------------------- Helper functions --------------------------------
+
+
+def is_heading_towards(car, point):
+    car_direction = car.orientation.front
+    car_to_point = point - car.location
+    ang = car_direction.ang_to_flat(car_to_point)
+    dist = car_to_point.length()
+    return is_heading_towards2(ang, dist)
+
+
+def is_heading_towards2(ang, dist):
+    required_ang = (math.pi / 3) * (dist / 10420 + 0.05)
+    return abs(ang) <= required_ang
 
 
 def turn_radius(v):

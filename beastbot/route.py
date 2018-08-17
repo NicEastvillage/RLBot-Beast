@@ -166,6 +166,53 @@ class AimCone:
         else:
             return self.right_ang - self.left_ang
 
+    def get_center_ang(self):
+        return rlmath.fix_ang(self.right_ang - self.span_size() / 2)
+
+    def get_center_dir(self):
+        ang = self.get_center_ang()
+        return Vec3(math.cos(ang), math.sin(ang))
+
+    def get_goto_point(self, data, point):
+        point = point.flat()
+        desired_dir = self.get_center_dir()
+
+        desired_dir_inv = -1 * desired_dir
+        car_loc = data.car.location.flat()
+        point_to_car = car_loc - point
+        dist = point_to_car.length()
+
+        ang_to_desired_dir = desired_dir_inv.ang_to_flat(point_to_car)
+
+        ANG_ROUTE_ACCEPTED = math.pi / 5.0
+        can_go_straight = abs(ang_to_desired_dir) < self.span_size() / 2.0
+        can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
+        if can_go_straight:
+            return point
+        elif can_with_route:
+            bx = point.x
+            by = point.y
+            cx = car_loc.x
+            cy = car_loc.y
+            dx = desired_dir_inv.x
+            dy = desired_dir_inv.y
+
+            t = - (bx * bx - 2 * bx * cx + by * by - 2 * by * cy + cx * cx + cy * cy) / (
+                        2 * (bx * dx + by * dy - cx * dx - cy * dy))
+            t = min(max(-1700, t), 1700)
+
+            goto = point + t * desired_dir_inv
+
+            goto.x = min(max(-4030, goto.x), 4030)
+            goto.y = min(max(-5090, goto.y), 5090)
+
+            data.renderer.draw_line_3d(data.car.location.tuple(), goto.tuple(), data.renderer.create_color(255, 150, 150, 150))
+            data.renderer.draw_line_3d(point.tuple(), goto.tuple(), data.renderer.create_color(255, 150, 150, 150))
+            return goto
+        else:
+            return None
+
+
     def draw(self, renderer, center, arm_len=500, arm_count=5, r=255, g=255, b=255):
         center = center.flat()
         c_tup = center.tuple()
