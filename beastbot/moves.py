@@ -253,20 +253,46 @@ def consider_dodge(data: Data, point):
     return False
 
 
+def go_to_and_stop(data: Data, point, boost=True, slide=True):
+    controller_state = SimpleControllerState()
+
+    car_to_point = point - data.car.location
+    point_rel = data.car.relative_location(point)
+    dist = car_to_point.length()
+    steer_correction_radians = point_rel.ang()
+
+    set_normal_steering_and_slide(controller_state, steer_correction_radians, dist, slide)
+
+    vel_f = data.car.velocity.proj_onto_size(data.car.orientation.front)
+    ex_brake_dist = (vel_f**2) / 2800
+    if dist > ex_brake_dist * 1.05:
+        controller_state.throttle = 1
+        if dist > ex_brake_dist * 1.5 and boost:
+            if not data.car.is_on_wall and not controller_state.handbrake and data.car.velocity.length() < 2000:
+                if is_heading_towards2(steer_correction_radians, car_to_point.length()):
+                    if data.car.orientation.up.ang_to(UP) < math.pi * 0.3:
+                        controller_state.boost = True
+    elif dist < ex_brake_dist:
+        controller_state.throttle = -1
+
+    return controller_state
+
 def stop_moving(data: Data):
     if not data.car.wheel_contact:
         fix_orientation(data)
 
     controller_state = SimpleControllerState()
 
+    # TODO Not sure if this works
     # We are on the ground. Now negate all velocity
     vel_f = data.car.orientation.front.proj_onto_size(data.car.velocity)
-    if abs(vel_f) > 100:
+    if abs(vel_f) > 300:
         controller_state.throttle = -rlmath.sign(vel_f)
 
     return controller_state
 
 
+# TODO Not sure if this works
 def jump_to_face(data: Data, point, angle=0.7, stop=True):
     if stop and data.car.velocity.flat().length() > 50:
         return stop_moving(data)

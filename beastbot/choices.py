@@ -216,9 +216,9 @@ class DefendGoal:
     def execute(self, data):
         own_goal = datalibs.get_goal_location(data.car.team)
         dist = own_goal.dist(data.car.location)
-        if dist > 800:
+        if dist > 240:
             data.renderer.draw_line_3d(data.car.location.tuple(), own_goal.tuple(), self.color(data.renderer))
-            return moves.go_towards_point(data, own_goal, True, True)
+            return moves.go_to_and_stop(data, own_goal, True, True)
         else:
             return moves.jump_to_face(data, data.ball.location)
 
