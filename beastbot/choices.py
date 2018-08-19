@@ -110,8 +110,8 @@ class ShootAtGoal:
     def execute(self, data):
         car_to_ball = data.ball_when_hit.location - data.car.location
 
-        # Check dodge. A dodge happens after 0.25 sec
-        ball_soon = predict.move_ball(data.ball.copy(), 0.25).location
+        # Check dodge. A dodge happens after 0.18 sec
+        ball_soon = predict.move_ball(data.ball.copy(), 0.15).location
         car_soon = predict.move_ball(datalibs.Ball().set(data.car), 0.25).location
         car_to_ball_soon = ball_soon - car_soon
         # Aim cone was calculated in utility
@@ -121,9 +121,10 @@ class ShootAtGoal:
                 data.agent.dodge_control.continue_dodge(data)
 
         goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+        dist = car_to_ball.length()
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
-        if goto is None:
+        if goto is None or dist < 600:
             team_sign = datalibs.team_sign(data.car.team)
             if (data.car.location.y - data.ball_when_hit.location.y) * team_sign > 0:
                 # car's y is on the correct side of the ball
