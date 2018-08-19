@@ -85,11 +85,17 @@ class Vec3:
         return rlmath.fix_ang(diff)
 
     def proj_onto(self, other):
-        return (self.dot(other) / other.dot(other)) * other
+        try:
+            return (self.dot(other) / other.dot(other)) * other
+        except ZeroDivisionError:
+            return Vec3()
 
     def proj_onto_size(self, other):
-        other = other.normalized()
-        return self.dot(other) / other.dot(other)   # can be negative!
+        try:
+            other = other.normalized()
+            return self.dot(other) / other.dot(other)   # can be negative!
+        except ZeroDivisionError:
+            return self.length()
 
     def set(self, some):
         self.x = some.x
