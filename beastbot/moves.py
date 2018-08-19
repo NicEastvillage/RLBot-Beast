@@ -277,6 +277,7 @@ def go_to_and_stop(data: Data, point, boost=True, slide=True):
 
     return controller_state
 
+
 def stop_moving(data: Data):
     if not data.car.wheel_contact:
         return fix_orientation(data)
@@ -286,7 +287,6 @@ def stop_moving(data: Data):
     # We are on the ground. Now negate all velocity
     vel_f = data.car.velocity.proj_onto_size(data.car.orientation.front)
     if abs(vel_f) > 200:
-        print("Decelerate")
         controller_state.throttle = -rlmath.sign(vel_f)
 
     return controller_state
