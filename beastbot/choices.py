@@ -124,7 +124,7 @@ class ShootAtGoal:
         dist = car_to_ball.length()
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
-        if goto is None or dist < 600:
+        if goto is None or dist < 450:
             team_sign = datalibs.team_sign(data.car.team)
             if (data.car.location.y - data.ball_when_hit.location.y) * team_sign > 0:
                 # car's y is on the correct side of the ball
@@ -259,16 +259,15 @@ class SaveGoal:
         ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
         ball_vel_g = data.ball.velocity.proj_onto_size(ball_to_goal)
         if ball_vel_g > 0:
-            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.8)
+            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.6)
         else:
             vel_g_01 = easing.fix(0.5 + ball_vel_g / 3000)
 
-        ang = abs(ball_to_goal.ang_to_flat(data.ball.velocity))
-        ang_01 = 1 - easing.fix(easing.lerp(0, math.pi*0.5, ang))**2
+        too_close = ball_to_goal.length2() < 900*900
 
-        ball_on_own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0.0, 0.5, data.ball.location.y))
+        hits_goal = predict.will_ball_hit_goal(data.ball).happens and rlmath.sign(data.ball.velocity.y) == team_sign
 
-        return easing.fix(vel_g_01 * ang_01 + ball_on_own_half_01)
+        return easing.fix(vel_g_01) or hits_goal or too_close
 
     def execute(self, data):
         best_route = None
@@ -314,7 +313,7 @@ class CollectBoost:
 
         # best_boost = self.collect_boost_system.evaluate(data)
 
-        return easing.inv_lerp(0, 0.78, boost01)
+        return easing.inv_lerp(0, 0.70, boost01)
 
     def execute(self, data):
         try:

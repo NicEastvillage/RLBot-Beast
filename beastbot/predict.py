@@ -132,6 +132,16 @@ def move_body(body, time, gravity=True):
     return body
 
 
+def will_ball_hit_goal(ball):
+    if ball.velocity.y == 0:
+        return Prediction(False, 1e306)
+
+    time = abs(ball.location.y) / abs(ball.velocity.y)
+    hit_loc = move_ball(ball.copy(), time).location
+    hits_goal = abs(hit_loc.x) < 1900
+    return Prediction(hits_goal, time)
+
+
 def next_ball_wall_hit(ball):
     walls = [
         SIDE_WALL_POS, SIDE_WALL_NEG, BACK_WALL_POS, BACK_WALL_NEG,
