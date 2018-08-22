@@ -208,7 +208,7 @@ class AimCone:
                         2 * (bx * dx + by * dy - cx * dx - cy * dy))
             t = min(max(-1700, t), 1700)
 
-            goto = point + t * closest_dir
+            goto = point + 0.8 * t * closest_dir
 
             goto.x = min(max(-4030, goto.x), 4030)
             goto.y = min(max(-5090, goto.y), 5090)
