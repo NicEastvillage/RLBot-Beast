@@ -242,16 +242,11 @@ class DefendGoal:
 class SaveGoal:
     def __init__(self, agent):
         team_sign = datalibs.team_sign(agent.team)
-        self.aim_corners = [
-            Vec3(x=4000),
-            Vec3(x=-4000),
-            Vec3(x=4000, y=3000*team_sign),
-            Vec3(x=-4000, y=3000*team_sign),
-            Vec3(x=1900, y=4900*team_sign),
-            Vec3(x=-1900, y=4900*team_sign),
-            Vec3(x=4000, y=4900*team_sign),
-            Vec3(x=-4000, y=4900*team_sign)
-        ]
+        self.own_goal_right = Vec3(x=-820 * team_sign, y=5120 * team_sign)
+        self.own_goal_left = Vec3(x=820 * team_sign, y=5120 * team_sign)
+        self.aim_cone = None
+        self.ball_to_goal_right = None
+        self.ball_to_goal_left = None
 
     def utility(self, data):
         team_sign = datalibs.team_sign(data.car.team)
@@ -270,16 +265,21 @@ class SaveGoal:
         return easing.fix(vel_g_01) or hits_goal or too_close
 
     def execute(self, data):
-        best_route = None
-        for target in self.aim_corners:
-            r = route.find_route_to_next_ball_landing(data, target)
-            if best_route is None\
-                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
-                    or (r.length < best_route.length and r.good_route):
+        self.ball_to_goal_right = self.own_goal_right - data.ball_when_hit.location
+        self.ball_to_goal_left = self.own_goal_left - data.ball_when_hit.location
+        self.aim_cone = route.AimCone(self.ball_to_goal_left.ang(), self.ball_to_goal_right.ang())
+        car_to_ball = data.ball_when_hit.location - data.car.location
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
 
-                best_route = r
+        self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=220, g=0, b=110)
 
-        return moves.follow_route(data, best_route)
+        if goto is None:
+            # go home
+            own_goal = datalibs.get_goal_location(data.car.team)
+            return moves.go_to_and_stop(data, own_goal, True, True)
+        else:
+            return moves.go_towards_point(data, goto, True, True)
 
     def get_point_of_interest(self, data):
         return datalibs.get_goal_location(data.car.team)
@@ -288,7 +288,7 @@ class SaveGoal:
         return "SaveGoal"
 
     def color(self, r):
-        return r.create_color(255, 255, 0, 0)
+        return r.create_color(255, 220, 0, 110)
 
 
 class CollectBoost:
