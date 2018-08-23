@@ -149,6 +149,8 @@ class AimCone:
     def __init__(self, right_most_ang, left_most_ang):
         self.right_ang = rlmath.fix_ang(right_most_ang)
         self.left_ang = rlmath.fix_ang(left_most_ang)
+        self.right_dir = Vec3(math.cos(right_most_ang), math.sin(right_most_ang))
+        self.left_dir = Vec3(math.cos(left_most_ang), math.sin(left_most_ang))
 
     def contains_direction(self, direction):
         # If you stand in blue goal and look at orange goal. positive y is forwards and positive x is left
@@ -187,21 +189,26 @@ class AimCone:
         ANG_ROUTE_ACCEPTED = math.pi / 5.0
         can_go_straight = abs(ang_to_desired_dir) < self.span_size() / 2.0
         can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
+        point = point + desired_dir_inv * 50
         if can_go_straight:
             return point
         elif can_with_route:
+            ang_to_right = abs(point_to_car.ang_to_flat(-1*self.right_dir))
+            ang_to_left = abs(point_to_car.ang_to_flat(-1*self.left_dir))
+            closest_dir = self.right_dir if ang_to_right < ang_to_left else self.left_dir
+
             bx = point.x
             by = point.y
             cx = car_loc.x
             cy = car_loc.y
-            dx = desired_dir_inv.x
-            dy = desired_dir_inv.y
+            dx = closest_dir.x
+            dy = closest_dir.y
 
             t = - (bx * bx - 2 * bx * cx + by * by - 2 * by * cy + cx * cx + cy * cy) / (
                         2 * (bx * dx + by * dy - cx * dx - cy * dy))
             t = min(max(-1700, t), 1700)
 
-            goto = point + t * desired_dir_inv
+            goto = point + 0.8 * t * closest_dir
 
             goto.x = min(max(-4030, goto.x), 4030)
             goto.y = min(max(-5090, goto.y), 5090)
@@ -211,7 +218,6 @@ class AimCone:
             return goto
         else:
             return None
-
 
     def draw(self, renderer, center, arm_len=500, arm_count=5, r=255, g=255, b=255):
         center = center.flat()
