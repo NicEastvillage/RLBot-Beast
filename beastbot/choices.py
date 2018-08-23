@@ -313,7 +313,7 @@ class CollectBoost:
 
         # best_boost = self.collect_boost_system.evaluate(data)
 
-        return easing.inv_lerp(0, 0.70, boost01)
+        return easing.inv_lerp(0, 0.64, boost01)
 
     def execute(self, data):
         try:
@@ -352,17 +352,20 @@ class SpecificBoostPad:
 
         # prefer those closer to own goal
         between_car_and_goal = datalibs.is_point_closer_to_goal(self.location, data.car.location, data.car.team)
-        btcg = 1 if between_car_and_goal else 0.7
+        btcg = 1 if between_car_and_goal else 0.9
 
+        off_dist_01 = 1
         if data.agent.point_of_interest is not None:
-            # prefer those between car and point of interest
+            # Only deviate if pot is far away and there is time to collect boost
             car_to_pot_dist = data.car.location.dist(data.agent.point_of_interest)
             pad_to_car_dist = data.car.location.dist(self.location)
             pad_to_pot_dist = data.agent.point_of_interest.dist(self.location)
-            off_dist_01 = rlu.dist_01(pad_to_car_dist + pad_to_pot_dist - car_to_pot_dist)
-            off_dist_01 = 1 - off_dist_01**2
-        else:
-            off_dist_01 = 1
+            if car_to_pot_dist > 1500 and pad_to_car_dist < pad_to_pot_dist:
+                # prefer those between car and point of interest
+                off_dist_01 = rlu.dist_01(pad_to_car_dist + pad_to_pot_dist - car_to_pot_dist)
+                off_dist_01 = 1 - off_dist_01**2
+            else:
+                off_dist_01 = 0
 
         return easing.fix(dist * ang * big * btcg * off_dist_01)
 
