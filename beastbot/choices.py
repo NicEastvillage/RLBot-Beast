@@ -110,13 +110,6 @@ class ShootAtGoal:
     def execute(self, data):
         car_to_ball = data.ball_when_hit.location - data.car.location
 
-        # Avoid enemy corners. Just wait
-        if data.ball_when_hit.location.y * datalibs.team_sign(data.enemy.team) > 4400 and abs(data.ball_when_hit.location.x) > 900:
-            wait_point = data.ball_when_hit.location * 0.5  # a point 50% closer to the center of the field
-            wait_point = wait_point.lerp(data.ball.location + Vec3(y=datalibs.team_sign(data.car.team) * 3000), 0.5)
-            data.renderer.draw_line_3d(data.car.location.tuple(), wait_point.tuple(), self.color(data.renderer))
-            return moves.go_towards_point_with_timing(data, wait_point, 1, True)
-
         # Check dodge. A dodge happens after 0.18 sec
         ball_soon = predict.move_ball(data.ball.copy(), 0.15).location
         car_soon = predict.move_ball(datalibs.Ball().set(data.car), 0.25).location
@@ -132,9 +125,16 @@ class ShootAtGoal:
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
         if goto is None or dist < 450:
-            team_sign = datalibs.team_sign(data.car.team)
-            if (data.car.location.y - data.ball_when_hit.location.y) * team_sign > 0:
-                # car's y is on the correct side of the ball
+            # Avoid enemy corners. Just wait
+            if data.ball_when_hit.location.y * datalibs.team_sign(data.enemy.team) > 4400 and abs(data.ball_when_hit.location.x) > 900 and not dist < 450:
+                wait_point = data.ball_when_hit.location * 0.5  # a point 50% closer to the center of the field
+                wait_point = wait_point.lerp(data.ball.location + Vec3(y=datalibs.team_sign(data.car.team) * 3000), 0.5)
+                data.renderer.draw_line_3d(data.car.location.tuple(), wait_point.tuple(), self.color(data.renderer))
+                return moves.go_towards_point_with_timing(data, wait_point, 1, True)
+
+            if datalibs.is_point_closer_to_goal(data.car.location, data.ball.location, data.car.team):
+
+                # return home
                 enemy_goal = datalibs.get_goal_location(data.enemy.team)
                 goal_to_ball = (data.ball_when_hit.location - enemy_goal).normalized()
                 offset_ball = data.ball_when_hit.location + goal_to_ball * 92
