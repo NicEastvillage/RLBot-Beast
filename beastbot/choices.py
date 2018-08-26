@@ -320,7 +320,13 @@ class CollectBoost:
 
         # best_boost = self.collect_boost_system.evaluate(data)
 
-        return easing.inv_lerp(0, 0.64, boost01)
+        pot_01 = 1
+        if data.agent.point_of_interest is not None:
+            # Agent have a point of interest. Only collect boost if missing speed and boost
+            pot_01 = easing.fix(1 - data.car.velocity.length() / 2300)
+
+        ut = boost01 * pot_01
+        return easing.inv_lerp(0, 0.7, ut)
 
     def execute(self, data):
         try:
@@ -362,19 +368,21 @@ class SpecificBoostPad:
         btcg = 1 if between_car_and_goal else 0.9
 
         off_dist_01 = 1
-        if data.agent.point_of_interest is not None:
+        if data.agent.point_of_interest is not None and False:
             # Only deviate if pot is far away and there is time to collect boost
             car_to_pot_dist = data.car.location.dist(data.agent.point_of_interest)
             pad_to_car_dist = data.car.location.dist(self.location)
             pad_to_pot_dist = data.agent.point_of_interest.dist(self.location)
-            if car_to_pot_dist > 1500 and pad_to_car_dist < pad_to_pot_dist:
+            if car_to_pot_dist > 1200 and pad_to_car_dist < pad_to_pot_dist:
                 # prefer those between car and point of interest
                 off_dist_01 = rlu.dist_01(pad_to_car_dist + pad_to_pot_dist - car_to_pot_dist)
                 off_dist_01 = 1 - off_dist_01**2
             else:
                 off_dist_01 = 0
 
-        return easing.fix(dist * ang * big * btcg * off_dist_01)
+        result = easing.fix(dist * ang * big * btcg * off_dist_01)
+        data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, int(result * 255), 0))
+        return result
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))
