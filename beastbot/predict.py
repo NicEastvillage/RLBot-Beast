@@ -251,7 +251,11 @@ def move_ball(ball, time):
             # Simulate until ball it hits wall
             move_body(ball, wall_hit.time)
             time_spent += wall_hit.time
-            wall_hit.wall.bounce_ball(ball)
+            # Did ball hit a goal?
+            if ball.location.z < datalibs.GOAL_HEIGHT - datalibs.BALL_RADIUS and abs(ball.location.x) < datalibs.GOAL_WIDTH2 - datalibs.BALL_RADIUS:
+                pass  # no bounce
+            else:
+                wall_hit.wall.bounce_ball(ball)
 
         elif ground_hit.time == 0.0 and abs(ball.velocity.z * BOUNCINESS) < 2.0:
             # Simulate ball rolling until it hits wall or time's up
@@ -269,7 +273,11 @@ def move_ball(ball, time):
             # Roll
             move_body(ball, wall_hit.time, False)
             time_spent += wall_hit.time
-            wall_hit.wall.bounce_ball(ball)
+            # Did ball hit a goal?
+            if ball.location.z < datalibs.GOAL_HEIGHT - datalibs.BALL_RADIUS and abs(ball.location.x) < datalibs.GOAL_WIDTH2 - datalibs.BALL_RADIUS:
+                pass  # no bounce
+            else:
+                wall_hit.wall.bounce_ball(ball)
 
         else:
             # Simulate until ball it hits ground
