@@ -38,7 +38,7 @@ class DodgeControl:
 
         self._t_ready = 0.33  # time on ground before ready again
         self._max_speed = 1900
-        self._boost_ang_req = 0.3
+        self._boost_ang_req = 0.25
 
     def can_dodge(self, data):
         return time.time() >= self.last_end_time + self._t_ready and data.car.wheel_contact and not self.is_dodging

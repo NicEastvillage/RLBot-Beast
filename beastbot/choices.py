@@ -261,13 +261,14 @@ class SaveGoal:
         ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
         ball_vel_g = data.ball.velocity.proj_onto_size(ball_to_goal)
         if ball_vel_g > 0:
-            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.6)
+            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.36)
         else:
-            vel_g_01 = easing.fix(0.5 + ball_vel_g / 3000)
+            vel_g_01 = 0
 
         too_close = ball_to_goal.length2() < 900*900
 
-        hits_goal = predict.will_ball_hit_goal(data.ball).happens and rlmath.sign(data.ball.velocity.y) == team_sign
+        hits_goal_prediction = predict.will_ball_hit_goal(data.ball)
+        hits_goal = hits_goal_prediction.happens and rlmath.sign(data.ball.velocity.y) == team_sign and hits_goal_prediction.time < 6
 
         return easing.fix(vel_g_01) or hits_goal or too_close
 
@@ -323,10 +324,10 @@ class CollectBoost:
         pot_01 = 1
         if data.agent.point_of_interest is not None:
             # Agent have a point of interest. Only collect boost if missing speed and boost
-            pot_01 = easing.fix(1 - data.car.velocity.length() / 2300)
+            pot_01 = easing.fix(1 - data.car.velocity.length() / 2500)  # 2500 so he is always missing some speed
 
         ut = boost01 * pot_01
-        return easing.inv_lerp(0, 0.7, ut)
+        return easing.inv_lerp(0, 0.9, ut)
 
     def execute(self, data):
         try:
