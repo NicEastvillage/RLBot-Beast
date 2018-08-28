@@ -295,6 +295,8 @@ def time_till_reach_ball(ball, car):
     vel_b_f = ball.velocity.proj_onto_size(car_to_ball)
     vel_c_amp = rlmath.lerp(vel_c_f, car.velocity.length(), 0.6)
     vel_f = vel_c_amp - vel_b_f
-    time = dist / max(300, vel_f)
-
+    dist_long_01 = min(max(0, dist / 10_000.0), 1)**2
+    time_normal = dist / max(250, vel_f)
+    time_long = dist / max(car.velocity.length(), 1400)
+    time = rlmath.lerp(time_normal, time_long, dist_long_01)
     return time
