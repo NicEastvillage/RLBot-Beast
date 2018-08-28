@@ -120,7 +120,7 @@ class ShootAtGoal:
                 data.agent.dodge_control.begin_dodge(data, lambda d: d.ball.location, True)
                 data.agent.dodge_control.continue_dodge(data)
 
-        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+        goto, goto_time = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
         dist = car_to_ball.length()
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
@@ -146,7 +146,7 @@ class ShootAtGoal:
                     return data.agent.dodge_control.continue_dodge(data)
                 return moves.go_towards_point(data, own_goal, True, False)
         else:
-            return moves.go_towards_point(data, goto, True, True)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.9, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
@@ -181,7 +181,7 @@ class ClearBall:
     def execute(self, data):
         car_to_ball = data.ball_when_hit.location - data.car.location
         in_position = self.aim_cone.contains_direction(car_to_ball)
-        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+        goto, goto_time = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=0, g=170, b=255)
 
@@ -190,7 +190,7 @@ class ClearBall:
             own_goal = datalibs.get_goal_location(data.car.team)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
-            return moves.go_towards_point(data, goto, True, True)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.9, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
@@ -278,7 +278,7 @@ class SaveGoal:
         self.aim_cone = route.AimCone(self.ball_to_goal_left.ang(), self.ball_to_goal_right.ang())
         car_to_ball = data.ball_when_hit.location - data.car.location
         in_position = self.aim_cone.contains_direction(car_to_ball)
-        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+        goto, goto_time = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=220, g=0, b=110)
 
@@ -287,7 +287,7 @@ class SaveGoal:
             own_goal = datalibs.get_goal_location(data.car.team)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
-            return moves.go_towards_point(data, goto, True, True)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.9, True)
 
     def get_point_of_interest(self, data):
         return datalibs.get_goal_location(data.car.team)

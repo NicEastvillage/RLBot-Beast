@@ -147,7 +147,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     return controller_state
 
 
-def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=False, alpha=1.3):
+def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=False, alpha=1.25):
     controller_state = SimpleControllerState()
 
     car_to_point = point - data.car.location
