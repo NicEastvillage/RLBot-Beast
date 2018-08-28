@@ -2,6 +2,7 @@ import math
 import rlmath
 import rlutility
 import predict
+import render
 from vec import *
 
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -126,9 +127,12 @@ class Car:
         return relative_location(self.location, location, self.orientation)
 
 class Data:
-    def __init__(self, agent, packet: GameTickPacket):
+    def __init__(self, agent, packet: GameTickPacket, should_render=False):
         self.agent = agent
-        self.renderer = agent.renderer
+        if should_render:
+            self.renderer = agent.renderer
+        else:
+            self.renderer = render.FakeRenderer()
         self.packet = packet
         self.ball = Ball().set_game_ball(packet.game_ball)
 
