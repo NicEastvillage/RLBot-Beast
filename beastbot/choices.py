@@ -146,6 +146,8 @@ class ShootAtGoal:
                     return data.agent.dodge_control.continue_dodge(data)
                 return moves.go_towards_point(data, own_goal, True, False)
         else:
+            if moves.consider_dodge(data, goto):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
@@ -189,6 +191,8 @@ class ClearBall:
             # go home-ish
             own_goal = datalibs.get_goal_location(data.car.team)
             own_goal = own_goal.lerp(data.ball.location, 0.5)
+            if moves.consider_dodge(data, own_goal):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
             return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
@@ -230,6 +234,8 @@ class DefendGoal:
         dist = own_goal.dist(data.car.location)
         if dist > 240:
             data.renderer.draw_line_3d(data.car.location.tuple(), own_goal.tuple(), self.color(data.renderer))
+            if moves.consider_dodge(data, own_goal, min_dist=1500):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
             return moves.jump_to_face(data, data.ball.location)
@@ -290,8 +296,12 @@ class SaveGoal:
             # go home-ish
             own_goal = datalibs.get_goal_location(data.car.team)
             own_goal = own_goal.lerp(data.ball.location, 0.5)
+            if moves.consider_dodge(data, own_goal):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
+            if moves.consider_dodge(data, goto):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
