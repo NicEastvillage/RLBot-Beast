@@ -191,7 +191,7 @@ class AimCone:
         can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
         point = point + desired_dir_inv * 50
         if can_go_straight:
-            return point
+            return point, 1.0
         elif can_with_route:
             ang_to_right = abs(point_to_car.ang_to_flat(-1*self.right_dir))
             ang_to_left = abs(point_to_car.ang_to_flat(-1*self.left_dir))
@@ -215,9 +215,9 @@ class AimCone:
 
             data.renderer.draw_line_3d(data.car.location.tuple(), goto.tuple(), data.renderer.create_color(255, 150, 150, 150))
             data.renderer.draw_line_3d(point.tuple(), goto.tuple(), data.renderer.create_color(255, 150, 150, 150))
-            return goto
+            return goto, 0.5
         else:
-            return None
+            return None, 1
 
     def draw(self, renderer, center, arm_len=500, arm_count=5, r=255, g=255, b=255):
         center = center.flat()

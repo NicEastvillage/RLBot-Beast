@@ -120,14 +120,21 @@ class ShootAtGoal:
                 data.agent.dodge_control.begin_dodge(data, lambda d: d.ball.location, True)
                 data.agent.dodge_control.continue_dodge(data)
 
-        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+        goto, goto_time = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
         dist = car_to_ball.length()
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, b=0)
         if goto is None or dist < 450:
-            team_sign = datalibs.team_sign(data.car.team)
-            if (data.car.location.y - data.ball_when_hit.location.y) * team_sign > 0:
-                # car's y is on the correct side of the ball
+            # Avoid enemy corners. Just wait
+            if data.ball_when_hit.location.y * datalibs.team_sign(data.enemy.team) > 4400 and abs(data.ball_when_hit.location.x) > 900 and not dist < 450:
+                wait_point = data.ball_when_hit.location * 0.5  # a point 50% closer to the center of the field
+                wait_point = wait_point.lerp(data.ball.location + Vec3(y=datalibs.team_sign(data.car.team) * 3000), 0.5)
+                data.renderer.draw_line_3d(data.car.location.tuple(), wait_point.tuple(), self.color(data.renderer))
+                return moves.go_towards_point_with_timing(data, wait_point, 1, True)
+
+            if datalibs.is_point_closer_to_goal(data.car.location, data.ball.location, data.car.team):
+
+                # return home
                 enemy_goal = datalibs.get_goal_location(data.enemy.team)
                 goal_to_ball = (data.ball_when_hit.location - enemy_goal).normalized()
                 offset_ball = data.ball_when_hit.location + goal_to_ball * 92
@@ -139,7 +146,9 @@ class ShootAtGoal:
                     return data.agent.dodge_control.continue_dodge(data)
                 return moves.go_towards_point(data, own_goal, True, False)
         else:
-            return moves.go_towards_point(data, goto, True, True)
+            if moves.consider_dodge(data, goto):
+                return data.agent.dodge_control.continue_dodge(data)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
@@ -152,38 +161,41 @@ class ShootAtGoal:
 
 class ClearBall:
     def __init__(self, agent):
-        team_sign = - datalibs.team_sign(agent.team)
-        self.aim_corners = [
-            Vec3(x=4000, y=300*team_sign),
-            Vec3(x=-4000, y=300*team_sign),
-            Vec3(x=2000, y=2500*team_sign),
-            Vec3(x=-2000, y=2500*team_sign),
-            Vec3(y=5000*team_sign)
-        ]
+        if agent.team == 0:
+            # blue
+            self.aim_cone = route.AimCone(.8 * math.pi, .2 * math.pi)
+        else:
+            # orange
+            self.aim_cone = route.AimCone(-.2 * math.pi, -.8 * math.pi)
 
     def utility(self, data):
         team_sign = datalibs.team_sign(data.car.team)
         goal_to_ball = data.ball.location - datalibs.get_goal_location(data.car.team)
         car_to_ball = data.ball.location - data.car.location
 
-        ang = abs(car_to_ball.ang_to_flat(goal_to_ball))
-        ang_01 = easing.fix(easing.lerp(math.pi * 0.6, 0, ang))
-        ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
+        ball_own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
 
-        return own_half_01 * ang_01
+        car_to_ball = data.ball_when_hit.location - data.car.location
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+
+        return ball_own_half_01 * in_position
 
     def execute(self, data):
-        best_route = None
-        for target in self.aim_corners:
-            r = route.find_route_to_next_ball_landing(data, target)
-            if best_route is None\
-                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
-                    or (r.length < best_route.length and r.good_route):
+        car_to_ball = data.ball_when_hit.location - data.car.location
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+        goto, goto_time = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
 
-                best_route = r
+        self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=0, g=170, b=255)
 
-        return moves.follow_route(data, best_route)
+        if goto is None:
+            # go home-ish
+            own_goal = datalibs.get_goal_location(data.car.team)
+            own_goal = own_goal.lerp(data.ball.location, 0.5)
+            if moves.consider_dodge(data, own_goal):
+                return data.agent.dodge_control.continue_dodge(data)
+            return moves.go_to_and_stop(data, own_goal, True, True)
+        else:
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
@@ -212,13 +224,18 @@ class DefendGoal:
         ball_on_my_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0, 1.6, data.ball.location.y))
         enemy_on_my_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0.5, 1.1, data.ball.location.y))
 
-        return easing.fix(ball_on_my_half_01 * enemy_on_my_half_01 * vel_g_01)
+        enemy_reaches_first = predict.time_till_reach_ball(data.ball, data.enemy) < data.time_till_hit
+        enemy_first_01 = 1 if enemy_reaches_first else 0.6
+
+        return easing.fix(ball_on_my_half_01 * enemy_on_my_half_01 * vel_g_01 * enemy_first_01)
 
     def execute(self, data):
         own_goal = datalibs.get_goal_location(data.car.team)
         dist = own_goal.dist(data.car.location)
         if dist > 240:
             data.renderer.draw_line_3d(data.car.location.tuple(), own_goal.tuple(), self.color(data.renderer))
+            if moves.consider_dodge(data, own_goal, min_dist=1500):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
             return moves.jump_to_face(data, data.ball.location)
@@ -254,13 +271,14 @@ class SaveGoal:
         ball_to_goal = datalibs.get_goal_location(data.car.team) - data.ball.location
         ball_vel_g = data.ball.velocity.proj_onto_size(ball_to_goal)
         if ball_vel_g > 0:
-            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.6)
+            vel_g_01 = easing.fix(ball_vel_g / 700 + 0.36)
         else:
-            vel_g_01 = easing.fix(0.5 + ball_vel_g / 3000)
+            vel_g_01 = 0
 
         too_close = ball_to_goal.length2() < 900*900
 
-        hits_goal = predict.will_ball_hit_goal(data.ball).happens and rlmath.sign(data.ball.velocity.y) == team_sign
+        hits_goal_prediction = predict.will_ball_hit_goal(data.ball)
+        hits_goal = hits_goal_prediction.happens and rlmath.sign(data.ball.velocity.y) == team_sign and hits_goal_prediction.time < 6
 
         return easing.fix(vel_g_01) or hits_goal or too_close
 
@@ -270,16 +288,21 @@ class SaveGoal:
         self.aim_cone = route.AimCone(self.ball_to_goal_left.ang(), self.ball_to_goal_right.ang())
         car_to_ball = data.ball_when_hit.location - data.car.location
         in_position = self.aim_cone.contains_direction(car_to_ball)
-        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
+        goto, goto_time = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=220, g=0, b=110)
 
-        if goto is None:
-            # go home
+        if goto is None or data.car.location.dist(data.ball.location) > 2000:
+            # go home-ish
             own_goal = datalibs.get_goal_location(data.car.team)
+            own_goal = own_goal.lerp(data.ball.location, 0.5)
+            if moves.consider_dodge(data, own_goal):
+                return data.agent.dodge_control.continue_dodge(data)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
-            return moves.go_towards_point(data, goto, True, True)
+            if moves.consider_dodge(data, goto):
+                return data.agent.dodge_control.continue_dodge(data)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
         return datalibs.get_goal_location(data.car.team)
@@ -313,7 +336,13 @@ class CollectBoost:
 
         # best_boost = self.collect_boost_system.evaluate(data)
 
-        return easing.inv_lerp(0, 0.70, boost01)
+        pot_01 = 1
+        if data.agent.point_of_interest is not None:
+            # Agent have a point of interest. Only collect boost if missing speed and boost
+            pot_01 = easing.fix(1 - data.car.velocity.length() / 2500)  # 2500 so he is always missing some speed
+
+        ut = boost01 * pot_01
+        return easing.inv_lerp(0, 0.9, ut)
 
     def execute(self, data):
         try:
@@ -352,19 +381,24 @@ class SpecificBoostPad:
 
         # prefer those closer to own goal
         between_car_and_goal = datalibs.is_point_closer_to_goal(self.location, data.car.location, data.car.team)
-        btcg = 1 if between_car_and_goal else 0.7
+        btcg = 1 if between_car_and_goal else 0.9
 
-        if data.agent.point_of_interest is not None:
-            # prefer those between car and point of interest
+        off_dist_01 = 1
+        if data.agent.point_of_interest is not None and False:
+            # Only deviate if pot is far away and there is time to collect boost
             car_to_pot_dist = data.car.location.dist(data.agent.point_of_interest)
             pad_to_car_dist = data.car.location.dist(self.location)
             pad_to_pot_dist = data.agent.point_of_interest.dist(self.location)
-            off_dist_01 = rlu.dist_01(pad_to_car_dist + pad_to_pot_dist - car_to_pot_dist)
-            off_dist_01 = 1 - off_dist_01**2
-        else:
-            off_dist_01 = 1
+            if car_to_pot_dist > 1200 and pad_to_car_dist < pad_to_pot_dist:
+                # prefer those between car and point of interest
+                off_dist_01 = rlu.dist_01(pad_to_car_dist + pad_to_pot_dist - car_to_pot_dist)
+                off_dist_01 = 1 - off_dist_01**2
+            else:
+                off_dist_01 = 0
 
-        return easing.fix(dist * ang * big * btcg * off_dist_01)
+        result = easing.fix(dist * ang * big * btcg * off_dist_01)
+        # data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, int(result * 255), 0))
+        return result
 
     def execute(self, data):
         data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, 180, 0))

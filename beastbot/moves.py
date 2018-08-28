@@ -38,7 +38,7 @@ class DodgeControl:
 
         self._t_ready = 0.33  # time on ground before ready again
         self._max_speed = 1900
-        self._boost_ang_req = 0.3
+        self._boost_ang_req = 0.25
 
     def can_dodge(self, data):
         return time.time() >= self.last_end_time + self._t_ready and data.car.wheel_contact and not self.is_dodging
@@ -147,7 +147,7 @@ def go_towards_point(data, point: Vec3, slide=False, boost=False) -> SimpleContr
     return controller_state
 
 
-def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=False, alpha=1.3):
+def go_towards_point_with_timing(data: Data, point: Vec3, eta: float, slide=False, alpha=1.25):
     controller_state = SimpleControllerState()
 
     car_to_point = point - data.car.location
@@ -236,14 +236,14 @@ def fix_orientation(data: Data, point = None):
     return controller
 
 
-def consider_dodge(data: Data, point):
+def consider_dodge(data: Data, point, min_dist=1000):
     if data.agent.dodge_control.can_dodge(data):
         car_to_point = point - data.car.location
         point_rel = data.car.relative_location(point)
         ang = point_rel.ang()
         vel_f = data.car.velocity.proj_onto_size(car_to_point)
         dist = car_to_point.length()
-        req_dist = max(1000, vel_f * 1.2)
+        req_dist = max(min_dist, vel_f * 1.2)
 
         if point_rel.x > 0 and 400 < vel_f < 2000 and dist > req_dist and is_heading_towards2(ang, dist):
             boost = data.car.boost > 40 and dist > 4000

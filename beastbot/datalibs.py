@@ -16,6 +16,7 @@ ARENA_WIDTH2 = ARENA_WIDTH / 2
 
 GOAL_LENGTH = 650
 GOAL_WIDTH = 1900
+GOAL_WIDTH2 = GOAL_WIDTH / 2
 GOAL_HEIGHT = 615
 
 CAR_LENGTH = 118
@@ -68,7 +69,7 @@ def team_sign(team):
 
 # returns true if point is closer to the goal belong to specified team than the other point
 def is_point_closer_to_goal(point, other, team):
-    return (point.y - other.y) * team_sign(team) > 0
+    return (point.y < other.y, point.y > other.y)[team]
 
 class Ball:
     def __init__(self):
@@ -142,6 +143,11 @@ class Data:
         # predictions
         self.time_till_hit = predict.time_till_reach_ball(self.ball, self.car)
         self.ball_when_hit = predict.move_ball(self.ball.copy(), self.time_till_hit)
+        if self.ball_when_hit.location.z > 100:
+            time_till_ground = predict.time_of_arrival_at_height(self.ball_when_hit, 100).time
+            self.ball_when_hit = predict.move_ball(self.ball_when_hit, time_till_ground)
+            self.time_till_hit += time_till_ground
+
 
     def __decide_possession(self):
         self.car.possession_score = self.__get_possession_score(self.car)

@@ -251,7 +251,11 @@ def move_ball(ball, time):
             # Simulate until ball it hits wall
             move_body(ball, wall_hit.time)
             time_spent += wall_hit.time
-            wall_hit.wall.bounce_ball(ball)
+            # Did ball hit a goal?
+            if ball.location.z < datalibs.GOAL_HEIGHT - datalibs.BALL_RADIUS and abs(ball.location.x) < datalibs.GOAL_WIDTH2 - datalibs.BALL_RADIUS:
+                pass  # no bounce
+            else:
+                wall_hit.wall.bounce_ball(ball)
 
         elif ground_hit.time == 0.0 and abs(ball.velocity.z * BOUNCINESS) < 2.0:
             # Simulate ball rolling until it hits wall or time's up
@@ -269,7 +273,11 @@ def move_ball(ball, time):
             # Roll
             move_body(ball, wall_hit.time, False)
             time_spent += wall_hit.time
-            wall_hit.wall.bounce_ball(ball)
+            # Did ball hit a goal?
+            if ball.location.z < datalibs.GOAL_HEIGHT - datalibs.BALL_RADIUS and abs(ball.location.x) < datalibs.GOAL_WIDTH2 - datalibs.BALL_RADIUS:
+                pass  # no bounce
+            else:
+                wall_hit.wall.bounce_ball(ball)
 
         else:
             # Simulate until ball it hits ground
@@ -287,6 +295,8 @@ def time_till_reach_ball(ball, car):
     vel_b_f = ball.velocity.proj_onto_size(car_to_ball)
     vel_c_amp = rlmath.lerp(vel_c_f, car.velocity.length(), 0.6)
     vel_f = vel_c_amp - vel_b_f
-    time = dist / max(300, vel_f)
-
+    dist_long_01 = min(max(0, dist / 10_000.0), 1)**2
+    time_normal = dist / max(250, vel_f)
+    time_long = dist / max(car.velocity.length(), 1400)
+    time = rlmath.lerp(time_normal, time_long, dist_long_01)
     return time
