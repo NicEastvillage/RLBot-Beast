@@ -382,7 +382,7 @@ class SpecificBoostPad:
                 off_dist_01 = 0
 
         result = easing.fix(dist * ang * big * btcg * off_dist_01)
-        data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, int(result * 255), 0))
+        # data.renderer.draw_line_3d(data.car.location.tuple(), self.location.tuple(), data.renderer.create_color(255, 0, int(result * 255), 0))
         return result
 
     def execute(self, data):
