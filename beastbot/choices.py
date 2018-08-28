@@ -282,7 +282,7 @@ class SaveGoal:
 
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=220, g=0, b=110)
 
-        if goto is None:
+        if goto is None or data.car.location.dist(data.ball.location) > 2000:
             # go home
             own_goal = datalibs.get_goal_location(data.car.team)
             return moves.go_to_and_stop(data, own_goal, True, True)
