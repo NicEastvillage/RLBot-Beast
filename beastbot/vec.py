@@ -8,7 +8,7 @@ class Vec3:
         self.y = float(y)
         self.z = float(z)
 
-    def in2D(self):
+    def flat(self):
         return Vec3(self.x, self.y, 0)
 
     def __add__(self, other):
@@ -48,6 +48,9 @@ class Vec3:
     def rescale(self, new_len):
         return new_len * self.normalized()
 
+    def mul_components(self, other):
+        return Vec3(self.x*other.x, self.y*other.y, self.z*other.z)
+
     def rotate_2d(self, ang):
         c = math.cos(ang)
         s = math.sin(ang)
@@ -60,11 +63,21 @@ class Vec3:
     def dot(self, other):
         return self.x*other.x + self.y*other.y + self.z*other.z
 
-    def angTo(self, ideal):
+    def cross(self, other):
+        return Vec3(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x
+        )
+
+    def ang(self):
+        return math.atan2(self.y, self.x)
+
+    def ang_to(self, ideal):
         cos_ang = self.dot(ideal) / (self.length() * ideal.length())
         return math.acos(cos_ang)
 
-    def angTo2d(self, ideal):
+    def ang_to_flat(self, ideal):
         current_in_radians = math.atan2(self.y, self.x)
         ideal_in_radians = math.atan2(ideal.y, ideal.x)
 
@@ -72,11 +85,17 @@ class Vec3:
         return rlmath.fix_ang(diff)
 
     def proj_onto(self, other):
-        return (self.dot(other) / other.dot(other)) * other
+        try:
+            return (self.dot(other) / other.dot(other)) * other
+        except ZeroDivisionError:
+            return Vec3()
 
     def proj_onto_size(self, other):
-        other = other.normalized()
-        return self.dot(other) / other.dot(other)   # can be negative!
+        try:
+            other = other.normalized()
+            return self.dot(other) / other.dot(other)   # can be negative!
+        except ZeroDivisionError:
+            return self.length()
 
     def set(self, some):
         self.x = some.x
@@ -121,5 +140,13 @@ class Orientation:
         sy = math.sin(self.yaw)
 
         self.front = Vec3(cp*cy, cp*sy, sp)
-        self.left = Vec3(cy*sp*sr-cr*sy, sy*sp*sr+cr*cy, -cp*sr)
+        self.right = Vec3(cy*sp*sr-cr*sy, sy*sp*sr+cr*cy, -cp*sr)
         self.up = Vec3(-cr*cy*sp-sr*sy, -cr*sy*sp+sr*cy, cp*cr)
+
+
+# x are how far in front of center, y is how far right of center, and z is how far above
+def relative_location(center, target, ori):
+    x = (target - center).dot(ori.front)
+    y = (target - center).dot(ori.right)
+    z = (target - center).dot(ori.up)
+    return Vec3(x, y, z)

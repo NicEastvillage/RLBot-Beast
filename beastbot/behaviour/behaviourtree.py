@@ -1,12 +1,12 @@
-from vec import Vec3
-
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
+
 
 SUCCESS = 0
 FAILURE = 1
 EVALUATING = 2 # always goes downwards in tree
 ACTION = 3
+
 
 class BTNode:
 	def __init__(self, children=[]):
@@ -30,6 +30,7 @@ class BTNode:
 		
 	def reset(self):
 		pass
+
 
 class BehaviourTree:
 	def __init__(self, node):
@@ -63,7 +64,9 @@ class BehaviourTree:
 		self.current.reset()
 		self.current == self.root
 
+
 # ========================== Composite Nodes =========================================================================
+
 
 # Sequencer, aborts on failure by returning failure
 class Sequencer(BTNode):
@@ -94,10 +97,13 @@ class Sequencer(BTNode):
 	def reset(self):
 		self.next = -1
 
+
 # Selector, aborts on success by returning success
 class Selector(BTNode):
-	def __init__(self, children = []):
+	def __init__(self, children=None):
 		super().__init__(children)
+		if children is None:
+			children = []
 		self.next = -1
 	
 	def resolve(self, prev_status, car, packet: GameTickPacket):
@@ -123,7 +129,9 @@ class Selector(BTNode):
 	def reset(self):
 		self.next = -1
 
+
 # ========================== Decorator Nodes =========================================================================
+
 
 # sig: <task>
 class Inverter(BTNode):
@@ -137,6 +145,7 @@ class Inverter(BTNode):
 			return (SUCCESS, self.parent, None)
 		else:
 			return (FAILURE, self.parent, None)
+
 
 # Returns SUCCESS when done
 # sig: <x:int> <task>
@@ -156,6 +165,7 @@ class RepeatXTimes(BTNode):
 	
 	def reset(self):
 		self.count = 0
+
 
 # Returns FAILURE after X tries without child return SUCCESS or ACTION
 # sig: <x:int> <task>
@@ -179,6 +189,7 @@ class TryXTimes(BTNode):
 	def reset(self):
 		self.count = 0
 
+
 # Returns SUCCESS when done
 # sig: <task>
 class RepeatUntilFailure(BTNode):
@@ -190,6 +201,7 @@ class RepeatUntilFailure(BTNode):
 			return (EVALUATING, self.children[0], None)
 		else:
 			return (SUCCESS, self.parent, None)
+
 
 # Returns SUCCESS when done
 # sig: <task>
@@ -203,6 +215,7 @@ class RepeatUntilSuccess(BTNode):
 		else:
 			return (SUCCESS, self.parent, None)
 
+
 # sig: <task>
 class AlwaysFailure(BTNode):
 	def __init__(self, child):
@@ -212,6 +225,7 @@ class AlwaysFailure(BTNode):
 		if prev_status == EVALUATING:
 			return (EVALUATING, self.children[0], None)
 		return (FAILURE, self.parent, None)
+
 
 # sig: <task>
 class AlwaysSuccess(BTNode):

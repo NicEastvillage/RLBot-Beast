@@ -1,18 +1,23 @@
 import math
 import rlmath
 import rlutility
-from vec import Vec3, Zone, Orientation
+import predict
+import render
+from vec import *
 
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
+# If you stand in blue goal and look at orange goal. positive y is forwards and positive x is left
+
 ARENA_LENGTH = 10280    # y
 ARENA_WIDTH = 8240      # x
-ARENA_HEIGHT = 4100     # z
+ARENA_HEIGHT = 2044     # z
 ARENA_LENGTH2 = ARENA_LENGTH / 2
 ARENA_WIDTH2 = ARENA_WIDTH / 2
 
 GOAL_LENGTH = 650
-GOAL_WIDTH = 1550
+GOAL_WIDTH = 1900
+GOAL_WIDTH2 = GOAL_WIDTH / 2
 GOAL_HEIGHT = 615
 
 CAR_LENGTH = 118
@@ -21,52 +26,34 @@ CAR_HEIGHT = 36
 
 BALL_RADIUS = 91.21
 
-BLUE_DIRECTION = -1
-ORANGE_DIRECTION = 1
-
 BLUE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, -ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 ORANGE_HALF_ZONE = Zone(Vec3(-ARENA_WIDTH2, ARENA_LENGTH2), Vec3(ARENA_WIDTH2, 0, ARENA_HEIGHT))
 
 BLUE_GOAL_LOCATION = Vec3(y=-ARENA_LENGTH2-100)
 ORANGE_GOAL_LOCATION = Vec3(y=ARENA_LENGTH2+100)
+BLUE_GOAL_POST_RIGHT = Vec3(893, -ARENA_LENGTH2)
+BLUE_GOAL_POST_LEFT = Vec3(-893, -ARENA_LENGTH2)
+ORANGE_GOAL_POST_RIGHT = Vec3(-893, ARENA_LENGTH2)
+ORANGE_GOAL_POST_LEFT = Vec3(893, ARENA_LENGTH2)
 
 wall_offset = 65
 ARENA_EXCEPT_WALLS_ZONE = Zone(Vec3(-ARENA_WIDTH2+wall_offset, -ARENA_LENGTH2+wall_offset),
                                Vec3(ARENA_WIDTH2-wall_offset, ARENA_LENGTH2-wall_offset, ARENA_HEIGHT))
 
-def get_goal_direction(car, packet:GameTickPacket):
-    if car.team == 0:
-        return BLUE_DIRECTION
+
+def get_goal_location(team):
+    return (BLUE_GOAL_LOCATION, ORANGE_GOAL_LOCATION)[team]
+
+
+def get_goal_posts(team):
+    if team:
+        return ORANGE_GOAL_POST_RIGHT, ORANGE_GOAL_POST_LEFT
     else:
-        return ORANGE_DIRECTION
-
-
-def get_goal_location(car, data):
-    if car.team == 0:
-        return BLUE_GOAL_LOCATION
-    else:
-        return ORANGE_GOAL_LOCATION
-
-
-def is_heading_towards(car, point):
-    car_location = Vec3(car.physics.location.x, car.physics.location.y)
-    car_direction = rlmath.get_car_facing_vector(car)
-    car_to_point = point - car_location
-    ang = car_direction.angTo2d(car_to_point)
-    dist = car_to_point.length()
-    return is_heading_towards2(ang, dist)
-
-
-def is_heading_towards2(ang, dist):
-    required_ang = (math.pi / 3) * (dist / ARENA_LENGTH + 0.05)
-    return abs(ang) <= required_ang
+        return BLUE_GOAL_POST_RIGHT, BLUE_GOAL_POST_LEFT
 
 
 def get_half_zone(team):
-    if team == 0:
-        return BLUE_HALF_ZONE
-    else:
-        return ORANGE_HALF_ZONE
+    return (BLUE_HALF_ZONE, ORANGE_HALF_ZONE)[team]
 
 
 def on_my_half(team, point):
@@ -76,6 +63,14 @@ def on_my_half(team, point):
         return point.y >= 0
 
 
+# returns -1 for blue (team 0) and 1 for orange (team 1)
+def team_sign(team):
+    return (-1, 1)[team]
+
+
+# returns true if point is closer to the goal belong to specified team than the other point
+def is_point_closer_to_goal(point, other, team):
+    return (point.y < other.y, point.y > other.y)[team]
 
 class Ball:
     def __init__(self):
@@ -86,14 +81,14 @@ class Ball:
 
     def set_game_ball(self, game_ball):
         self.location = Vec3().set(game_ball.physics.location)
-        self.location_2d = self.location.in2D()
+        self.location_2d = self.location.flat()
         self.velocity = Vec3().set(game_ball.physics.velocity)
         self.angular_velocity = Vec3().set(game_ball.physics.angular_velocity)
         return self
 
     def set(self, other):
         self.location.set(other.location)
-        self.location_2d = self.location.in2D()
+        self.location_2d = self.location.flat()
         self.velocity.set(other.velocity)
         self.angular_velocity.set(other.angular_velocity)
         return self
@@ -106,7 +101,7 @@ class Car:
     def __init__(self, game_car):
         self.team = int(game_car.team)
         self.location = Vec3().set(game_car.physics.location)
-        self.location_2d = self.location.in2D()
+        self.location_2d = self.location.flat()
         self.velocity = Vec3().set(game_car.physics.velocity)
         self.angular_velocity = Vec3().set(game_car.physics.angular_velocity)
         self.orientation = Orientation(game_car.physics.rotation)
@@ -126,13 +121,18 @@ class Car:
 
         self.dist_to_ball = self.location.dist(ball.location)
         self.dist_to_ball_2d = car_to_ball_2d.length()
-        self.ang_to_ball_2d = self.orientation.front.angTo2d(car_to_ball_2d)
+        self.ang_to_ball_2d = self.orientation.front.ang_to_flat(car_to_ball_2d)
 
+    def relative_location(self, location):
+        return relative_location(self.location, location, self.orientation)
 
 class Data:
-    def __init__(self, agent, packet: GameTickPacket):
+    def __init__(self, agent, packet: GameTickPacket, should_render=False):
         self.agent = agent
-        self.renderer = agent.renderer
+        if should_render:
+            self.renderer = agent.renderer
+        else:
+            self.renderer = render.FakeRenderer()
         self.packet = packet
         self.ball = Ball().set_game_ball(packet.game_ball)
 
@@ -143,6 +143,15 @@ class Data:
         self.enemy.set_ball_dependent_variables(self.ball)
 
         self.__decide_possession()
+
+        # predictions
+        self.time_till_hit = predict.time_till_reach_ball(self.ball, self.car)
+        self.ball_when_hit = predict.move_ball(self.ball.copy(), self.time_till_hit)
+        if self.ball_when_hit.location.z > 100:
+            time_till_ground = predict.time_of_arrival_at_height(self.ball_when_hit, 100).time
+            self.ball_when_hit = predict.move_ball(self.ball_when_hit, time_till_ground)
+            self.time_till_hit += time_till_ground
+
 
     def __decide_possession(self):
         self.car.possession_score = self.__get_possession_score(self.car)
@@ -155,7 +164,7 @@ class Data:
             car_to_ball = self.ball.location - car.location
 
             dist = car_to_ball.length()
-            ang = car.orientation.front.angTo(car_to_ball)
+            ang = car.orientation.front.ang_to(car_to_ball)
 
             return rlutility.dist_01(dist) * rlutility.face_ang_01(ang)
         except ZeroDivisionError:

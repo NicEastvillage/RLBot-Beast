@@ -38,7 +38,7 @@ class UtilitySystem:
 			if callable(reset_method):
 				reset_method()
 
-		return self.choices[self.best_index]
+		return self.choices[self.best_index], self.scores[self.best_index]
 
 	def reset(self):
 		self.best_index = -1
