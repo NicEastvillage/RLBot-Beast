@@ -159,38 +159,38 @@ class ShootAtGoal:
 
 class ClearBall:
     def __init__(self, agent):
-        team_sign = - datalibs.team_sign(agent.team)
-        self.aim_corners = [
-            Vec3(x=4000, y=300*team_sign),
-            Vec3(x=-4000, y=300*team_sign),
-            Vec3(x=2000, y=2500*team_sign),
-            Vec3(x=-2000, y=2500*team_sign),
-            Vec3(y=5000*team_sign)
-        ]
+        if agent.team == 0:
+            # blue
+            self.aim_cone = route.AimCone(.8 * math.pi, .2 * math.pi)
+        else:
+            # orange
+            self.aim_cone = route.AimCone(-.2 * math.pi, -.8 * math.pi)
 
     def utility(self, data):
         team_sign = datalibs.team_sign(data.car.team)
         goal_to_ball = data.ball.location - datalibs.get_goal_location(data.car.team)
         car_to_ball = data.ball.location - data.car.location
 
-        ang = abs(car_to_ball.ang_to_flat(goal_to_ball))
-        ang_01 = easing.fix(easing.lerp(math.pi * 0.6, 0, ang))
-        ang_01 = easing.smooth_stop(2, ang_01)
-        own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
+        ball_own_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, -0.2, 1.2, data.ball.location.y))
 
-        return own_half_01 * ang_01
+        car_to_ball = data.ball_when_hit.location - data.car.location
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+
+        return ball_own_half_01 * in_position
 
     def execute(self, data):
-        best_route = None
-        for target in self.aim_corners:
-            r = route.find_route_to_next_ball_landing(data, target)
-            if best_route is None\
-                    or (not best_route.good_route and (r.good_route or r.length < best_route.length))\
-                    or (r.length < best_route.length and r.good_route):
+        car_to_ball = data.ball_when_hit.location - data.car.location
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+        goto = self.aim_cone.get_goto_point(data, data.ball_when_hit.location)
 
-                best_route = r
+        self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=0, g=170, b=255)
 
-        return moves.follow_route(data, best_route)
+        if goto is None:
+            # go home
+            own_goal = datalibs.get_goal_location(data.car.team)
+            return moves.go_to_and_stop(data, own_goal, True, True)
+        else:
+            return moves.go_towards_point(data, goto, True, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
