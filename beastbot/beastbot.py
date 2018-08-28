@@ -33,7 +33,7 @@ class Beast(BaseAgent):
 
         self.renderer.begin_rendering()
 
-        predict.draw_ball_path(self.renderer, data, 4.5, 0.11)
+        # predict.draw_ball_path(data.renderer, data, 4.5, 0.11)
 
         if self.dodge_control.is_dodging:
 
