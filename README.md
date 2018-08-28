@@ -1,9 +1,9 @@
 # Beast from the East
-A python bot for Rocket League using the framework [RLBot](https://github.com/RLBot/RLBot).
+A python offline bot for Rocket League using the framework [RLBot](https://github.com/RLBot/RLBot).
 
-For strategy it uses utility theory (also called AI response curves) which it does pretty well. However, while it excels at positioning and aiming it currently never jumps (so no dodges or aerials).
+Designed for 1v1 soccer.
 
-It will participate in the Rocket League Bot Tournament August 2018.
+It participated in the Rocket League Bot Tournament August 2018 and got #9 place in 1v1 and #5 place in 2v2 with random teammates.
 
 ## How to run
 
@@ -12,12 +12,15 @@ It will participate in the Rocket League Bot Tournament August 2018.
    - Make sure pip is included in the installation
 3. Open Rocket League
 4. Double click on run.bat
-   - To skip auto-update checks double click on run-quick.bat instead (very first time should always be run.bat)
 5. Match has begun!
 
-The match configuration can be change in rlbot.cfg
-Rendering can be toggled with PageUp/PageDown.
+The match configuration can be changed in rlbot.cfg
 
 ## More
 
 See https://github.com/RLBot/RLBot/wiki for framework documentation and tutorials.
+
+## TODO
+Things I will improve in the future:
+* Make it better at turning in goal so it avoids goal posts
+* Implement integrated ball prediction when it is released
