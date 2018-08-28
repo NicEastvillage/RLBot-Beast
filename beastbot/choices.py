@@ -146,7 +146,7 @@ class ShootAtGoal:
                     return data.agent.dodge_control.continue_dodge(data)
                 return moves.go_towards_point(data, own_goal, True, False)
         else:
-            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.9, True)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
@@ -186,11 +186,12 @@ class ClearBall:
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=0, g=170, b=255)
 
         if goto is None:
-            # go home
+            # go home-ish
             own_goal = datalibs.get_goal_location(data.car.team)
+            own_goal = own_goal.lerp(data.ball.location, 0.5)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
-            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.9, True)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
         return data.ball.location
@@ -219,7 +220,10 @@ class DefendGoal:
         ball_on_my_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0, 1.6, data.ball.location.y))
         enemy_on_my_half_01 = easing.fix(easing.remap((-1*team_sign) * datalibs.ARENA_LENGTH2, team_sign * datalibs.ARENA_LENGTH2, 0.5, 1.1, data.ball.location.y))
 
-        return easing.fix(ball_on_my_half_01 * enemy_on_my_half_01 * vel_g_01)
+        enemy_reaches_first = predict.time_till_reach_ball(data.ball, data.enemy) < data.time_till_hit
+        enemy_first_01 = 1 if enemy_reaches_first else 0.6
+
+        return easing.fix(ball_on_my_half_01 * enemy_on_my_half_01 * vel_g_01 * enemy_first_01)
 
     def execute(self, data):
         own_goal = datalibs.get_goal_location(data.car.team)
@@ -283,11 +287,12 @@ class SaveGoal:
         self.aim_cone.draw(data.renderer, data.ball_when_hit.location, r=220, g=0, b=110)
 
         if goto is None or data.car.location.dist(data.ball.location) > 2000:
-            # go home
+            # go home-ish
             own_goal = datalibs.get_goal_location(data.car.team)
+            own_goal = own_goal.lerp(data.ball.location, 0.5)
             return moves.go_to_and_stop(data, own_goal, True, True)
         else:
-            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.9, True)
+            return moves.go_towards_point_with_timing(data, goto, data.time_till_hit * goto_time * 0.95, True)
 
     def get_point_of_interest(self, data):
         return datalibs.get_goal_location(data.car.team)
