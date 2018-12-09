@@ -1,6 +1,5 @@
 import math
-
-from rlmath import *
+import rlmath
 import datalibs
 from vec import Vec3
 
@@ -9,19 +8,21 @@ GRAVITY = Vec3(z=-650)
 BOUNCINESS = -0.6
 
 
-def draw_ball_path(agent, duration, step_size):
-    ball_prediction = agent.get_ball_prediction_struct()
-    if ball_prediction is not None and duration > 0 and step_size > 0:
-        time_passed = 0
-        steps_taken = 0
-        locations = [ball_prediction.slices[0].physics.location]
-        while time_passed < duration and steps_taken + step_size < ball_prediction.num_slices:
-            steps_taken += step_size
-            time_passed += step_size * 0.016666
-            locations.append(ball_prediction.slices[steps_taken].physics.location)
+def draw_ball_path(renderer, data, duration, time_step):
+    time_passed = 0
+    ball_clone = datalibs.Ball()
+    locations = [data.ball.location]
+    while time_passed < duration:
+        time_passed += time_step
+        ball_clone.set(data.ball)
+        move_ball(ball_clone, time_passed)
+        locations.append(ball_clone.location.copy())
 
-        if steps_taken > 0:
-            agent.renderer.draw_polyline_3d(locations, agent.renderer.create_color(255, 255, 0, 0))
+    prev_loc_t = locations[0].tuple()
+    for loc in locations[1:]:
+        loc_t = loc.tuple()
+        renderer.draw_line_3d(prev_loc_t, loc_t, renderer.create_color(255, 255, 0, 0))
+        prev_loc_t = loc_t
 
 
 class Prediction:
@@ -49,12 +50,12 @@ class WallHitPrediction(Prediction):
 class SideWall:
     def __init__(self, x):
         self.wall_x = x
-        self.normal = Vec3(x=sign(x))
+        self.normal = Vec3(x=rlmath.sign(x))
 
     def get_next_ball_hit(self, ball):
         if ball.velocity.x == 0:
             return Prediction(False, 1e307)
-        dist = sign(self.wall_x) * (abs(self.wall_x - ball.location.x) - datalibs.BALL_RADIUS)
+        dist = rlmath.sign(self.wall_x) * (abs(self.wall_x - ball.location.x) - datalibs.BALL_RADIUS)
         t = dist / ball.velocity.x
         return Prediction(t >= 0, t)
 
@@ -65,12 +66,12 @@ class SideWall:
 class BackWall:
     def __init__(self, y):
         self.wall_y = y
-        self.normal = Vec3(y=sign(y))
+        self.normal = Vec3(y=rlmath.sign(y))
 
     def get_next_ball_hit(self, ball):
         if ball.velocity.y == 0:
             return Prediction(False, 1e307)
-        dist = sign(self.wall_y) * (abs(self.wall_y - ball.location.y) - datalibs.BALL_RADIUS)
+        dist = rlmath.sign(self.wall_y) * (abs(self.wall_y - ball.location.y) - datalibs.BALL_RADIUS)
         t = dist / ball.velocity.y
         return Prediction(t >= 0, t)
 
@@ -288,14 +289,14 @@ def move_ball(ball, time):
 
 
 def time_till_reach_ball(ball, car):
-    car_to_ball = xy(ball.pos - car.pos)
-    dist = norm(car_to_ball) - datalibs.BALL_RADIUS - 25
-    vel_c_f = proj_onto_size(car.vel, car_to_ball)
-    vel_b_f = proj_onto_size(ball.vel, car_to_ball)
-    vel_c_amp = lerp(vel_c_f, norm(car.vel), 0.6)
+    car_to_ball = (ball.location - car.location).flat()
+    dist = car_to_ball.length() - datalibs.BALL_RADIUS - 25
+    vel_c_f = car.velocity.proj_onto_size(car_to_ball)
+    vel_b_f = ball.velocity.proj_onto_size(car_to_ball)
+    vel_c_amp = rlmath.lerp(vel_c_f, car.velocity.length(), 0.6)
     vel_f = vel_c_amp - vel_b_f
     dist_long_01 = min(max(0, dist / 10_000.0), 1)**2
     time_normal = dist / max(250, vel_f)
-    time_long = dist / max(norm(car.vel), 1400)
-    time = lerp(time_normal, time_long, dist_long_01)
+    time_long = dist / max(car.velocity.length(), 1400)
+    time = rlmath.lerp(time_normal, time_long, dist_long_01)
     return time

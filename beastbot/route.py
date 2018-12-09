@@ -1,6 +1,8 @@
 import math
 import rlmath
 import datalibs
+import predict
+from datalibs import Data
 from vec import Vec3
 
 
@@ -26,13 +28,13 @@ class Route:
         return sum_len
 
 
-def find_route_to_next_ball_landing(data, look_towards=None):
+def find_route_to_next_ball_landing(data: Data, look_towards=None):
     car_to_ball = data.ball.location - data.car.location
     dist = car_to_ball.length()
     vel_f = data.car.velocity.proj_onto_size(car_to_ball)
     drive_time = dist / max(1410, vel_f)
 
-    ball = data.ball
+    ball = data.ball.copy()
 
     predict.move_ball(ball, drive_time)
     time_hit = predict.next_ball_ground_hit(ball).time
@@ -52,7 +54,7 @@ def draw_route(renderer, route: Route, r=255, g=255, b=0):
         prev_loc_t = loc_t
 
 
-def get_route_to_ball(data, time_offset=0, look_towards=None):
+def get_route_to_ball(data: Data, time_offset=0, look_towards=None):
     dist_step_size = 1410 * 0.5
     max_turn_ang = math.pi * 0.3
 
@@ -96,7 +98,7 @@ def get_route_to_ball(data, time_offset=0, look_towards=None):
         return Route([point, ball_init_loc], ball_init_dir, 1, 1410, car_loc, good_route, False)
 
 
-def get_route(data, destination, look_target):
+def get_route(data: Data, destination, look_target):
     dist_step_size = 1410 * 0.5
     max_turn_ang = math.pi * 0.3
 

@@ -1,10 +1,7 @@
 import math
-
-from RLUtilities.GameInfo import GameInfo
-from RLUtilities.Simulation import Car
-
 import rlmath
-import utsystem
+import rlutility
+import predict
 import render
 from vec import *
 
@@ -100,9 +97,8 @@ class Ball:
         return Ball().set(self)
 
 
-class ECar(Car):
+class Car:
     def __init__(self, game_car):
-        super().__init__(game_car)
         self.team = int(game_car.team)
         self.location = Vec3().set(game_car.physics.location)
         self.location_2d = self.location.flat()
@@ -130,27 +126,46 @@ class ECar(Car):
     def relative_location(self, location):
         return relative_location(self.location, location, self.orientation)
 
-
-class EGameInfo(GameInfo):
-    def __init__(self, index, team):
-        super().__init__(index, team)
-        self.packet = None
-        self.is_kickoff = False
-        self.enemy = None
-        self.time_till_hit = 0
-        self.ball_when_hit = None
-
-    def read_packet(self, packet):
-        super().read_packet(packet)
+class Data:
+    def __init__(self, agent, packet: GameTickPacket, should_render=False):
+        self.agent = agent
+        if should_render:
+            self.renderer = agent.renderer
+        else:
+            self.renderer = render.FakeRenderer()
         self.packet = packet
-        self.is_kickoff = packet.game_info.is_kickoff_pause
+        self.ball = Ball().set_game_ball(packet.game_ball)
 
-        self.enemy = self.cars[1 - self.index]
+        self.car = Car(packet.game_cars[agent.index])
+        self.enemy = Car(packet.game_cars[1 - agent.index])
+
+        self.car.set_ball_dependent_variables(self.ball)
+        self.enemy.set_ball_dependent_variables(self.ball)
+
+        self.__decide_possession()
 
         # predictions
-        self.time_till_hit = predict.time_till_reach_ball(self.ball, self.my_car)
+        self.time_till_hit = predict.time_till_reach_ball(self.ball, self.car)
         self.ball_when_hit = predict.move_ball(self.ball.copy(), self.time_till_hit)
         if self.ball_when_hit.location.z > 100:
             time_till_ground = predict.time_of_arrival_at_height(self.ball_when_hit, 100).time
             self.ball_when_hit = predict.move_ball(self.ball_when_hit, time_till_ground)
             self.time_till_hit += time_till_ground
+
+
+    def __decide_possession(self):
+        self.car.possession_score = self.__get_possession_score(self.car)
+        self.enemy.possession_score = self.__get_possession_score(self.enemy)
+        self.car.has_possession = self.car.possession_score >= self.enemy.possession_score
+        self.enemy.has_possession = not self.car.has_possession
+
+    def __get_possession_score(self, car):
+        try:
+            car_to_ball = self.ball.location - car.location
+
+            dist = car_to_ball.length()
+            ang = car.orientation.front.ang_to(car_to_ball)
+
+            return rlutility.dist_01(dist) * rlutility.face_ang_01(ang)
+        except ZeroDivisionError:
+            return 0
