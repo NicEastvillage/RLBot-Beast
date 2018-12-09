@@ -1,6 +1,6 @@
 import math
 import rlmath
-import rlutility
+import utsystem
 from vec import Vec3
 import datalibs
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -40,7 +40,7 @@ def get_possession_score(car, packet):
 	dist = car_to_ball.length()
 	ang = car_dir.ang_to(car_to_ball)
 	
-	return rlutility.dist_01(dist)*rlutility.face_ang_01(ang)
+	return utsystem.dist_01(dist) * utsystem.face_ang_01(ang)
 
 
 # float

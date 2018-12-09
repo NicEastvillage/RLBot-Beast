@@ -1,13 +1,15 @@
 import math
+
+from RLUtilities.LinearAlgebra import vec3
+from RLUtilities.Simulation import Ball
+
 import moves
 import time
 import rlmath
-import rlutility as rlu
+import utsystem as rlu
 import easing
-import predict
 import datalibs
 import route
-from vec import Vec3
 
 from rlbot.agents.base_agent import SimpleControllerState
 
@@ -22,7 +24,7 @@ class Dribbling:
         dist01 = 1 - easing.smooth_stop(4, dist01)
 
         car_to_ball = data.ball.location - data.car.location
-        above_ang = car_to_ball.ang_to(Vec3(z=1))
+        above_ang = car_to_ball.ang_to(vec3(z=1))
         aa01 = easing.fix(1 - 1.5 * above_ang / math.pi)
 
         return easing.fix(0.76 * aa01 + enemy_dist_u) * (data.ball.location.z > 25)
@@ -47,60 +49,23 @@ class Dribbling:
         return r.create_color(255, 255, 0, 255)
 
 
-class KickOff:
-    def utility(self, data):
-        return (data.packet.game_info.is_kickoff_pause or (data.ball.location.x == 0 and data.ball.location.y == 0)) * 2
-
-    def execute(self, data):
-        data.renderer.draw_line_3d(data.car.location.tuple(), (0, 0, 0), data.renderer.create_color(255, 255, 255, 255))
-
-        car_to_ball = -1 * data.car.location
-        dist = car_to_ball.length()
-        vel_f = data.car.velocity.proj_onto_size(car_to_ball)
-
-        # a dodge is strong around 0.25 secs in
-        if dist - 190 < vel_f * 0.3 and data.agent.dodge_control.can_dodge(data):
-            data.agent.dodge_control.begin_dodge(data, Vec3(), True)
-            return data.agent.dodge_control.continue_dodge(data)
-        # make two dodges when spawning far back
-        elif dist > 3900 and vel_f > 730 and data.agent.dodge_control.can_dodge(data):
-            data.agent.dodge_control.begin_dodge(data, Vec3(), True)
-            return data.agent.dodge_control.continue_dodge(data)
-        # pickup boost when spawning back corner
-        elif abs(data.car.location.x) > 200 and abs(data.car.location.y) > 2880:
-            # The pads exact location is (0, 2816)
-            pad_loc = Vec3(0, datalibs.team_sign(data.car.team) * 2790, 0)
-            return moves.go_towards_point(data, pad_loc, False, True)
-
-        return moves.go_towards_point(data, Vec3(), False, True)
-
-    def get_point_of_interest(self, data):
-        return data.ball.location
-
-    def __str__(self):
-        return "KickOff"
-
-    def color(self, r):
-        return r.create_color(255, 255, 255, 255)
-
-
 class ShootAtGoal:
     def __init__(self, agent):
         team_sign = - datalibs.team_sign(agent.team)
-        self.enemy_goal_right = Vec3(x=-820 * team_sign, y=5120 * team_sign)
-        self.enemy_goal_left = Vec3(x=820 * team_sign, y=5120 * team_sign)
+        self.enemy_goal_right = vec3(x=-820 * team_sign, y=5120 * team_sign)
+        self.enemy_goal_left = vec3(x=820 * team_sign, y=5120 * team_sign)
         self.aim_cone = None
         self.ball_to_goal_right = None
         self.ball_to_goal_left = None
 
-    def utility(self, data):
-        ball_soon = predict.move_ball(data.ball.copy(), 1)
-        team_sign = datalibs.team_sign(data.car.team)
+    def utility(self, bot):
+        ball_soon = Ball(bot.info.ball).step(1)
+        team_sign = bot.tsgn
 
-        own_half_01 = easing.fix(easing.remap(team_sign * datalibs.ARENA_LENGTH2, (-1 * team_sign) * datalibs.ARENA_LENGTH2, 0.0, 1.1, ball_soon.location.y))
+        own_half_01 = rlmath.clip(easing.remap(team_sign * datalibs.ARENA_LENGTH2, (-1 * team_sign) * datalibs.ARENA_LENGTH2, 0.0, 1.1, ball_soon.pos.y), 0, 1)
 
-        self.ball_to_goal_right = self.enemy_goal_right - data.ball_when_hit.location
-        self.ball_to_goal_left = self.enemy_goal_left - data.ball_when_hit.location
+        self.ball_to_goal_right = self.enemy_goal_right - bot.info.ball_when_hit.location
+        self.ball_to_goal_left = self.enemy_goal_left - bot.info.ball_when_hit.location
         self.aim_cone = route.AimCone(self.ball_to_goal_right.ang(), self.ball_to_goal_left.ang())
         car_to_ball = data.ball_when_hit.location - data.car.location
         in_position = self.aim_cone.contains_direction(car_to_ball)
@@ -128,7 +93,7 @@ class ShootAtGoal:
             # Avoid enemy corners. Just wait
             if data.ball_when_hit.location.y * datalibs.team_sign(data.enemy.team) > 4400 and abs(data.ball_when_hit.location.x) > 900 and not dist < 450:
                 wait_point = data.ball_when_hit.location * 0.5  # a point 50% closer to the center of the field
-                wait_point = wait_point.lerp(data.ball.location + Vec3(y=datalibs.team_sign(data.car.team) * 3000), 0.5)
+                wait_point = wait_point.lerp(data.ball.location + vec3(y=datalibs.team_sign(data.car.team) * 3000), 0.5)
                 data.renderer.draw_line_3d(data.car.location.tuple(), wait_point.tuple(), self.color(data.renderer))
                 return moves.go_towards_point_with_timing(data, wait_point, 1, True)
 
@@ -241,7 +206,7 @@ class DefendGoal:
             return moves.jump_to_face(data, data.ball.location)
 
         # team_sign = datalibs.team_sign(data.car.team)
-        # def_pos = Vec3(data.ball.location.x / 4.8, team_sign * 4950)
+        # def_pos = vec3(data.ball.location.x / 4.8, team_sign * 4950)
         #
         # return moves...go_to_stop_and_face?()
 
@@ -259,8 +224,8 @@ class DefendGoal:
 class SaveGoal:
     def __init__(self, agent):
         team_sign = datalibs.team_sign(agent.team)
-        self.own_goal_right = Vec3(x=-820 * team_sign, y=5120 * team_sign)
-        self.own_goal_left = Vec3(x=820 * team_sign, y=5120 * team_sign)
+        self.own_goal_right = vec3(x=-820 * team_sign, y=5120 * team_sign)
+        self.own_goal_left = vec3(x=820 * team_sign, y=5120 * team_sign)
         self.aim_cone = None
         self.ball_to_goal_right = None
         self.ball_to_goal_left = None
@@ -315,41 +280,41 @@ class SaveGoal:
 
 
 class CollectBoost:
-    def __init__(self, agent):
+    def __init__(self, bot):
         self.collect_boost_system = None
-        self.init_array(agent)
+        self.init_array(bot)
 
-    def init_array(self, agent):
+    def init_array(self, bot):
         boost_choices = []
-        for i, pad in enumerate(agent.get_field_info().boost_pads):
-            if i >= agent.get_field_info().num_boosts:
+        for i, pad in enumerate(bot.get_field_info().boost_pads):
+            if i >= bot.get_field_info().num_boosts:
                 break
             boost_choices.append(SpecificBoostPad(pad, i))
 
         self.collect_boost_system = rlu.UtilitySystem(boost_choices, 0)
 
-    def utility(self, data):
-        if data.car.boost == 100:
+    def utility(self, bot):
+        if bot.info.my_car.boost == 100:
             return -0.5
-        boost01 = data.car.boost / 100.0
+        boost01 = bot.info.my_car.boost / 100.0
         boost01 = 1 - easing.smooth_stop(4, boost01)
 
-        # best_boost = self.collect_boost_system.evaluate(data)
+        # TODO Maybe consider how good the best boost pad is
 
         pot_01 = 1
-        if data.agent.point_of_interest is not None:
-            # Agent have a point of interest. Only collect boost if missing speed and boost
-            pot_01 = easing.fix(1 - data.car.velocity.length() / 2500)  # 2500 so he is always missing some speed
+        if bot.point_of_interest is not None:
+            # Beast have a point of interest. Only collect boost if missing speed and boost
+            pot_01 = easing.fix(1 - bot.info.my_car.velocity.length() / 2500)  # 2500 so he is always missing some speed
 
         ut = boost01 * pot_01
         return easing.inv_lerp(0, 0.9, ut)
 
-    def execute(self, data):
+    def execute(self, bot):
         try:
-            best, score = self.collect_boost_system.evaluate(data)
-            return best.execute(data)
+            best, score = self.collect_boost_system.evaluate(bot)
+            return best.execute(bot)
         except ValueError:
-            self.init_array(data.agent)
+            self.init_array(bot)
             return SimpleControllerState()
 
     def reset(self):
@@ -366,7 +331,7 @@ class SpecificBoostPad:
     def __init__(self, info, index):
         self.info = info
         self.index = index
-        self.location = Vec3().set(info.location)
+        self.location = vec3().set(info.location)
 
     def utility(self, data):
         car_to_pad = self.location - data.car.location_2d

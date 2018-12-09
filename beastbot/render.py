@@ -5,6 +5,12 @@ class FakeRenderer:
     def __init__(self):
         pass
 
+    def begin_rendering(self):
+        pass
+
+    def end_rendering(self):
+        pass
+
     def create_color(self, a, r, g, b):
         pass
 
@@ -18,4 +24,7 @@ class FakeRenderer:
         pass
 
     def draw_line_3d(self, start, end, color):
+        pass
+
+    def draw_polyline_3d(self, locs, color):
         pass
