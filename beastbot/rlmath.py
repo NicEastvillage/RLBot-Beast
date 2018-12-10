@@ -56,5 +56,5 @@ def rotated_2d(vec: vec3, ang: float) -> vec3:
                 s * vec[0] + c * vec[1])
 
 
-def is_near_wall(point: vec3, offset: float=100) -> bool:
+def is_near_wall(point: vec3, offset: float=130) -> bool:
     return abs(point[0]) > FIELD_WIDTH - offset or abs(point[1]) > FIELD_LENGTH - offset  # TODO Add diagonal walls

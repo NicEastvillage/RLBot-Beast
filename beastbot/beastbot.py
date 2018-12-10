@@ -1,10 +1,10 @@
-from RLUtilities.GameInfo import GameInfo
-from RLUtilities.Maneuvers import Drive
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
+from info import EGameInfo
 from moves import go_towards_point
 from render import FakeRenderer, draw_ball_path
+from rlmath import *
 from utsystem import UtilitySystem
 
 RENDER = True
@@ -13,8 +13,7 @@ RENDER = True
 class Beast(BaseAgent):
     def __init__(self, name, team, index):
         super().__init__(name, team, index)
-        self.team_sign = -1 if team == 0 else 1
-        self.info = GameInfo(index, team)
+        self.info = EGameInfo(index, team)
         self.controls = SimpleControllerState()
         self.plan = None
         self.doing_kickoff = False
@@ -22,7 +21,7 @@ class Beast(BaseAgent):
         self.ut = None
 
     def initialize_agent(self):
-        self.ut = UtilitySystem([AtbaChoice()])
+        self.ut = UtilitySystem([ShootAtGoal()])
 
         if not RENDER:
             self.renderer = FakeRenderer()
@@ -64,7 +63,7 @@ class Beast(BaseAgent):
         return self.controls
 
 
-class AtbaChoice:
+class ShootAtGoal:
     def __init__(self):
         pass
 
@@ -72,4 +71,17 @@ class AtbaChoice:
         return 1
 
     def execute(self, bot):
-        bot.controls = go_towards_point(bot, bot.info.ball.pos, 2000, True, True, True, 120)
+
+        car = bot.info.my_car
+        ball = bot.info.ball
+
+        car_to_ball = ball.pos - car.pos
+        ball_to_goal = bot.info.enemy_goal - ball.pos
+
+
+        right_side_of_ball = dot(car_to_ball, ball_to_goal) > 0
+
+        if right_side_of_ball:
+            bot.controls = go_towards_point(bot, ball.pos, 2000, True, True)
+        else:
+            bot.controls = go_towards_point(bot, bot.info.own_goal_field, 2000, True, True)

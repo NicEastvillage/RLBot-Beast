@@ -3,7 +3,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 from rlmath import *
 
 
-def go_towards_point(bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, wall_offset_allowed=100) -> SimpleControllerState:
+def go_towards_point(bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, wall_offset_allowed=130) -> SimpleControllerState:
     REQUIRED_SLIDE_ANG = 1.65
 
     controls = SimpleControllerState()
