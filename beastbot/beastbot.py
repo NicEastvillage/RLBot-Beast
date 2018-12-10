@@ -1,3 +1,4 @@
+from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
@@ -78,10 +79,9 @@ class ShootAtGoal:
         car_to_ball = ball.pos - car.pos
         ball_to_goal = bot.info.enemy_goal - ball.pos
 
-
         right_side_of_ball = dot(car_to_ball, ball_to_goal) > 0
 
         if right_side_of_ball:
             bot.controls = go_towards_point(bot, ball.pos, 2000, True, True)
         else:
-            bot.controls = go_towards_point(bot, bot.info.own_goal_field, 2000, True, True)
+            bot.controls = go_towards_point(bot, bot.info.own_goal_field, 2000, True, True, 2000)

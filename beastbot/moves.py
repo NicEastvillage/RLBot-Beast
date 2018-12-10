@@ -1,5 +1,6 @@
 from rlbot.agents.base_agent import SimpleControllerState
 
+from plans import DodgePlan
 from rlmath import *
 
 
