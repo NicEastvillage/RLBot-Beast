@@ -3,6 +3,11 @@ import math
 from RLUtilities.LinearAlgebra import *
 
 
+FIELD_WIDTH = 8192
+FIELD_LENGTH = 10240
+FILED_HEIGHT = 2044
+
+
 # returns sign of x, and 0 if x == 0
 def sign0(x) -> float:
     return x and (1, -1)[x < 0]
@@ -49,3 +54,7 @@ def rotated_2d(vec: vec3, ang: float) -> vec3:
     s = math.sin(ang)
     return vec3(c * vec[0] - s * vec[1],
                 s * vec[0] + c * vec[1])
+
+
+def is_near_wall(point: vec3, offset: float=100) -> bool:
+    return abs(point[0]) > FIELD_WIDTH - offset or abs(point[1]) > FIELD_LENGTH - offset  # TODO Add diagonal walls

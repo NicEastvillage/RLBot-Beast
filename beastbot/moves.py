@@ -3,15 +3,15 @@ from rlbot.agents.base_agent import SimpleControllerState
 from rlmath import *
 
 
-def go_towards_point(bot, point: vec3, target_vel=1430, slide=False, boost=False, get_down=True, can_keep_speed=True) -> SimpleControllerState:
+def go_towards_point(bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, wall_offset_allowed=100) -> SimpleControllerState:
     REQUIRED_SLIDE_ANG = 1.65
 
     controls = SimpleControllerState()
 
     car = bot.info.my_car
 
-    # Get down from wall by choosing a point
-    if get_down and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
+    # Get down from wall by choosing a point close to ground
+    if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
         point = lerp(xy(car.pos), xy(point), 0.5)
 
     car_to_point = point - car.pos

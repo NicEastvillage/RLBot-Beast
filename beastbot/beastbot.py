@@ -72,4 +72,4 @@ class AtbaChoice:
         return 1
 
     def execute(self, bot):
-        bot.controls = go_towards_point(bot, bot.info.ball.pos, 2000, True, True, True, True)
+        bot.controls = go_towards_point(bot, bot.info.ball.pos, 2000, True, True, True, 120)
