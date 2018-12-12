@@ -1,71 +1,101 @@
+from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import SimpleControllerState
 
 from plans import DodgePlan
 from rlmath import *
 
 
-def go_towards_point(bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, wall_offset_allowed=130) -> SimpleControllerState:
-    REQUIRED_SLIDE_ANG = 1.65
+class DriveController:
+    def __init__(self):
+        self.controls = SimpleControllerState()
+        self.dodge = None
 
-    controls = SimpleControllerState()
+    def go_towards_point(self, bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, can_dodge=True, wall_offset_allowed=130) -> SimpleControllerState:
+        REQUIRED_ANG_FOR_SLIDE = 1.65
+        REQUIRED_VELF_FOR_DODGE = 800  # 910
+        REQUIRED_ANG_FOR_DODGE = 0.3
 
-    car = bot.info.my_car
+        car = bot.info.my_car
 
-    # Get down from wall by choosing a point close to ground
-    if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
-        point = lerp(xy(car.pos), xy(point), 0.5)
+        # Get down from wall by choosing a point close to ground
+        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
+            point = lerp(xy(car.pos), xy(point), 0.5)
 
-    car_to_point = point - car.pos
+        car_to_point = point - car.pos
 
-    # The vector from the car to the point in local coordinates:
-    # point_local[0]: how far in front of my car
-    # point_local[1]: how far to the left of my car
-    # point_local[2]: how far above my car
-    point_local = dot(point - car.pos, car.theta)
+        # Dodge over
+        if self.dodge is not None and self.dodge.finished:
+            self.dodge = None
 
-    # Angle to point in local xy plane
-    angle = math.atan2(point_local[1], point_local[0])
-    dist = norm(point_local)
-    vel_towards_point = proj_onto_size(car.vel, car_to_point)
+        # Continue dodge
+        if self.dodge is not None:
 
-    # Is in turn radius deadzone?
-    tr = turn_radius(abs(vel_towards_point + 50))  # small bias
-    tr_side = -1 * sign(angle)
-    tr_center_local = vec3(0, tr * tr_side, 0)
-    point_is_in_turn_radius_deadzone = norm(point - tr_center_local) < tr
+            self.dodge.target = point
+            self.dodge.step(0.01666)
 
-    if point_is_in_turn_radius_deadzone:
-        # Hard turn
-        controls.throttle = 0 if vel_towards_point > 250 else 0.2
-        controls.steer = sign(angle)
+            self.dodge.controls.boost = boost and angle_between(car_to_point, car.forward()) < 0.15\
+                                        and norm(car.vel) < 2000 and dot(car.up(), car_to_point) >= 0
 
-    else:
-        # Should drop speed or just keep up the speed?
-        if can_keep_speed and target_vel < vel_towards_point:
-            target_vel = vel_towards_point
+            return self.dodge.controls
 
-        # Turn and maybe slide
-        controls.steer = clip(angle * 2.8, -1.0, 1.0)
-        if slide and dist > 300 and abs(angle) > REQUIRED_SLIDE_ANG:
-            controls.handbrake = True
-            controls.steer = sign(angle)
+        # The vector from the car to the point in local coordinates:
+        # point_local[0]: how far in front of my car
+        # point_local[1]: how far to the left of my car
+        # point_local[2]: how far above my car
+        point_local = dot(point - car.pos, car.theta)
 
-        # Overshoot target vel for quick adjustment
-        target_vel = lerp(vel_towards_point, target_vel, 1.2)
+        # Angle to point in local xy plane
+        angle = math.atan2(point_local[1], point_local[0])
+        dist = norm(point_local)
+        vel_f = proj_onto_size(car.vel, car.forward())
+        vel_towards_point = proj_onto_size(car.vel, car_to_point)
 
-        # Find appropriate throttle/boost
-        if vel_towards_point < target_vel:
-            controls.throttle = 1
-            if boost and vel_towards_point + 25 < target_vel \
-                    and not controls.handbrake and is_heading_towards(angle, dist):
+        # Start dodge
+        if can_dodge and abs(angle) < REQUIRED_ANG_FOR_DODGE and vel_towards_point > REQUIRED_VELF_FOR_DODGE and dist > vel_towards_point + 500 + 200:
+            self.dodge = AirDodge(car, 0.1, point)
 
-                controls.boost = True
+        # Is in turn radius deadzone?
+        tr = turn_radius(abs(vel_f + 50))  # small bias
+        tr_side = -1 * sign(angle)
+        tr_center_local = vec3(0, tr * tr_side, 0)
+        point_is_in_turn_radius_deadzone = norm(point - tr_center_local) < tr
+
+        if point_is_in_turn_radius_deadzone:
+            # Hard turn
+            self.controls.throttle = 0 if vel_f > 250 else 0.2
+            self.controls.steer = sign(angle)
 
         else:
-            vel_delta = target_vel - vel_towards_point
-            controls.throttle = clip(vel_delta / 300, -1, 1)
+            # Should drop speed or just keep up the speed?
+            if can_keep_speed and target_vel < vel_towards_point:
+                target_vel = vel_towards_point
 
-    return controls
+            # Turn and maybe slide
+            self.controls.steer = clip(angle * 2.8, -1.0, 1.0)
+            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE:
+                self.controls.handbrake = True
+                self.controls.steer = sign(angle)
+            else:
+                self.controls.handbrake = False
+
+            # Overshoot target vel for quick adjustment
+            target_vel = lerp(vel_towards_point, target_vel, 1.2)
+
+            # Find appropriate throttle/boost
+            if vel_towards_point < target_vel:
+                self.controls.throttle = 1
+                if boost and vel_towards_point + 25 < target_vel \
+                        and not self.controls.handbrake and is_heading_towards(angle, dist):
+                    self.controls.boost = True
+                else:
+                    self.controls.boost = False
+
+            else:
+                vel_delta = target_vel - vel_towards_point
+                self.controls.throttle = clip(vel_delta / 350, -1, 1)
+                self.controls.boost = False
+
+        return self.controls
 
 # ----------------------------------------- Helper functions --------------------------------
 

@@ -3,7 +3,7 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 from info import EGameInfo
-from moves import go_towards_point
+from moves import DriveController
 from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
@@ -20,6 +20,7 @@ class Beast(BaseAgent):
         self.doing_kickoff = False
 
         self.ut = None
+        self.drive = DriveController()
 
     def initialize_agent(self):
         self.ut = UtilitySystem([ShootAtGoal()])
@@ -78,10 +79,13 @@ class ShootAtGoal:
 
         car_to_ball = ball.pos - car.pos
         ball_to_goal = bot.info.enemy_goal - ball.pos
+        dist = norm(car_to_ball)
 
         right_side_of_ball = dot(car_to_ball, ball_to_goal) > 0
 
         if right_side_of_ball:
-            bot.controls = go_towards_point(bot, ball.pos, 2000, True, True)
+            # Chase ball
+            bot.controls = bot.drive.go_towards_point(bot, xy(ball.pos), 2000, True, True, can_dodge=dist > 2200)
         else:
-            bot.controls = go_towards_point(bot, bot.info.own_goal_field, 2000, True, True, 2000)
+            # Go home
+            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal_field, 2000, True, True)
