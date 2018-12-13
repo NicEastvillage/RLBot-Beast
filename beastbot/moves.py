@@ -1,6 +1,7 @@
 from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import SimpleControllerState
 
+import render
 from plans import DodgePlan
 from rlmath import *
 
@@ -51,14 +52,20 @@ class DriveController:
         vel_towards_point = proj_onto_size(car.vel, car_to_point)
 
         # Start dodge
-        if can_dodge and abs(angle) < REQUIRED_ANG_FOR_DODGE and vel_towards_point > REQUIRED_VELF_FOR_DODGE and dist > vel_towards_point + 500 + 200:
+        if can_dodge and is_heading_towards_strict(angle, dist) and vel_towards_point > REQUIRED_VELF_FOR_DODGE and dist > vel_towards_point + 500 + 200:
             self.dodge = AirDodge(car, 0.1, point)
 
         # Is in turn radius deadzone?
         tr = turn_radius(abs(vel_f + 50))  # small bias
-        tr_side = -1 * sign(angle)
+        tr_side = sign(angle)
         tr_center_local = vec3(0, tr * tr_side, 0)
         point_is_in_turn_radius_deadzone = norm(point - tr_center_local) < tr
+        # Draw turn radius deadzone
+        if car.on_ground:
+            tr_center_world = car.pos + dot(car.theta, tr_center_local)
+            tr_center_world_2 = car.pos + dot(car.theta, -1 * tr_center_local)
+            render.draw_circle(bot, tr_center_world, car.up(), tr, 22)
+            render.draw_circle(bot, tr_center_world_2, car.up(), tr, 22)
 
         if point_is_in_turn_radius_deadzone:
             # Hard turn
@@ -72,7 +79,7 @@ class DriveController:
 
             # Turn and maybe slide
             self.controls.steer = clip(angle * 2.8, -1.0, 1.0)
-            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE:
+            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[0]) < tr * 6:
                 self.controls.handbrake = True
                 self.controls.steer = sign(angle)
             else:
@@ -103,6 +110,12 @@ class DriveController:
 def is_heading_towards(ang, dist):
     # The further away the car is the less accurate the angle is required
     required_ang = 0.05 + 0.0001 * dist
+    return abs(ang) <= required_ang
+
+
+def is_heading_towards_strict(ang, dist):
+    # The further away the car is the less accurate the angle is required
+    required_ang = 0.02 + 0.0001 * dist
     return abs(ang) <= required_ang
 
 

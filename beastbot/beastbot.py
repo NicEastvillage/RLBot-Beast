@@ -53,7 +53,7 @@ class Beast(BaseAgent):
             self.plan.execute(self)
 
         # Rendering
-        draw_ball_path(self, 4.5, 2)
+        draw_ball_path(self, 4, 5)
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
