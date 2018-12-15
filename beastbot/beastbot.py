@@ -14,6 +14,7 @@ RENDER = True
 class Beast(BaseAgent):
     def __init__(self, name, team, index):
         super().__init__(name, team, index)
+        self.do_rendering = RENDER
         self.info = EGameInfo(index, team)
         self.controls = SimpleControllerState()
         self.plan = None
@@ -53,7 +54,8 @@ class Beast(BaseAgent):
             self.plan.execute(self)
 
         # Rendering
-        draw_ball_path(self, 4, 5)
+        if self.do_rendering:
+            draw_ball_path(self, 4, 5)
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
