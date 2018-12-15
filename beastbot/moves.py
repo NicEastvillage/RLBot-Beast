@@ -2,7 +2,6 @@ from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import SimpleControllerState
 
 import render
-from plans import DodgePlan
 from rlmath import *
 
 
@@ -10,11 +9,16 @@ class DriveController:
     def __init__(self):
         self.controls = SimpleControllerState()
         self.dodge = None
+        self.last_point = None
+        self.car = None
+
+    def start_dodge(self):
+        if self.dodge is None:
+            self.dodge = AirDodge(self.car, 0.1, self.last_point)
 
     def go_towards_point(self, bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, can_dodge=True, wall_offset_allowed=130) -> SimpleControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
-        REQUIRED_VELF_FOR_DODGE = 800  # 910
-        REQUIRED_ANG_FOR_DODGE = 0.3
+        REQUIRED_VELF_FOR_DODGE = 850
 
         car = bot.info.my_car
 
@@ -78,7 +82,7 @@ class DriveController:
                 target_vel = vel_towards_point
 
             # Turn and maybe slide
-            self.controls.steer = clip(angle * 2.8, -1.0, 1.0)
+            self.controls.steer = clip(angle + (3*angle) ** 3, -1.0, 1.0)
             if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[0]) < tr * 6:
                 self.controls.handbrake = True
                 self.controls.steer = sign(angle)
@@ -101,6 +105,10 @@ class DriveController:
                 vel_delta = target_vel - vel_towards_point
                 self.controls.throttle = clip(vel_delta / 350, -1, 1)
                 self.controls.boost = False
+
+        # Save for things for later
+        self.car = car
+        self.last_point = point
 
         return self.controls
 

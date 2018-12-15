@@ -4,6 +4,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 from info import EGameInfo
 from moves import DriveController
+from plans import KickoffPlan
 from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
@@ -35,9 +36,9 @@ class Beast(BaseAgent):
         self.renderer.begin_rendering()
 
         # Check kickoff
-        #if self.info.is_kickoff and not self.doing_kickoff:
-        #    self.plan = KickOffPlan()
-        #    self.doing_kickoff = True
+        if self.info.is_kickoff and not self.doing_kickoff:
+            self.plan = KickoffPlan()
+            self.doing_kickoff = True
 
         # Execute logic
         if self.plan is None or self.plan.finished:

@@ -8,6 +8,10 @@ FIELD_LENGTH = 10240
 FILED_HEIGHT = 2044
 
 
+X = 0
+Y = 1
+Z = 2
+
 # returns sign of x, and 0 if x == 0
 def sign0(x) -> float:
     return x and (1, -1)[x < 0]
