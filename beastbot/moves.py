@@ -1,7 +1,10 @@
+import time
+
 from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import SimpleControllerState
 
 import render
+from plans import DodgePlan
 from rlmath import *
 
 
@@ -11,14 +14,16 @@ class DriveController:
         self.dodge = None
         self.last_point = None
         self.car = None
+        self.last_dodge_end_time = 0
+        self.dodge_cooldown = 0.26
 
     def start_dodge(self):
         if self.dodge is None:
-            self.dodge = AirDodge(self.car, 0.1, self.last_point)
+            self.dodge = DodgePlan(self.last_point)
 
     def go_towards_point(self, bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, can_dodge=True, wall_offset_allowed=130) -> SimpleControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
-        REQUIRED_VELF_FOR_DODGE = 850
+        REQUIRED_VELF_FOR_DODGE = 950
 
         car = bot.info.my_car
 
@@ -31,15 +36,13 @@ class DriveController:
         # Dodge over
         if self.dodge is not None and self.dodge.finished:
             self.dodge = None
+            self.last_dodge_end_time = time.time()
 
         # Continue dodge
         if self.dodge is not None:
 
             self.dodge.target = point
-            self.dodge.step(0.01666)
-
-            self.dodge.controls.boost = boost and angle_between(car_to_point, car.forward()) < 0.15\
-                                        and norm(car.vel) < 2000 and dot(car.up(), car_to_point) >= 0
+            self.dodge.execute(bot)
 
             return self.dodge.controls
 
@@ -49,15 +52,16 @@ class DriveController:
         # point_local[2]: how far above my car
         point_local = dot(point - car.pos, car.theta)
 
-        # Angle to point in local xy plane
+        # Angle to point in local xy plane and other stuff
         angle = math.atan2(point_local[1], point_local[0])
         dist = norm(point_local)
         vel_f = proj_onto_size(car.vel, car.forward())
         vel_towards_point = proj_onto_size(car.vel, car_to_point)
 
         # Start dodge
-        if can_dodge and is_heading_towards_strict(angle, dist) and vel_towards_point > REQUIRED_VELF_FOR_DODGE and dist > vel_towards_point + 500 + 200:
-            self.dodge = AirDodge(car, 0.1, point)
+        if can_dodge and is_heading_towards_strict(angle, dist) and vel_towards_point > REQUIRED_VELF_FOR_DODGE\
+                and dist > vel_towards_point + 500 + 200 and time.time() > self.last_dodge_end_time + self.dodge_cooldown:
+            self.dodge = DodgePlan(point)
 
         # Is in turn radius deadzone?
         tr = turn_radius(abs(vel_f + 50))  # small bias

@@ -1,21 +1,92 @@
-from RLUtilities.Maneuvers import AirDodge
+import time
+
+from rlbot.agents.base_agent import SimpleControllerState
 
 from rlmath import *
 
-class DodgePlan:
-    def __init__(self, bot, target=None):
-        self.target = target
-        self.dodge = AirDodge(bot.info.my_car, target=self._resolve_target())
-        self.finished = False
 
-    def _resolve_target(self):
-        return self.target() if callable(self.target) else self.target
+class DodgePlan:
+    def __init__(self, target=None, boost=False):
+        self.target = target
+        self.boost = boost
+        self.controls = SimpleControllerState()
+        self.start_time = time.time()
+        self.finished = False
+        self.almost_finished = False
+
+        self._t_first_unjump = 0.10
+        self._t_aim = 0.13
+        self._t_second_jump = 0.18
+        self._t_second_unjump = 0.46
+        self._t_finishing = 1.0  # After this, Fix orientation until lands on ground
+
+        self._t_steady_again = 0.25  # Time on ground before steady and ready again
+        self._max_speed = 2000  # Don't boost if above this speed
+        self._boost_ang_req = 0.25
 
     def execute(self, bot):
-        self.dodge.target = self._resolve_target()
-        self.dodge.step(0.01666)
-        bot.controls = self.dodge.controls
-        self.finished = self.dodge.finished
+        ct = time.time() - self.start_time
+
+        # Target is allowed to be a function that takes bot as a parameter. Check what it is
+        if callable(self.target):
+            target = self.target(bot)
+        else:
+            target = self.target
+
+        # Get car and reset controls
+        car = bot.info.my_car
+        self.controls.throttle = 1
+        self.controls.yaw = 0
+        self.controls.pitch = 0
+        self.controls.jump = False
+
+        # To boost or not to boost, that is the question
+        car_to_target = target - car.pos
+        vel_p = proj_onto_size(car.vel, car_to_target)
+        angle = angle_between(car_to_target, car.forward())
+        self.controls.boost = self.boost and angle < self._boost_ang_req and vel_p < self._max_speed
+
+        # States of dodge (note reversed order)
+        # Land on ground
+        if ct >= self._t_finishing:
+            self.almost_finished = True
+            if car.on_ground:
+                self.finished = True
+            # TODO return fix_orientation(data)
+            return self.controls
+
+        elif ct >= self._t_second_unjump:
+            # Stop pressing jump and rotate and wait for flip is done
+            pass
+
+        elif ct >= self._t_aim:
+            if ct >= self._t_second_jump:
+                self.controls.jump = 1
+
+            # Direction, yaw, pitch, roll
+            if self.target is None:
+                self.controls.roll = 0
+                self.controls.pitch = -1
+                self.controls.yaw = 0
+            else:
+                target_local = dot(car_to_target, car.theta)
+                target_local[Z] = 0
+
+                direction = normalize(target_local)
+
+                self.controls.roll = 0
+                self.controls.pitch = -direction[X]
+                self.controls.yaw = sign(car.theta[2, 2]) * direction[Y]
+
+        # Stop pressing jump
+        elif ct >= self._t_first_unjump:
+            pass
+
+        # First jump
+        else:
+            self.controls.jump = 1
+
+        return self.controls
 
 
 class KickoffPlan:
