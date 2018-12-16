@@ -56,9 +56,9 @@ def proj_onto_size(src: vec3, dir: vec3) -> float:
 def rotated_2d(vec: vec3, ang: float) -> vec3:
     c = math.cos(ang)
     s = math.sin(ang)
-    return vec3(c * vec[0] - s * vec[1],
-                s * vec[0] + c * vec[1])
+    return vec3(c * vec[X] - s * vec[Y],
+                s * vec[X] + c * vec[Y])
 
 
 def is_near_wall(point: vec3, offset: float=130) -> bool:
-    return abs(point[0]) > FIELD_WIDTH - offset or abs(point[1]) > FIELD_LENGTH - offset  # TODO Add diagonal walls
+    return abs(point[X]) > FIELD_WIDTH - offset or abs(point[Y]) > FIELD_LENGTH - offset  # TODO Add diagonal walls

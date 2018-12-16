@@ -53,7 +53,7 @@ class DriveController:
         point_local = dot(point - car.pos, car.theta)
 
         # Angle to point in local xy plane and other stuff
-        angle = math.atan2(point_local[1], point_local[0])
+        angle = math.atan2(point_local[Y], point_local[X])
         dist = norm(point_local)
         vel_f = proj_onto_size(car.vel, car.forward())
         vel_towards_point = proj_onto_size(car.vel, car_to_point)
@@ -87,7 +87,7 @@ class DriveController:
 
             # Turn and maybe slide
             self.controls.steer = clip(angle + (3*angle) ** 3, -1.0, 1.0)
-            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[0]) < tr * 6:
+            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[X]) < tr * 6:
                 self.controls.handbrake = True
                 self.controls.steer = sign(angle)
             else:
