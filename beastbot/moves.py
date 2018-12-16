@@ -59,15 +59,15 @@ class DriveController:
         vel_towards_point = proj_onto_size(car.vel, car_to_point)
 
         # Start dodge
-        if can_dodge and is_heading_towards_strict(angle, dist) and vel_towards_point > REQUIRED_VELF_FOR_DODGE\
-                and dist > vel_towards_point + 500 + 200 and time.time() > self.last_dodge_end_time + self.dodge_cooldown:
+        if can_dodge and abs(angle) <= 0.02 and vel_towards_point > REQUIRED_VELF_FOR_DODGE\
+                and dist > vel_towards_point + 500 + 500 and time.time() > self.last_dodge_end_time + self.dodge_cooldown:
             self.dodge = DodgePlan(point)
 
         # Is in turn radius deadzone?
         tr = turn_radius(abs(vel_f + 50))  # small bias
         tr_side = sign(angle)
         tr_center_local = vec3(0, tr * tr_side, 0)
-        point_is_in_turn_radius_deadzone = norm(point - tr_center_local) < tr
+        point_is_in_turn_radius_deadzone = norm(point_local - tr_center_local) < tr
         # Draw turn radius deadzone
         if car.on_ground and bot.do_rendering:
             tr_center_world = car.pos + dot(car.theta, tr_center_local)
@@ -86,8 +86,8 @@ class DriveController:
                 target_vel = vel_towards_point
 
             # Turn and maybe slide
-            self.controls.steer = clip(angle + (3*angle) ** 3, -1.0, 1.0)
-            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[X]) < tr * 6:
+            self.controls.steer = clip(angle + (2.5*angle) ** 3, -1.0, 1.0)
+            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[Y]) < tr * 6:
                 self.controls.handbrake = True
                 self.controls.steer = sign(angle)
             else:
@@ -122,12 +122,6 @@ class DriveController:
 def is_heading_towards(ang, dist):
     # The further away the car is the less accurate the angle is required
     required_ang = 0.05 + 0.0001 * dist
-    return abs(ang) <= required_ang
-
-
-def is_heading_towards_strict(ang, dist):
-    # The further away the car is the less accurate the angle is required
-    required_ang = 0.02 + 0.0001 * dist
     return abs(ang) <= required_ang
 
 

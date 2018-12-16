@@ -1,3 +1,5 @@
+import time
+
 from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -24,6 +26,8 @@ class Beast(BaseAgent):
         self.ut = None
         self.drive = DriveController()
 
+        self.last_time = 0
+
     def initialize_agent(self):
         self.ut = UtilitySystem([ShootAtGoal()])
 
@@ -39,6 +43,7 @@ class Beast(BaseAgent):
         if self.info.is_kickoff and not self.doing_kickoff:
             self.plan = KickoffPlan()
             self.doing_kickoff = True
+            print("Beast: Begins kickoff")
 
         # Execute logic
         if self.plan is None or self.plan.finished:
