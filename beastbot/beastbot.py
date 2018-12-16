@@ -18,8 +18,8 @@ class Beast(BaseAgent):
     def __init__(self, name, team, index):
         super().__init__(name, team, index)
         self.do_rendering = RENDER
-        self.info = EGameInfo(index, team)
         self.controls = SimpleControllerState()
+        self.info = None
         self.plan = None
         self.doing_kickoff = False
 
@@ -30,6 +30,7 @@ class Beast(BaseAgent):
 
     def initialize_agent(self):
         self.ut = UtilitySystem([ShootAtGoal()])
+        self.info = EGameInfo(self.index, self.team, self.get_field_info())
 
         if not RENDER:
             self.renderer = FakeRenderer()
