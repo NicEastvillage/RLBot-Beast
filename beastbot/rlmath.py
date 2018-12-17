@@ -12,6 +12,28 @@ X = 0
 Y = 1
 Z = 2
 
+
+class Zone2d:
+    def __init__(self, cornerA, cornerB):
+        self.cornerMin = vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), 0)
+        self.cornerMax = vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), 0)
+
+    def contains(self, point):
+        return self.cornerMin[X] <= point[X] <= self.cornerMax[X]\
+               and self.cornerMin[Y] <= point[Y] <= self.cornerMax[Y]
+
+
+class Zone3d:
+    def __init__(self, cornerA, cornerB):
+        self.cornerMin = vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), min(cornerA[Z], cornerB[Z]))
+        self.cornerMax = vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), max(cornerA[Z], cornerB[Z]))
+
+    def contains(self, point):
+        return self.cornerMin[X] <= point[X] <= self.cornerMax[X]\
+               and self.cornerMin[Y] <= point[Y] <= self.cornerMax[Y]\
+               and self.cornerMin[Z] <= point[Z] <= self.cornerMax[Z]
+
+
 # returns sign of x, and 0 if x == 0
 def sign0(x) -> float:
     return x and (1, -1)[x < 0]
