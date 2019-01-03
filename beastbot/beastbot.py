@@ -69,10 +69,6 @@ class Beast(BaseAgent):
         # Rendering
         if self.do_rendering:
             draw_ball_path(self, 4, 5)
-            for pad in self.info.boost_pads:
-                score = self.info.get_boost_pad_convenience_score(pad)
-                self.renderer.draw_line_3d(self.info.my_car.pos, pad.pos, self.renderer.create_color(255, 0, int(255 * score), 0))
-
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
