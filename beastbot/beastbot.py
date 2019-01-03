@@ -107,4 +107,4 @@ class ShootAtGoal:
             bot.controls = bot.drive.go_towards_point(bot, xy(ball.pos), 2000, True, True, can_dodge=dist > 2200)
         else:
             # Go home
-            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal_field, 2000, True, True, can_collect_boost=True)
+            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal_field, 2000, True, True)
