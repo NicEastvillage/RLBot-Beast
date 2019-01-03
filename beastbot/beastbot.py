@@ -30,12 +30,18 @@ class Beast(BaseAgent):
 
     def initialize_agent(self):
         self.ut = UtilitySystem([ShootAtGoal()])
-        self.info = EGameInfo(self.index, self.team, self.get_field_info())
+        self.info = EGameInfo(self.index, self.team, )
 
         if not RENDER:
             self.renderer = FakeRenderer()
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
+
+        # Read packet
+        if not self.info.field_info_loaded:
+            self.info.read_field_info(self.get_field_info())
+            if not self.info.field_info_loaded:
+                return SimpleControllerState()
         self.info.read_packet(packet)
 
         self.renderer.begin_rendering()
@@ -63,6 +69,10 @@ class Beast(BaseAgent):
         # Rendering
         if self.do_rendering:
             draw_ball_path(self, 4, 5)
+            for pad in self.info.boost_pads:
+                score = self.info.get_boost_pad_convenience_score(pad)
+                self.renderer.draw_line_3d(self.info.my_car.pos, pad.pos, self.renderer.create_color(255, 0, int(255 * score), 0))
+
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
@@ -97,4 +107,4 @@ class ShootAtGoal:
             bot.controls = bot.drive.go_towards_point(bot, xy(ball.pos), 2000, True, True, can_dodge=dist > 2200)
         else:
             # Go home
-            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal_field, 2000, True, True)
+            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal_field, 2000, True, True, can_collect_boost=True)

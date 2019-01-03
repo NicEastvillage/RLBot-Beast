@@ -47,9 +47,9 @@ class DriveController:
             return self.dodge.controls
 
         # The vector from the car to the point in local coordinates:
-        # point_local[0]: how far in front of my car
-        # point_local[1]: how far to the left of my car
-        # point_local[2]: how far above my car
+        # point_local[X]: how far in front of my car
+        # point_local[Y]: how far to the left of my car
+        # point_local[Z]: how far above my car
         point_local = dot(point - car.pos, car.theta)
 
         # Angle to point in local xy plane and other stuff
@@ -115,6 +115,7 @@ class DriveController:
         self.last_point = point
 
         return self.controls
+
 
 # ----------------------------------------- Helper functions --------------------------------
 
