@@ -5,7 +5,7 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 from info import EGameInfo
-from moves import DriveController
+from moves import DriveController, AimCone
 from plans import KickoffPlan
 from render import FakeRenderer, draw_ball_path
 from rlmath import *
@@ -69,6 +69,13 @@ class Beast(BaseAgent):
         # Rendering
         if self.do_rendering:
             draw_ball_path(self, 4, 5)
+
+            # Aim cone
+            dir_to_post_1 = (self.info.enemy_goal + vec3(3800, 0, 0)) - self.info.ball.pos
+            dir_to_post_2 = (self.info.enemy_goal + vec3(-3800, 0, 0)) - self.info.ball.pos
+            cone = AimCone(dir_to_post_1, dir_to_post_2)
+            cone.get_goto_point(self, self.info.ball.pos)
+            cone.draw(self, self.info.ball.pos)
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll

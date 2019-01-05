@@ -117,6 +117,108 @@ class DriveController:
         return self.controls
 
 
+
+class AimCone:
+    def __init__(self, right_most, left_most):
+        # Right angle and direction
+        if isinstance(right_most, float):
+            self.right_ang = fix_ang(right_most)
+            self.right_dir = vec3(math.cos(right_most), math.sin(right_most))
+        elif isinstance(right_most, vec3):
+            self.right_ang = math.atan2(right_most[Y], right_most[X])
+            self.right_dir = normalize(right_most)
+        # Left angle and direction
+        if isinstance(left_most, float):
+            self.left_ang = fix_ang(left_most)
+            self.left_dir = vec3(math.cos(left_most), math.sin(left_most))
+        elif isinstance(left_most, vec3):
+            self.left_ang = math.atan2(left_most[Y], left_most[X])
+            self.left_dir = normalize(left_most)
+
+    def contains_direction(self, direction):
+        # Direction can be both a angle or a vec3. Determine angle
+        if isinstance(direction, float):
+            ang = direction
+        elif isinstance(direction, vec3):
+            ang = math.atan2(direction[Y], direction[X])
+        else:
+            print("Err: direction is not an angle or vec3")
+            ang = 0
+
+        # Check if direction is with cone
+        if self.right_ang < self.left_ang:
+            return not (self.right_ang >= ang or ang >= self.left_ang)
+        else:
+            return not (self.right_ang >= ang >= self.left_ang)
+
+    def span_size(self):
+        if self.right_ang < self.left_ang:
+            return math.tau + self.right_ang - self.left_ang
+        else:
+            return self.right_ang - self.left_ang
+
+    def get_center_ang(self):
+        return fix_ang(self.right_ang - self.span_size() / 2)
+
+    def get_center_dir(self):
+        ang = self.get_center_ang()
+        return vec3(math.cos(ang), math.sin(ang), 0)
+
+    def get_goto_point(self, bot, point):
+        point = xy(point)
+        desired_dir = self.get_center_dir()
+
+        desired_dir_inv = -1 * desired_dir
+        car_loc = xy(bot.info.my_car.pos)
+        point_to_car = car_loc - point
+
+        ang_to_desired_dir = angle_between(desired_dir_inv, point_to_car)
+
+        ANG_ROUTE_ACCEPTED = math.pi / 5.0
+        can_go_straight = abs(ang_to_desired_dir) < self.span_size() / 2.0
+        can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
+        point = point + desired_dir_inv * 50
+        if can_go_straight:
+            return point, 1.0
+        elif can_with_route:
+            ang_to_right = abs(angle_between(point_to_car, -1 * self.right_dir))
+            ang_to_left = abs(angle_between(point_to_car, -1 * self.left_dir))
+            closest_dir = self.right_dir if ang_to_right < ang_to_left else self.left_dir
+
+            bx = point[X]
+            by = point[Y]
+            cx = car_loc[X]
+            cy = car_loc[Y]
+            dx = closest_dir[X]
+            dy = closest_dir[Y]
+
+            t = - (bx * bx - 2 * bx * cx + by * by - 2 * by * cy + cx * cx + cy * cy) / (
+                        2 * (bx * dx + by * dy - cx * dx - cy * dy))
+            t = clip(t, -1700, 1700)
+
+            goto = point + 1.0 * t * closest_dir
+
+            goto[X] = clip(goto[X], -FIELD_WIDTH / 2, FIELD_WIDTH / 2)
+            goto[Y] = clip(goto[Y], -FIELD_LENGTH / 2, FIELD_LENGTH / 2)
+
+            bot.renderer.draw_line_3d(car_loc, goto, bot.renderer.create_color(255, 150, 150, 150))
+            bot.renderer.draw_line_3d(point, goto, bot.renderer.create_color(255, 150, 150, 150))
+            return goto, 0.5
+        else:
+            return None, 1
+
+    def draw(self, bot, center, arm_len=500, arm_count=5, r=255, g=255, b=255):
+        renderer = bot.renderer
+        ang_step = self.span_size() / (arm_count - 1)
+
+        for i in range(arm_count):
+            ang = self.right_ang - ang_step * i
+            arm_dir = vec3(math.cos(ang), math.sin(ang), 0)
+            end = center + arm_dir * arm_len
+            alpha = 255 if i == 0 or i == arm_count - 1 else 110
+            renderer.draw_line_3d(center, end, renderer.create_color(alpha, r, g, b))
+
+
 # ----------------------------------------- Helper functions --------------------------------
 
 
