@@ -1,7 +1,9 @@
+import random
 import time
 
 from RLUtilities.Maneuvers import AirDodge
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
+from rlbot.utils.game_state_util import CarState, Physics, Vector3, Rotator, GameState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 from info import EGameInfo
@@ -27,6 +29,7 @@ class Beast(BaseAgent):
         self.drive = DriveController()
 
         self.last_time = 0
+        self.state_setting_timer_last = time.time()
 
     def initialize_agent(self):
         self.ut = UtilitySystem([ShootAtGoal()])

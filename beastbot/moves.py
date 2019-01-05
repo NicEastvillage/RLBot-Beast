@@ -48,6 +48,9 @@ class DriveController:
         if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
             point = lerp(xy(car.pos), xy(point), 0.5)
 
+        # If the car is in a goal, avoid goal posts
+        self.avoid_goal_post(bot, point)
+
         car_to_point = point - car.pos
 
         # The vector from the car to the point in local coordinates:
@@ -120,6 +123,31 @@ class DriveController:
 
         return self.controls
 
+    def avoid_goal_post(self, bot, point):
+        car = bot.info.my_car
+        car_to_point = point - car.pos
+
+        # Car is not in goal, not adjustment needed
+        if abs(car.pos[Y]) < FIELD_LENGTH / 2:
+            return
+
+        # Car can go straight, not adjustment needed
+        if car_to_point[X] == 0:
+            return
+
+        # Do we need to cross a goal post to get to the point?
+        goalx = GOAL_WIDTH / 2 - 100
+        goaly = FIELD_LENGTH / 2 - 100
+        t = max((goalx - car.pos[X]) / car_to_point[X],
+                (-goalx - car.pos[X]) / car_to_point[X])
+        # This is the y coordinate when car would hit a goal wall. Is that inside the goal?
+        crossing_goalx_at_y = abs(car.pos[Y] + t * car_to_point[Y])
+        if crossing_goalx_at_y > goaly:
+            # Adjustment is needed
+            point[X] = clip(point[X], -goalx, goalx)
+            point[Y] = clip(point[Y], -goaly, goaly)
+            if bot.do_rendering:
+                bot.renderer.draw_line_3d(car.pos, point, bot.renderer.green())
 
 
 class AimCone:

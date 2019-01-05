@@ -6,6 +6,7 @@ from RLUtilities.LinearAlgebra import *
 FIELD_WIDTH = 8192
 FIELD_LENGTH = 10240
 FILED_HEIGHT = 2044
+GOAL_WIDTH = 1900
 
 
 X = 0

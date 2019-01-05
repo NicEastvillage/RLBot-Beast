@@ -19,7 +19,7 @@ class DodgePlan:
         self._t_aim = 0.13
         self._t_second_jump = 0.18
         self._t_second_unjump = 0.46
-        self._t_finishing = 1.0  # After this, Fix orientation until lands on ground
+        self._t_finishing = 1.0  # After this, fix orientation until lands on ground
 
         self._t_steady_again = 0.25  # Time on ground before steady and ready again
         self._max_speed = 2000  # Don't boost if above this speed
@@ -53,13 +53,13 @@ class DodgePlan:
             self.almost_finished = True
             if car.on_ground:
                 self.finished = True
-            # TODO return fix_orientation(data)
+            else:
+                bot.plan = RecoverPlan()
+                self.finished = True
             return self.controls
-
         elif ct >= self._t_second_unjump:
             # Stop pressing jump and rotate and wait for flip is done
             pass
-
         elif ct >= self._t_aim:
             if ct >= self._t_second_jump:
                 self.controls.jump = 1
@@ -109,7 +109,7 @@ class KickoffPlan:
             bot.drive.start_dodge()
 
         # Make two dodges when spawning far back
-        elif dist > 3900 and vel_p > 780:
+        elif dist > 3500 and vel_p > 1000:
             bot.drive.start_dodge()
 
         # Pickup boost when spawning back corner by driving a bit towards the middle boost pad first
@@ -131,5 +131,6 @@ class RecoverPlan:
             self.aerialturn = AerialTurn(bot.info.my_car)
 
         self.aerialturn.step(0.01666)
+        self.aerialturn.controls.throttle = 1
         bot.controls = self.aerialturn.controls
         self.finished = self.aerialturn.finished
