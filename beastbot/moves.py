@@ -201,8 +201,9 @@ class AimCone:
             goto[X] = clip(goto[X], -FIELD_WIDTH / 2, FIELD_WIDTH / 2)
             goto[Y] = clip(goto[Y], -FIELD_LENGTH / 2, FIELD_LENGTH / 2)
 
-            bot.renderer.draw_line_3d(car_loc, goto, bot.renderer.create_color(255, 150, 150, 150))
-            bot.renderer.draw_line_3d(point, goto, bot.renderer.create_color(255, 150, 150, 150))
+            if bot.do_rendering:
+                bot.renderer.draw_line_3d(car_loc, goto, bot.renderer.create_color(255, 150, 150, 150))
+                bot.renderer.draw_line_3d(point, goto, bot.renderer.create_color(255, 150, 150, 150))
             return goto, 0.5
         else:
             return None, 1

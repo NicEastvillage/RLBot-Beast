@@ -70,13 +70,6 @@ class Beast(BaseAgent):
         if self.do_rendering:
             draw_ball_path(self, 4, 5)
 
-            # Aim cone
-            dir_to_post_1 = (self.info.enemy_goal + vec3(3800, 0, 0)) - self.info.ball.pos
-            dir_to_post_2 = (self.info.enemy_goal + vec3(-3800, 0, 0)) - self.info.ball.pos
-            cone = AimCone(dir_to_post_1, dir_to_post_2)
-            cone.get_goto_point(self, self.info.ball.pos)
-            cone.draw(self, self.info.ball.pos)
-
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
         self.info.my_car.last_input.pitch = self.controls.pitch
@@ -100,12 +93,25 @@ class ShootAtGoal:
         ball = bot.info.ball
 
         car_to_ball = ball.pos - car.pos
-        ball_to_goal = bot.info.enemy_goal - ball.pos
+        ball_to_enemy_goal = bot.info.enemy_goal - ball.pos
+        own_goal_to_ball = ball.pos - bot.info.own_goal
         dist = norm(car_to_ball)
 
-        right_side_of_ball = dot(car_to_ball, ball_to_goal) > 0
+        offence = ball.pos[Y] * bot.info.team_sign < 0
+        dot_enemy = dot(car_to_ball, ball_to_enemy_goal)
+        dot_own = dot(car_to_ball, own_goal_to_ball)
+        right_side_of_ball = dot_enemy > 0 if offence else dot_own > 0
+        print(offence, dot_enemy, dot_own, right_side_of_ball)
 
         if right_side_of_ball:
+            # Aim cone
+            dir_to_post_1 = (bot.info.enemy_goal + vec3(3800, 0, 0)) - bot.info.ball.pos
+            dir_to_post_2 = (bot.info.enemy_goal + vec3(-3800, 0, 0)) - bot.info.ball.pos
+            cone = AimCone(dir_to_post_1, dir_to_post_2)
+            cone.get_goto_point(bot, bot.info.ball.pos)
+            if bot.do_rendering:
+                cone.draw(bot, bot.info.ball.pos)
+
             # Chase ball
             bot.controls = bot.drive.go_towards_point(bot, xy(ball.pos), 2000, True, True, can_dodge=dist > 2200)
         else:
