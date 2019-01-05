@@ -59,9 +59,10 @@ class Beast(BaseAgent):
             self.doing_kickoff = False
             choice = self.ut.evaluate(self)
             choice.execute(self)
-            # The choice has started a plan, reset utility system
+            # The choice has started a plan, reset utility system and execute plan instead
             if self.plan is not None:
                 self.ut.reset()
+                self.plan.execute(self)
         else:
             # We have a plan
             self.plan.execute(self)

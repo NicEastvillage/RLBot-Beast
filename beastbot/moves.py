@@ -1,10 +1,10 @@
 import time
 
-from RLUtilities.Maneuvers import AirDodge
+from RLUtilities.Maneuvers import AirDodge, AerialTurn
 from rlbot.agents.base_agent import SimpleControllerState
 
 import render
-from plans import DodgePlan
+from plans import DodgePlan, RecoverPlan
 from rlmath import *
 
 
@@ -16,6 +16,7 @@ class DriveController:
         self.car = None
         self.last_dodge_end_time = 0
         self.dodge_cooldown = 0.26
+        self.recovery = None
 
     def start_dodge(self):
         if self.dodge is None:
@@ -23,28 +24,31 @@ class DriveController:
 
     def go_towards_point(self, bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, can_dodge=True, wall_offset_allowed=130) -> SimpleControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
-        REQUIRED_VELF_FOR_DODGE = 950
+        REQUIRED_VELF_FOR_DODGE = 1100
 
         car = bot.info.my_car
 
-        # Get down from wall by choosing a point close to ground
-        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
-            point = lerp(xy(car.pos), xy(point), 0.5)
-
-        car_to_point = point - car.pos
-
-        # Dodge over
+        # Dodge is finished
         if self.dodge is not None and self.dodge.finished:
             self.dodge = None
             self.last_dodge_end_time = time.time()
 
         # Continue dodge
         if self.dodge is not None:
-
             self.dodge.target = point
             self.dodge.execute(bot)
-
             return self.dodge.controls
+
+        # Begin recovery
+        if not car.on_ground:
+            bot.plan = RecoverPlan()
+            return self.controls
+
+        # Get down from wall by choosing a point close to ground
+        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
+            point = lerp(xy(car.pos), xy(point), 0.5)
+
+        car_to_point = point - car.pos
 
         # The vector from the car to the point in local coordinates:
         # point_local[X]: how far in front of my car

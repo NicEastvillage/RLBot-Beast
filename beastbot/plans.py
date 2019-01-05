@@ -1,5 +1,6 @@
 import time
 
+from RLUtilities.Maneuvers import AerialTurn
 from rlbot.agents.base_agent import SimpleControllerState
 
 from rlmath import *
@@ -108,7 +109,7 @@ class KickoffPlan:
             bot.drive.start_dodge()
 
         # Make two dodges when spawning far back
-        elif dist > 3900 and vel_p > 730:
+        elif dist > 3900 and vel_p > 780:
             bot.drive.start_dodge()
 
         # Pickup boost when spawning back corner by driving a bit towards the middle boost pad first
@@ -118,3 +119,17 @@ class KickoffPlan:
 
         bot.controls = bot.drive.go_towards_point(bot, point, target_vel=2300, slide=False, boost=True, can_dodge=False)
         self.finished = not bot.info.is_kickoff
+
+
+class RecoverPlan:
+    def __init__(self):
+        self.finished = False
+        self.aerialturn = None
+
+    def execute(self, bot):
+        if self.aerialturn is None:
+            self.aerialturn = AerialTurn(bot.info.my_car)
+
+        self.aerialturn.step(0.01666)
+        bot.controls = self.aerialturn.controls
+        self.finished = self.aerialturn.finished
