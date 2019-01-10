@@ -105,14 +105,13 @@ class ShootAtGoal:
         dot_enemy = dot(car_to_ball, ball_to_enemy_goal)
         dot_own = dot(car_to_ball, own_goal_to_ball)
         right_side_of_ball = dot_enemy > 0 if offence else dot_own > 0
-        print(offence, dot_enemy, dot_own, right_side_of_ball)
 
         if right_side_of_ball:
             # Aim cone
             dir_to_post_1 = (bot.info.enemy_goal + vec3(3800, 0, 0)) - bot.info.ball.pos
             dir_to_post_2 = (bot.info.enemy_goal + vec3(-3800, 0, 0)) - bot.info.ball.pos
             cone = AimCone(dir_to_post_1, dir_to_post_2)
-            cone.get_goto_point(bot, bot.info.ball.pos)
+            cone.get_goto_point(bot, car.pos, bot.info.ball.pos)
             if bot.do_rendering:
                 cone.draw(bot, bot.info.ball.pos)
 

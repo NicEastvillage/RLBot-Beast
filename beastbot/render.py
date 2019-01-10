@@ -5,6 +5,8 @@ import math
 
 from RLUtilities.LinearAlgebra import *
 
+from rlmath import bezier
+
 
 class FakeRenderer:
     def __init__(self):
@@ -62,3 +64,13 @@ def draw_circle(bot, center: vec3, normal: vec3, radius: float, pieces: int):
         points.append(center + arm)
 
     bot.renderer.draw_polyline_3d(points, bot.renderer.orange())
+
+
+def draw_bezier(bot, points, time_step=0.05):
+    time = 0
+    last_point = points[0]
+    while time < 1:
+        time += time_step
+        current_point = bezier(time, points)
+        bot.renderer.draw_line_3d(last_point, current_point, bot.renderer.create_color(255, 180, 255, 210))
+        last_point = current_point

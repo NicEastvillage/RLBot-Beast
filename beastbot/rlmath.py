@@ -85,3 +85,25 @@ def rotated_2d(vec: vec3, ang: float) -> vec3:
 
 def is_near_wall(point: vec3, offset: float=130) -> bool:
     return abs(point[X]) > FIELD_WIDTH - offset or abs(point[Y]) > FIELD_LENGTH - offset  # TODO Add diagonal walls
+
+
+def curve_from_arrival_dir(src, target, dir, w=1):
+    bx = target[X]
+    by = target[Y]
+    cx = src[X]
+    cy = src[Y]
+    dx = dir[X]
+    dy = dir[Y]
+
+    t = - (bx * bx - 2 * bx * cx + by * by - 2 * by * cy + cx * cx + cy * cy) / (2 * (bx * dx + by * dy - cx * dx - cy * dy))
+    t = clip(t, -1700, 1700)
+
+    return target + w * t * dir
+
+
+def bezier(t, points):
+    n = len(points)
+    if n == 1:
+        return points[0]
+    else:
+        return (1 - t) * bezier(t, points[0:-1]) + t * bezier(t, points[1:n])

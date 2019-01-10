@@ -13,7 +13,6 @@ class DriveController:
         self.controls = SimpleControllerState()
         self.dodge = None
         self.last_point = None
-        self.car = None
         self.last_dodge_end_time = 0
         self.dodge_cooldown = 0.26
         self.recovery = None
@@ -117,8 +116,7 @@ class DriveController:
                 self.controls.throttle = clip(vel_delta / 350, -1, 1)
                 self.controls.boost = False
 
-        # Save for things for later
-        self.car = car
+        # Saved if something outside calls start_dodge() in the meantime
         self.last_point = point
 
         return self.controls
@@ -196,17 +194,17 @@ class AimCone:
         ang = self.get_center_ang()
         return vec3(math.cos(ang), math.sin(ang), 0)
 
-    def get_goto_point(self, bot, point):
+    def get_goto_point(self, bot, src, point):
         point = xy(point)
         desired_dir = self.get_center_dir()
 
         desired_dir_inv = -1 * desired_dir
-        car_loc = xy(bot.info.my_car.pos)
-        point_to_car = car_loc - point
+        car_pos = xy(src)
+        point_to_car = car_pos - point
 
         ang_to_desired_dir = angle_between(desired_dir_inv, point_to_car)
 
-        ANG_ROUTE_ACCEPTED = math.pi / 5.0
+        ANG_ROUTE_ACCEPTED = math.pi / 4.0
         can_go_straight = abs(ang_to_desired_dir) < self.span_size() / 2.0
         can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
         point = point + desired_dir_inv * 50
@@ -217,27 +215,21 @@ class AimCone:
             ang_to_left = abs(angle_between(point_to_car, -1 * self.left_dir))
             closest_dir = self.right_dir if ang_to_right < ang_to_left else self.left_dir
 
-            bx = point[X]
-            by = point[Y]
-            cx = car_loc[X]
-            cy = car_loc[Y]
-            dx = closest_dir[X]
-            dy = closest_dir[Y]
-
-            t = - (bx * bx - 2 * bx * cx + by * by - 2 * by * cy + cx * cx + cy * cy) / (
-                        2 * (bx * dx + by * dy - cx * dx - cy * dy))
-            t = clip(t, -1700, 1700)
-
-            goto = point + 1.0 * t * closest_dir
+            goto = curve_from_arrival_dir(car_pos, point, closest_dir)
 
             goto[X] = clip(goto[X], -FIELD_WIDTH / 2, FIELD_WIDTH / 2)
             goto[Y] = clip(goto[Y], -FIELD_LENGTH / 2, FIELD_LENGTH / 2)
 
             if bot.do_rendering:
-                bot.renderer.draw_line_3d(car_loc, goto, bot.renderer.create_color(255, 150, 150, 150))
+                bot.renderer.draw_line_3d(car_pos, goto, bot.renderer.create_color(255, 150, 150, 150))
                 bot.renderer.draw_line_3d(point, goto, bot.renderer.create_color(255, 150, 150, 150))
+
+                # Bezier
+                render.draw_bezier(bot, [car_pos, goto, point])
+
             return goto, 0.5
         else:
+
             return None, 1
 
     def draw(self, bot, center, arm_len=500, arm_count=5, r=255, g=255, b=255):
