@@ -87,7 +87,7 @@ class DodgePlan:
         else:
             self.controls.jump = 1
 
-        return self.controls
+        bot.controls = self.controls
 
 
 class KickoffPlan:

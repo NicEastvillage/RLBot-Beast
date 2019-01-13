@@ -6,6 +6,7 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.game_state_util import CarState, Physics, Vector3, Rotator, GameState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
+from behaviour import *
 from info import EGameInfo
 from moves import DriveController, AimCone
 from plans import KickoffPlan
@@ -22,6 +23,7 @@ class Beast(BaseAgent):
         self.do_rendering = RENDER
         self.controls = SimpleControllerState()
         self.info = None
+        self.choice = None
         self.plan = None
         self.doing_kickoff = False
 
@@ -32,7 +34,7 @@ class Beast(BaseAgent):
         self.state_setting_timer_last = time.time()
 
     def initialize_agent(self):
-        self.ut = UtilitySystem([ShootAtGoal()])
+        self.ut = UtilitySystem([DefaultBehaviour(), Carry()])
         self.info = EGameInfo(self.index, self.team, )
 
         if not RENDER:
@@ -60,11 +62,12 @@ class Beast(BaseAgent):
             # There is no plan, use utility system to find a choice
             self.plan = None
             self.doing_kickoff = False
-            choice = self.ut.evaluate(self)
-            choice.execute(self)
+            self.choice = self.ut.evaluate(self)
+            self.choice.execute(self)
             # The choice has started a plan, reset utility system and execute plan instead
             if self.plan is not None:
                 self.ut.reset()
+                self.choice = None
                 self.plan.execute(self)
         else:
             # We have a plan
@@ -73,6 +76,9 @@ class Beast(BaseAgent):
         # Rendering
         if self.do_rendering:
             draw_ball_path(self, 4, 5)
+            doing = self.plan or self.choice
+            if doing is not None:
+                self.renderer.draw_string_3d(self.info.my_car.pos, 1, 1, doing.__class__.__name__, self.renderer.team_color(alt_color=True))
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
@@ -84,12 +90,12 @@ class Beast(BaseAgent):
         return self.controls
 
 
-class ShootAtGoal:
+class DefaultBehaviour:
     def __init__(self):
         pass
 
     def utility(self, bot):
-        return 1
+        return 0.1
 
     def execute(self, bot):
 

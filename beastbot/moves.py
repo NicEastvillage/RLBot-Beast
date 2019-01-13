@@ -90,6 +90,9 @@ class DriveController:
             # Should drop speed or just keep up the speed?
             if can_keep_speed and target_vel < vel_towards_point:
                 target_vel = vel_towards_point
+            else:
+                # Small lerp adjustment
+                target_vel = lerp(vel_towards_point, target_vel, 1.2)
 
             # Turn and maybe slide
             self.controls.steer = clip(angle + (2.5*angle) ** 3, -1.0, 1.0)

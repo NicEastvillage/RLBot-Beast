@@ -24,7 +24,7 @@ class UtilitySystem:
         self.current_best_index = best_index
         choice = self.choices[self.current_best_index]
         # Can choice be evaluated further? - this allows nested UtilitySystems
-        evaluate_method = getattr(choice, "reset", None)
+        evaluate_method = getattr(choice, "evaluate", None)
         if callable(evaluate_method):
             choice = evaluate_method(bot)
         return choice

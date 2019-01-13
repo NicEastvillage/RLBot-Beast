@@ -7,6 +7,8 @@ FIELD_WIDTH = 8192
 FIELD_LENGTH = 10240
 FILED_HEIGHT = 2044
 GOAL_WIDTH = 1900
+GRAVITY = vec3(0, 0, -650)
+BALL_RADIUS = 92
 
 
 X = 0
@@ -44,6 +46,10 @@ def sign(x) -> float:
     return (1, -1)[x < 0]
 
 
+def clip01(x) -> float:
+    return clip(x, 0, 1)
+
+
 def lerp(a, b, t: float):
     return (1 - t) * a + t * b
 
@@ -53,6 +59,9 @@ def inv_lerp(a, b, v) -> float:
 
 
 def fix_ang(ang: float) -> float:
+    """
+    Transforms the given angle into the range -pi...pi
+    """
     while abs(ang) > math.pi:
         if ang < 0:
             ang += 2 * math.pi
@@ -62,6 +71,9 @@ def fix_ang(ang: float) -> float:
 
 
 def proj_onto(src: vec3, dir: vec3) -> vec3:
+    """
+    Returns the vector component of src that is parallel with dir, i.e. the projection of src onto dir.
+    """
     try:
         return (dot(src, dir) / dot(dir, dir)) * dir
     except ZeroDivisionError:
@@ -69,6 +81,9 @@ def proj_onto(src: vec3, dir: vec3) -> vec3:
 
 
 def proj_onto_size(src: vec3, dir: vec3) -> float:
+    """
+    Returns the size of the vector that is the project of src onto dir
+    """
     try:
         dir_n = normalize(dir)
         return dot(src, dir_n) / dot(dir_n, dir_n)  # can be negative!
@@ -87,21 +102,28 @@ def is_near_wall(point: vec3, offset: float=130) -> bool:
     return abs(point[X]) > FIELD_WIDTH - offset or abs(point[Y]) > FIELD_LENGTH - offset  # TODO Add diagonal walls
 
 
-def curve_from_arrival_dir(src, target, dir, w=1):
-    bx = target[X]
-    by = target[Y]
-    cx = src[X]
-    cy = src[Y]
+def curve_from_arrival_dir(src, target, arrival_direction, w=1):
+    """
+    Returns a point that is equally far from src and target on the line going through target with the given direction
+    """
+    dir = normalize(arrival_direction)
+    tx = target[X]
+    ty = target[Y]
+    sx = src[X]
+    sy = src[Y]
     dx = dir[X]
     dy = dir[Y]
 
-    t = - (bx * bx - 2 * bx * cx + by * by - 2 * by * cy + cx * cx + cy * cy) / (2 * (bx * dx + by * dy - cx * dx - cy * dy))
+    t = - (tx * tx - 2 * tx * sx + ty * ty - 2 * ty * sy + sx * sx + sy * sy) / (2 * (tx * dx + ty * dy - sx * dx - sy * dy))
     t = clip(t, -1700, 1700)
 
     return target + w * t * dir
 
 
-def bezier(t, points):
+def bezier(t: float, points: list) -> vec3:
+    """
+    Returns a point on a bezier curve made from the given controls points
+    """
     n = len(points)
     if n == 1:
         return points[0]
