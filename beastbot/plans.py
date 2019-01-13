@@ -95,29 +95,43 @@ class KickoffPlan:
         self.finished = False
 
     def execute(self, bot):
-        DODGE_DIST = 190
+        DODGE_DIST = 250
+        MIDDLE_OFFSET = 430
 
         # Since ball is at (0,0) we don't we a car_to_ball variable like we do so many other places
         car = bot.info.my_car
         dist = norm(car.pos)
         vel_p = -proj_onto_size(car.vel, car.pos)
 
-        point = vec3(0, 0, 0)
+        point = vec3(0, bot.info.team_sign * (dist / 2.6 - MIDDLE_OFFSET), 0)
+        speed = 2300
+        opp_dist = norm(bot.info.opponents[0].pos)
+        opp_does_kick = opp_dist < dist + 700
 
-        # Dodge when close to (0, 0). The dodge itself should happen in about 0.3 seconds
-        if dist - DODGE_DIST < vel_p * 0.3:
+        print(dist, vel_p, opp_does_kick)
+
+        # Opponent is not going for kickoff, so we slow down a bit
+        if not opp_does_kick:
+            speed = 2210
+            point = vec3(0, bot.info.team_sign * (dist / 2.05 - MIDDLE_OFFSET), 0)
+            point += vec3(35 * sign(car.pos[X]), 0, 0)
+
+
+        # Dodge when close to (0, 0) - but only if the opponent also goes for kickoff. The dodge itself should happen in about 0.3 seconds
+        if dist - DODGE_DIST < vel_p * 0.3 and opp_does_kick:
             bot.drive.start_dodge()
 
         # Make two dodges when spawning far back
-        elif dist > 3500 and vel_p > 1000:
+        elif dist > 3640 and vel_p > 1200 and not opp_does_kick:
             bot.drive.start_dodge()
 
         # Pickup boost when spawning back corner by driving a bit towards the middle boost pad first
-        elif abs(car.pos[X]) > 200 and abs(car.pos[Y]) > 2880:
+        elif abs(car.pos[X]) > 230 and abs(car.pos[Y]) > 2880:
             # The pads exact location is (0, 2816), but don't have to be exact
             point[Y] = bot.info.team_sign * 2790
 
-        bot.controls = bot.drive.go_towards_point(bot, point, target_vel=2300, slide=False, boost=True, can_dodge=False)
+        bot.renderer.draw_line_3d(car.pos, point, bot.renderer.white())
+        bot.controls = bot.drive.go_towards_point(bot, point, target_vel=speed, slide=False, boost=True, can_dodge=False, can_keep_speed=False)
         self.finished = not bot.info.is_kickoff
 
 
