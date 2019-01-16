@@ -58,6 +58,12 @@ def inv_lerp(a, b, v) -> float:
     return a if b - a == 0 else (v - a) / (b - a)
 
 
+def remap(prev_low, prev_high, new_low, new_high, v) -> float:
+    out = inv_lerp(prev_low, prev_high, v)
+    out = lerp(new_low, new_high, out)
+    return out
+
+
 def fix_ang(ang: float) -> float:
     """
     Transforms the given angle into the range -pi...pi
@@ -129,3 +135,8 @@ def bezier(t: float, points: list) -> vec3:
         return points[0]
     else:
         return (1 - t) * bezier(t, points[0:-1]) + t * bezier(t, points[1:n])
+
+
+def is_closer_to_goal_than(a: vec3, b: vec3, team_index):
+    """ Returns true if a is closer than b to goal owned by the given team """
+    return (a[Y] < b[Y], a[Y] > b[Y])[team_index]

@@ -20,6 +20,8 @@ class EGameInfo(GameInfo):
         self.own_goal = vec3(0, self.team_sign * FIELD_LENGTH / 2, 0)
         self.own_goal_field = vec3(0, self.team_sign * (FIELD_LENGTH / 2 - 560), 0)
         self.enemy_goal = vec3(0, -self.team_sign * FIELD_LENGTH / 2, 0)
+        self.enemy_goal_right = vec3(820 * self.team_sign, -5120 * self.team_sign, 0)
+        self.enemy_goal_left = vec3(-820 * self.team_sign, -5120 * self.team_sign, 0)
 
         self.field_info_loaded = False
 

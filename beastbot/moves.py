@@ -232,7 +232,6 @@ class AimCone:
 
             return goto, 0.5
         else:
-
             return None, 1
 
     def draw(self, bot, center, arm_len=500, arm_count=5, r=255, g=255, b=255):

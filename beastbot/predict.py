@@ -60,8 +60,8 @@ def fall(obj, time: float, g=GRAVITY):
 
 def ball_predict(bot, time: float) -> DummyObject:
     """ Returns a DummyObject describing the expected position and velocity of the ball """
-    t = int(clip(360 * time / 6, 0, 360)) - 1
     path = bot.get_ball_prediction_struct()
+    t = int(clip(360 * time / 6, 1, path.num_slices)) - 1
     return DummyObject(path.slices[t].physics)
 
 
@@ -100,3 +100,18 @@ def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY[Z]) -> Uncer
     else:
         # Never fulfils requirements
         return UncertainEvent(False, 1e300)
+
+
+def time_till_reach_ball(car, ball):
+    """ Rough estimate about when we can reach the ball in 2d. """
+    car_to_ball = xy(ball.pos - car.pos)
+    dist = norm(car_to_ball) - BALL_RADIUS - 25
+    vel_c_f = proj_onto_size(car.vel, car_to_ball)
+    vel_b_f = proj_onto_size(ball.vel, car_to_ball)
+    vel_c_amp = lerp(vel_c_f, norm(car.vel), 0.6)
+    vel_f = vel_c_amp - vel_b_f
+    dist_long_01 = clip01(dist / 10_000.0)**2
+    time_normal = dist / max(250, vel_f)
+    time_long = dist / max(norm(car.vel), 1400)
+    time = lerp(time_normal, time_long, dist_long_01)
+    return time

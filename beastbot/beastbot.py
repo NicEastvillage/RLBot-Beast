@@ -34,7 +34,7 @@ class Beast(BaseAgent):
         self.state_setting_timer_last = time.time()
 
     def initialize_agent(self):
-        self.ut = UtilitySystem([DefaultBehaviour(), Carry()])
+        self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), Carry()])
         self.info = EGameInfo(self.index, self.team, )
 
         if not RENDER:

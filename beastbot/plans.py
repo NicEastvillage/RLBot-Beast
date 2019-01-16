@@ -108,8 +108,6 @@ class KickoffPlan:
         opp_dist = norm(bot.info.opponents[0].pos)
         opp_does_kick = opp_dist < dist + 700
 
-        print(dist, vel_p, opp_does_kick)
-
         # Opponent is not going for kickoff, so we slow down a bit
         if not opp_does_kick:
             speed = 2210
