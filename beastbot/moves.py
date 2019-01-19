@@ -85,6 +85,7 @@ class DriveController:
             # Hard turn
             self.controls.throttle = 0 if vel_f > 250 else 0.2
             self.controls.steer = sign(angle)
+            self.controls.boost = False
 
         else:
             # Should drop speed or just keep up the speed?
