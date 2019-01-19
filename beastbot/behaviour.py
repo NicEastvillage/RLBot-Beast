@@ -99,7 +99,7 @@ class ShootAtGoal:
         car_to_ball = reachable_ball.pos - bot.info.my_car.pos
         in_position = self.aim_cone.contains_direction(car_to_ball)
 
-        return clip01(own_half_01 + 0.06 * in_position)
+        return clip01(own_half_01 + 0.1 * in_position)
 
     def execute(self, bot):
 
@@ -109,7 +109,6 @@ class ShootAtGoal:
         reach_time = predict.time_till_reach_ball(car_now, ball_now)
         reachable_ball = predict.ball_predict(bot, reach_time)
         car_to_rball = reachable_ball.pos - car_now.pos
-        print(reachable_ball.pos)
 
         # Check if close enough to dodge. A dodge happens after 0.3 sec
         ball_soon_pos = predict.ball_predict(bot, 0.25).pos
@@ -153,3 +152,41 @@ class ShootAtGoal:
             speed = dist / (reach_time * goto_time * 0.95)
             bot.controls = bot.drive.go_towards_point(bot, goto, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
             return
+
+
+class ClearBall:
+    def __init__(self, bot):
+        if bot.team == 0:
+            # blue
+            self.aim_cone = AimCone(.8 * math.pi, .2 * math.pi)
+        else:
+            # orange
+            self.aim_cone = AimCone(-.1 * math.pi, -.9 * math.pi)
+
+    def utility(self, bot):
+        team_sign = bot.info.team_sign
+
+        length = team_sign * FIELD_LENGTH / 2
+        ball_own_half_01 = clip01(remap(-length, length, -0.2, 1.2, bot.info.ball.pos[Y]))
+
+        reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
+        car_to_ball = reachable_ball.pos - bot.info.my_car.pos
+        in_position = self.aim_cone.contains_direction(car_to_ball)
+
+        return ball_own_half_01 * in_position
+
+    def execute(self, bot):
+        reach_time = predict.time_till_reach_ball(bot.info.my_car, bot.info.ball)
+        reachable_ball = predict.ball_predict(bot, reach_time)
+        goto, goto_time = self.aim_cone.get_goto_point(bot, bot.info.my_car.pos, reachable_ball.pos)
+
+        self.aim_cone.draw(bot, reachable_ball.pos, r=0, g=170, b=255)
+
+        if goto is None:
+            # go home-ish
+            own_goal = lerp(bot.info.own_goal, bot.info.ball.pos, 0.5)
+            bot.controls = bot.drive.go_towards_point(bot, own_goal, target_vel=1460, slide=True, boost=True, can_keep_speed=True)
+        else:
+            dist = norm(bot.info.my_car.pos - reachable_ball.pos)
+            speed = dist / (reach_time * goto_time)
+            bot.controls = bot.drive.go_towards_point(bot, goto, target_vel=speed, slide=True, boost=True, can_keep_speed=False)

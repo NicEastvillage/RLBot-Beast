@@ -156,14 +156,14 @@ class AimCone:
         # Right angle and direction
         if isinstance(right_most, float):
             self.right_ang = fix_ang(right_most)
-            self.right_dir = vec3(math.cos(right_most), math.sin(right_most))
+            self.right_dir = vec3(math.cos(right_most), math.sin(right_most), 0)
         elif isinstance(right_most, vec3):
             self.right_ang = math.atan2(right_most[Y], right_most[X])
             self.right_dir = normalize(right_most)
         # Left angle and direction
         if isinstance(left_most, float):
             self.left_ang = fix_ang(left_most)
-            self.left_dir = vec3(math.cos(left_most), math.sin(left_most))
+            self.left_dir = vec3(math.cos(left_most), math.sin(left_most), 0)
         elif isinstance(left_most, vec3):
             self.left_ang = math.atan2(left_most[Y], left_most[X])
             self.left_dir = normalize(left_most)
@@ -180,9 +180,9 @@ class AimCone:
 
         # Check if direction is with cone
         if self.right_ang < self.left_ang:
-            return not (self.right_ang >= ang or ang >= self.left_ang)
+            return self.right_ang >= ang or ang >= self.left_ang
         else:
-            return not (self.right_ang >= ang >= self.left_ang)
+            return self.right_ang >= ang >= self.left_ang
 
     def span_size(self):
         if self.right_ang < self.left_ang:
