@@ -128,9 +128,11 @@ class KickoffPlan:
             # The pads exact location is (0, 2816), but don't have to be exact
             point[Y] = bot.info.team_sign * 2790
 
-        bot.renderer.draw_line_3d(car.pos, point, bot.renderer.white())
         bot.controls = bot.drive.go_towards_point(bot, point, target_vel=speed, slide=False, boost=True, can_dodge=False, can_keep_speed=False)
         self.finished = not bot.info.is_kickoff
+
+        if bot.do_rendering:
+            bot.renderer.draw_line_3d(car.pos, point, bot.renderer.white())
 
 
 class RecoverPlan:
