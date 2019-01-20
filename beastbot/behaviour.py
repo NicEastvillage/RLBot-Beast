@@ -123,15 +123,20 @@ class ShootAtGoal:
         goto, goto_time = self.aim_cone.get_goto_point(bot, car_now.pos, reachable_ball.pos)
         dist = norm(car_to_rball)
 
-        self.aim_cone.draw(bot, reachable_ball.pos, b=0)
+        if bot.do_rendering:
+            self.aim_cone.draw(bot, reachable_ball.pos, b=0)
+
         if goto is None or dist < 450:
 
             # Avoid enemy corners. Just wait
             if reachable_ball.pos[Y] * -bot.info.team_sign > 4350 and abs(reachable_ball.pos[X]) > 900 and not dist < 450:
                 wait_point = reachable_ball.pos * 0.5  # a point 50% closer to the center of the field
                 wait_point = lerp(wait_point, ball_now.pos + vec3(0, bot.info.team_sign * 3000, 0), 0.5)
-                bot.renderer.draw_line_3d(car_now.pos, wait_point, bot.renderer.yellow())
                 bot.controls = bot.drive.go_towards_point(bot, wait_point, norm(car_now.pos - wait_point), slide=False, boost=False, can_keep_speed=True, can_dodge=False)
+
+                if bot.do_rendering:
+                    bot.renderer.draw_line_3d(car_now.pos, wait_point, bot.renderer.yellow())
+
                 return
 
             if is_closer_to_goal_than(car_now.pos, ball_now.pos, bot.info.team):
@@ -139,8 +144,11 @@ class ShootAtGoal:
                 # Chase
                 goal_to_ball = normalize(reachable_ball.pos - bot.info.enemy_goal)
                 offset_ball = reachable_ball.pos + goal_to_ball * BALL_RADIUS
-                bot.renderer.draw_line_3d(car_now.pos, offset_ball, bot.renderer.yellow())
                 bot.controls = bot.drive.go_towards_point(bot, offset_ball, target_vel=2200, slide=False, boost=True)
+
+                if bot.do_rendering:
+                    bot.renderer.draw_line_3d(car_now.pos, offset_ball, bot.renderer.yellow())
+
                 return
 
             else:
@@ -180,7 +188,8 @@ class ClearBall:
         reachable_ball = predict.ball_predict(bot, reach_time)
         goto, goto_time = self.aim_cone.get_goto_point(bot, bot.info.my_car.pos, reachable_ball.pos)
 
-        self.aim_cone.draw(bot, reachable_ball.pos, r=0, g=170, b=255)
+        if bot.do_rendering:
+            self.aim_cone.draw(bot, reachable_ball.pos, r=0, g=170, b=255)
 
         if goto is None:
             # go home-ish
