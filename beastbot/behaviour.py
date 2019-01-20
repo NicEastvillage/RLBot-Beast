@@ -131,7 +131,7 @@ class ShootAtGoal:
                 wait_point = reachable_ball.pos * 0.5  # a point 50% closer to the center of the field
                 wait_point = lerp(wait_point, ball_now.pos + vec3(0, bot.info.team_sign * 3000, 0), 0.5)
                 bot.renderer.draw_line_3d(car_now.pos, wait_point, bot.renderer.yellow())
-                bot.controls = bot.drive.go_towards_point(bot, wait_point, norm(car_now.pos - wait_point), slide=True, boost=False, can_keep_speed=True, can_dodge=False)
+                bot.controls = bot.drive.go_towards_point(bot, wait_point, norm(car_now.pos - wait_point), slide=False, boost=False, can_keep_speed=True, can_dodge=False)
                 return
 
             if is_closer_to_goal_than(car_now.pos, ball_now.pos, bot.info.team):
