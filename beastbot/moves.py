@@ -1,5 +1,3 @@
-import time
-
 from RLUtilities.Maneuvers import AirDodge, AerialTurn
 from rlbot.agents.base_agent import SimpleControllerState
 
@@ -30,7 +28,7 @@ class DriveController:
         # Dodge is finished
         if self.dodge is not None and self.dodge.finished:
             self.dodge = None
-            self.last_dodge_end_time = time.time()
+            self.last_dodge_end_time = bot.info.current_game_time
 
         # Continue dodge
         if self.dodge is not None:
@@ -66,7 +64,7 @@ class DriveController:
 
         # Start dodge
         if can_dodge and abs(angle) <= 0.02 and vel_towards_point > REQUIRED_VELF_FOR_DODGE\
-                and dist > vel_towards_point + 500 + 500 and time.time() > self.last_dodge_end_time + self.dodge_cooldown:
+                and dist > vel_towards_point + 500 + 500 and bot.info.current_game_time > self.last_dodge_end_time + self.dodge_cooldown:
             self.dodge = DodgePlan(point)
 
         # Is in turn radius deadzone?

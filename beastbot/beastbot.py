@@ -14,7 +14,7 @@ from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
 
-RENDER = False
+RENDER = True
 
 
 class Beast(BaseAgent):
@@ -29,9 +29,6 @@ class Beast(BaseAgent):
 
         self.ut = None
         self.drive = DriveController()
-
-        self.last_time = 0
-        self.state_setting_timer_last = time.time()
 
     def initialize_agent(self):
         self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), Carry()])
@@ -78,7 +75,7 @@ class Beast(BaseAgent):
             draw_ball_path(self, 4, 5)
             doing = self.plan or self.choice
             if doing is not None:
-                self.renderer.draw_string_3d(self.info.my_car.pos, 1, 1, doing.__class__.__name__, self.renderer.team_color(alt_color=True))
+                self.renderer.draw_string_3d(self.info.my_car.pos, 1, 1, doing.__class__.__name__, self.random_color(doing.__class__))
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
@@ -88,6 +85,21 @@ class Beast(BaseAgent):
 
         self.renderer.end_rendering()
         return self.controls
+
+    def random_color(self, anything):
+        color_functions = {
+            0: self.renderer.red,
+            1: self.renderer.green,
+            2: self.renderer.blue,
+            3: self.renderer.lime,
+            4: self.renderer.yellow,
+            5: self.renderer.orange,
+            6: self.renderer.cyan,
+            7: self.renderer.pink,
+            8: self.renderer.purple,
+            9: self.renderer.teal,
+        }
+        return color_functions.get(hash(anything) % 10)()
 
 
 class DefaultBehaviour:
