@@ -30,9 +30,6 @@ class Beast(BaseAgent):
         self.ut = None
         self.drive = DriveController()
 
-        self.last_time = 0
-        self.state_setting_timer_last = time.time()
-
     def initialize_agent(self):
         self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), Carry()])
         self.info = EGameInfo(self.index, self.team, )

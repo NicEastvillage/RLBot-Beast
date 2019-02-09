@@ -15,6 +15,9 @@ class EGameInfo(GameInfo):
         super().__init__(index, team)
 
         self.team_sign = -1 if team == 0 else 1
+
+        self.dt = 0.016666
+        self.current_game_time = 0
         self.is_kickoff = False
 
         self.own_goal = vec3(0, self.team_sign * FIELD_LENGTH / 2, 0)
@@ -43,6 +46,8 @@ class EGameInfo(GameInfo):
         super().read_packet(packet)
 
         # Game state
+        self.dt = packet.game_info.seconds_elapsed - self.current_game_time
+        self.current_game_time = packet.game_info.seconds_elapsed
         self.is_kickoff = packet.game_info.is_kickoff_pause
 
         # Boost pads
