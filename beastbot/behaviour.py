@@ -48,7 +48,7 @@ class Carry:
         ball_to_goal = bot.info.enemy_goal - ball.pos
 
         # Decide on target pos and speed
-        target = ball_landing.data["pos"] - self.offset_bias * normalize(ball_to_goal)
+        target = ball_landing.data["obj"].pos - self.offset_bias * normalize(ball_to_goal)
         dist = norm(target - bot.info.my_car.pos)
         speed = 1400 if ball_landing.time == 0 else dist / ball_landing.time
 
@@ -108,6 +108,13 @@ class ShootAtGoal:
 
         reach_time = predict.time_till_reach_ball(car_now, ball_now)
         reachable_ball = predict.ball_predict(bot, reach_time)
+
+        # If the reachable ball is in the air, let it move a bit more TODO: Hit it in the air instead
+        if reachable_ball.pos[Z] > 130:
+            next_landing = predict.next_ball_landing(bot, reachable_ball)
+            reach_time = reach_time + next_landing.time
+            reachable_ball = next_landing.data["obj"]
+
         car_to_rball = reachable_ball.pos - car_now.pos
 
         # Check if close enough to dodge. A dodge happens after 0.3 sec
