@@ -68,12 +68,7 @@ def fix_ang(ang: float) -> float:
     """
     Transforms the given angle into the range -pi...pi
     """
-    while abs(ang) > math.pi:
-        if ang < 0:
-            ang += 2 * math.pi
-        else:
-            ang -= 2 * math.pi
-    return ang
+    return ((ang + math.pi) % math.tau) - math.pi
 
 
 def proj_onto(src: vec3, dir: vec3) -> vec3:

@@ -3,6 +3,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 
 import render
 from plans import DodgePlan, RecoverPlan
+from predict import ball_predict, next_ball_landing
 from rlmath import *
 
 
@@ -167,21 +168,9 @@ class AimCone:
             self.left_ang = math.atan2(left_most[Y], left_most[X])
             self.left_dir = normalize(left_most)
 
-    def contains_direction(self, direction):
-        # Direction can be both a angle or a vec3. Determine angle
-        if isinstance(direction, float):
-            ang = direction
-        elif isinstance(direction, vec3):
-            ang = math.atan2(direction[Y], direction[X])
-        else:
-            print("Err: direction is not an angle or vec3")
-            ang = 0
-
-        # Check if direction is with cone
-        if self.right_ang < self.left_ang:
-            return self.right_ang >= ang or ang >= self.left_ang
-        else:
-            return self.right_ang >= ang >= self.left_ang
+    def contains_direction(self, direction, span_offset: float=0):
+        ang_delta = angle_between(direction, self.get_center_dir())
+        return abs(ang_delta) < self.span_size() / 2.0 + span_offset
 
     def span_size(self):
         if self.right_ang < self.left_ang:
@@ -195,6 +184,14 @@ class AimCone:
     def get_center_dir(self):
         ang = self.get_center_ang()
         return vec3(math.cos(ang), math.sin(ang), 0)
+
+    def get_closest_dir_in_cone(self, direction, span_offset: float=0):
+        if self.contains_direction(direction, span_offset):
+            return normalize(direction)
+        else:
+            ang_to_right = abs(angle_between(direction, self.right_dir))
+            ang_to_left = abs(angle_between(direction, self.left_dir))
+            return self.right_dir if ang_to_right < ang_to_left else self.left_dir
 
     def get_goto_point(self, bot, src, point):
         point = xy(point)
@@ -243,6 +240,92 @@ class AimCone:
             end = center + arm_dir * arm_len
             alpha = 255 if i == 0 or i == arm_count - 1 else 110
             renderer.draw_line_3d(center, end, renderer.create_color(alpha, r, g, b))
+
+
+class ShotController:
+    def __init__(self):
+        self.controls = SimpleControllerState()
+        self.dodge = None
+        self.last_point = None
+        self.last_dodge_end_time = 0
+        self.dodge_cooldown = 0.26
+        self.recovery = None
+
+    def with_aiming(self, bot, aim_cone: AimCone, time: float):
+
+        #       aim: |           |           |           |
+        #  ball      |   bad     |    ok     |   good    |
+        # z pos:     |           |           |           |
+        # -----------+-----------+-----------+-----------+
+        #  too high  |   give    |   give    |   wait/   |
+        #            |    up     |    up     |  improve  |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+        #   medium   |   give    |  improve  |  aerial   |
+        #            |    up     |    aim    |           |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+        #   soon on  |  improve  |  slow     |  slow     |
+        #   ground   |    aim    |  curve    |  straight |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+        #  on ground |  improve  |  fast     |  fast     |
+        #            |   aim??   |  curve    |  straight |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+
+        self.controls = SimpleControllerState()
+        car = bot.info.my_car
+        ball = bot.info.ball
+
+        ball_t = ball_predict(bot, time)
+        car_to_ball_t = ball_t.pos - car.pos
+
+        if ball_t.pos[Z] < 110 or (ball_t.pos[Z] < 500 and ball_t.vel[Z] <= 0):
+
+            # The ball is on the ground or soon on the ground
+
+            if ball_t.pos[Z] > 110 and ball_t.vel[Z] <= 0:
+                # The ball is slightly in the air, lets wait just a bit more
+                time = next_ball_landing(bot).time
+                ball_t = ball_predict(bot, time)
+                car_to_ball_t = ball_t.pos - car.pos
+
+            # The ball is on the ground, can are we in position for a shot?
+            if aim_cone.contains_direction(car_to_ball_t):
+
+                # Straight shot
+
+                offset_point = xy(ball_t.pos) - 50 * aim_cone.get_center_dir()
+                speed = 2 * norm(car_to_ball_t) / time
+                self.controls = bot.drive.go_towards_point(bot, offset_point, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
+                return self.controls
+
+            elif aim_cone.contains_direction(car_to_ball_t, math.pi / 4):
+
+                # Curve shot
+
+                offset_point = xy(ball_t.pos) - 50 * aim_cone.get_center_dir()
+                closest_dir = aim_cone.get_closest_dir_in_cone(car_to_ball_t)
+                curve_point = curve_from_arrival_dir(car.pos, offset_point, closest_dir)
+
+                curve_point[X] = clip(curve_point[X], -FIELD_WIDTH / 2, FIELD_WIDTH / 2)
+                curve_point[Y] = clip(curve_point[Y], -FIELD_LENGTH / 2, FIELD_LENGTH / 2)
+
+                speed = norm(car_to_ball_t) / time
+                self.controls = bot.drive.go_towards_point(bot, curve_point, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
+                return self.controls
+
+            else:
+
+                # We are NOT in position!
+                pass
+
+        else:
+
+            if aim_cone.contains_direction(car_to_ball_t):
+                pass  # Allow small aerial (wait if ball is too high)
+
+            elif aim_cone.contains_direction(car_to_ball_t, math.pi / 4):
+                pass  # Aim is ok, but ball is in the air
+
+
 
 
 # ----------------------------------------- Helper functions --------------------------------

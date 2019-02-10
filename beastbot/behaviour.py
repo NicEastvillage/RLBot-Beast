@@ -157,7 +157,7 @@ class ShootAtGoal:
                 return
         else:
             # Shoot !
-            speed = dist / (reach_time * goto_time * 0.95)
+            speed = dist / reach_time
             bot.controls = bot.drive.go_towards_point(bot, goto, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
             return
 
