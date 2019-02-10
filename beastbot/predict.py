@@ -65,7 +65,7 @@ def ball_predict(bot, time: float) -> DummyObject:
     return DummyObject(path.slices[t].physics)
 
 
-def next_ball_landing(bot, size=BALL_RADIUS):
+def next_ball_landing(bot, size=BALL_RADIUS) -> UncertainEvent:
     landing = arrival_at_height(bot.info.ball, size, "DOWN")
     t = landing.time if landing.happens else 0
     pos = ball_predict(bot, t).pos
