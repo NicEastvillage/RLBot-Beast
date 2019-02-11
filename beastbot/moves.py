@@ -203,7 +203,7 @@ class AimCone:
 
         ang_to_desired_dir = angle_between(desired_dir_inv, point_to_car)
 
-        ANG_ROUTE_ACCEPTED = math.pi / 4.0
+        ANG_ROUTE_ACCEPTED = math.pi / 4.3
         can_go_straight = abs(ang_to_desired_dir) < self.span_size() / 2.0
         can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
         point = point + desired_dir_inv * 50
