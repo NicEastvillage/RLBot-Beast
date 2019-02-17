@@ -82,9 +82,15 @@ class DriveController:
 
         if point_is_in_turn_radius_deadzone:
             # Hard turn
-            self.controls.throttle = 0 if vel_f > 150 else 0.1
             self.controls.steer = sign(angle)
             self.controls.boost = False
+            self.controls.throttle = 0 if vel_f > 150 else 0.1
+            if point_local[X] < 25:
+                # Brake or go backwards when the point is really close but not in front of us
+                self.controls.throttle = clip((25 - point_local[X]) * -.5, 0, -0.6)
+                self.controls.steer = 0
+                if vel_f > 300:
+                    self.controls.handbrake = True
 
         else:
             # Should drop speed or just keep up the speed?
@@ -308,7 +314,7 @@ class ShotController:
 
             self.ball_when_hit = ball_soon
 
-            # The ball is on the ground, can are we in position for a shot?
+            # The ball is on the ground, are we in position for a shot?
             if aim_cone.contains_direction(car_to_ball_soon):
 
                 # Straight shot
