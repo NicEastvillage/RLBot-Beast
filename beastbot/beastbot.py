@@ -8,13 +8,13 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 from behaviour import *
 from info import EGameInfo
-from moves import DriveController, AimCone
+from moves import DriveController, AimCone, ShotController
 from plans import KickoffPlan
 from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
 
-RENDER = True
+RENDER = False
 
 
 class Beast(BaseAgent):
@@ -29,6 +29,7 @@ class Beast(BaseAgent):
 
         self.ut = None
         self.drive = DriveController()
+        self.shoot = ShotController()
 
     def initialize_agent(self):
         self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), Carry()])

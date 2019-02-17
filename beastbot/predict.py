@@ -65,11 +65,21 @@ def ball_predict(bot, time: float) -> DummyObject:
     return DummyObject(path.slices[t].physics)
 
 
-def next_ball_landing(bot, size=BALL_RADIUS):
-    landing = arrival_at_height(bot.info.ball, size, "DOWN")
-    t = landing.time if landing.happens else 0
-    pos = ball_predict(bot, t).pos
-    return UncertainEvent(landing.happens, t, data={"pos": pos})
+def next_ball_landing(bot, obj=None, size=BALL_RADIUS) -> UncertainEvent:
+    """ Returns a UncertainEvent describing the next ball landing. If obj==None the current ball is used, otherwise the
+    given obj is used. """
+    if obj is None:
+        obj = bot.info.ball
+        landing = arrival_at_height(obj, size, "DOWN")
+        t = landing.time if landing.happens else 0
+        moved_obj = ball_predict(bot, t)
+
+    else:
+        landing = arrival_at_height(obj, size, "DOWN")
+        t = landing.time if landing.happens else 0
+        moved_obj = fall(obj, t)
+
+    return UncertainEvent(landing.happens, t, data={"obj": moved_obj})
 
 
 def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY[Z]) -> UncertainEvent:
@@ -105,12 +115,12 @@ def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY[Z]) -> Uncer
 def time_till_reach_ball(car, ball):
     """ Rough estimate about when we can reach the ball in 2d. """
     car_to_ball = xy(ball.pos - car.pos)
-    dist = norm(car_to_ball) - BALL_RADIUS - 25
+    dist = norm(car_to_ball) - BALL_RADIUS / 2
     vel_c_f = proj_onto_size(car.vel, car_to_ball)
     vel_b_f = proj_onto_size(ball.vel, car_to_ball)
     vel_c_amp = lerp(vel_c_f, norm(car.vel), 0.6)
     vel_f = vel_c_amp - vel_b_f
-    dist_long_01 = clip01(dist / 10_000.0)**2
+    dist_long_01 = clip01(dist / 10_000.0)
     time_normal = dist / max(250, vel_f)
     time_long = dist / max(norm(car.vel), 1400)
     time = lerp(time_normal, time_long, dist_long_01)

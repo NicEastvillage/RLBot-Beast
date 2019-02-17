@@ -78,3 +78,13 @@ class EGameInfo(GameInfo):
         angle_score = 1 - clip((abs(angle) / 3), 0, 1)
 
         return dist_score * angle_score * (0.8, 1)[pad.is_big]
+
+    def closest_enemy(self, pos: vec3):
+        enemy = None
+        dist = -1
+        for e in self.opponents:
+            d = norm(e.pos - pos)
+            if enemy is None or d < dist:
+                enemy = e
+                dist = d
+        return enemy, dist

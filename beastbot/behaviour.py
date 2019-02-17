@@ -1,6 +1,7 @@
 from RLUtilities.Simulation import Car, Input
 
 import predict
+import render
 from moves import AimCone
 from plans import DodgePlan
 from rlmath import *
@@ -48,7 +49,7 @@ class Carry:
         ball_to_goal = bot.info.enemy_goal - ball.pos
 
         # Decide on target pos and speed
-        target = ball_landing.data["pos"] - self.offset_bias * normalize(ball_to_goal)
+        target = ball_landing.data["obj"].pos - self.offset_bias * normalize(ball_to_goal)
         dist = norm(target - bot.info.my_car.pos)
         speed = 1400 if ball_landing.time == 0 else dist / ball_landing.time
 
@@ -103,63 +104,50 @@ class ShootAtGoal:
 
     def execute(self, bot):
 
-        car_now = bot.info.my_car
-        ball_now = bot.info.ball
+        car = bot.info.my_car
+        ball = bot.info.ball
 
-        reach_time = predict.time_till_reach_ball(car_now, ball_now)
-        reachable_ball = predict.ball_predict(bot, reach_time)
-        car_to_rball = reachable_ball.pos - car_now.pos
-
-        # Check if close enough to dodge. A dodge happens after 0.3 sec
-        ball_soon_pos = predict.ball_predict(bot, 0.25).pos
-        car_soon = Car(car_now)
-        car_soon.step(Input(), 0.25)
-        car_to_ball_soon = ball_soon_pos - car_soon.pos
-
-        # Aim cone was calculated in utility
-        if norm(car_to_ball_soon) < 240 + BALL_RADIUS and self.aim_cone.contains_direction(car_to_ball_soon):
-            bot.drive.start_dodge()
-
-        goto, goto_time = self.aim_cone.get_goto_point(bot, car_now.pos, reachable_ball.pos)
-        dist = norm(car_to_rball)
-
+        shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, predict.time_till_reach_ball(car, ball))
         if bot.do_rendering:
-            self.aim_cone.draw(bot, reachable_ball.pos, b=0)
+            self.aim_cone.draw(bot, bot.shoot.ball_when_hit.pos, b=0)
 
-        if goto is None or dist < 450:
+        hit_pos = bot.shoot.ball_when_hit.pos
+        dist = norm(car.pos - hit_pos)
+        closest_enemy, enemy_dist = bot.info.closest_enemy(0.5 * (hit_pos + ball.pos))
 
-            # Avoid enemy corners. Just wait
-            if reachable_ball.pos[Y] * -bot.info.team_sign > 4350 and abs(reachable_ball.pos[X]) > 900 and not dist < 450:
-                wait_point = reachable_ball.pos * 0.5  # a point 50% closer to the center of the field
-                wait_point = lerp(wait_point, ball_now.pos + vec3(0, bot.info.team_sign * 3000, 0), 0.5)
-                bot.controls = bot.drive.go_towards_point(bot, wait_point, norm(car_now.pos - wait_point), slide=False, boost=False, can_keep_speed=True, can_dodge=False)
+        if not bot.shoot.can_shoot and is_closer_to_goal_than(car.pos, hit_pos, bot.info.team):
+            # Can't shoot but or at least on the right side: Chase
 
-                if bot.do_rendering:
-                    bot.renderer.draw_line_3d(car_now.pos, wait_point, bot.renderer.yellow())
+            goal_to_ball = normalize(hit_pos - bot.info.enemy_goal)
+            offset_ball = hit_pos + goal_to_ball * BALL_RADIUS * 0.9
+            bot.controls = bot.drive.go_towards_point(bot, offset_ball, target_vel=2200, slide=False, boost=True)
 
-                return
+            if bot.do_rendering:
+                bot.renderer.draw_line_3d(car.pos, offset_ball, bot.renderer.yellow())
 
-            if is_closer_to_goal_than(car_now.pos, ball_now.pos, bot.info.team):
+        elif not bot.shoot.aim_is_ok and hit_pos[Y] * -bot.info.team_sign > 4350 and abs(hit_pos[X]) > 900 and not dist < 450:
+            # hit_pos is an enemy corner and we are not close: Avoid enemy corners and just wait
 
-                # Chase
-                goal_to_ball = normalize(reachable_ball.pos - bot.info.enemy_goal)
-                offset_ball = reachable_ball.pos + goal_to_ball * BALL_RADIUS
-                bot.controls = bot.drive.go_towards_point(bot, offset_ball, target_vel=2200, slide=False, boost=True)
+            enemy_to_ball = normalize(hit_pos - closest_enemy.pos)
+            wait_point = hit_pos + enemy_to_ball * enemy_dist  # a point 50% closer to the center of the field
+            wait_point = lerp(wait_point, ball.pos + vec3(0, bot.info.team_sign * 3000, 0), 0.5)
+            bot.controls = bot.drive.go_towards_point(bot, wait_point, norm(car.pos - wait_point), slide=False, boost=False, can_keep_speed=True, can_dodge=False)
 
-                if bot.do_rendering:
-                    bot.renderer.draw_line_3d(car_now.pos, offset_ball, bot.renderer.yellow())
+            if bot.do_rendering:
+                bot.renderer.draw_line_3d(car.pos, wait_point, bot.renderer.yellow())
 
-                return
+        elif not bot.shoot.can_shoot:
+            # return home
+            boost = dist > 1500 or enemy_dist < dist
+            dodge = dist > 1500 or enemy_dist < dist
+            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal, target_vel=2200, slide=True, boost=boost, can_keep_speed=True, can_dodge=dodge)
 
-            else:
-                # return home
-                bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal, target_vel=2200, slide=True, boost=norm(car_now.vel) < 1800, can_keep_speed=True)
-                return
         else:
             # Shoot !
-            speed = dist / (reach_time * goto_time * 0.95)
-            bot.controls = bot.drive.go_towards_point(bot, goto, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
-            return
+            bot.controls = shoot_controls
+
+            if bot.shoot.using_curve and bot.do_rendering:
+                render.draw_bezier(bot, [car.pos, bot.shoot.curve_point, hit_pos])
 
 
 class ClearBall:
@@ -179,23 +167,25 @@ class ClearBall:
 
         reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
         car_to_ball = reachable_ball.pos - bot.info.my_car.pos
-        in_position = self.aim_cone.contains_direction(car_to_ball)
+        in_position = self.aim_cone.contains_direction(car_to_ball, math.pi / 8)
 
         return ball_own_half_01 * in_position
 
     def execute(self, bot):
-        reach_time = predict.time_till_reach_ball(bot.info.my_car, bot.info.ball)
-        reachable_ball = predict.ball_predict(bot, reach_time)
-        goto, goto_time = self.aim_cone.get_goto_point(bot, bot.info.my_car.pos, reachable_ball.pos)
+        car = bot.info.my_car
+        shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
+        hit_pos = bot.shoot.ball_when_hit.pos
 
         if bot.do_rendering:
-            self.aim_cone.draw(bot, reachable_ball.pos, r=0, g=170, b=255)
+            self.aim_cone.draw(bot, hit_pos, r=0, g=170, b=255)
 
-        if goto is None:
+        if bot.shoot.can_shoot:
+            bot.controls = shoot_controls
+
+            if bot.shoot.using_curve and bot.do_rendering:
+                render.draw_bezier(bot, [car.pos, bot.shoot.curve_point, hit_pos])
+
+        else:
             # go home-ish
             own_goal = lerp(bot.info.own_goal, bot.info.ball.pos, 0.5)
             bot.controls = bot.drive.go_towards_point(bot, own_goal, target_vel=1460, slide=True, boost=True, can_keep_speed=True)
-        else:
-            dist = norm(bot.info.my_car.pos - reachable_ball.pos)
-            speed = dist / (reach_time * goto_time)
-            bot.controls = bot.drive.go_towards_point(bot, goto, target_vel=speed, slide=True, boost=True, can_keep_speed=False)

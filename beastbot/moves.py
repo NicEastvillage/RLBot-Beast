@@ -3,6 +3,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 
 import render
 from plans import DodgePlan, RecoverPlan
+from predict import ball_predict, next_ball_landing
 from rlmath import *
 
 
@@ -64,7 +65,7 @@ class DriveController:
 
         # Start dodge
         if can_dodge and abs(angle) <= 0.02 and vel_towards_point > REQUIRED_VELF_FOR_DODGE\
-                and dist > vel_towards_point + 500 + 500 and bot.info.current_game_time > self.last_dodge_end_time + self.dodge_cooldown:
+                and dist > vel_towards_point + 500 + 700 and bot.info.current_game_time > self.last_dodge_end_time + self.dodge_cooldown:
             self.dodge = DodgePlan(point)
 
         # Is in turn radius deadzone?
@@ -81,9 +82,15 @@ class DriveController:
 
         if point_is_in_turn_radius_deadzone:
             # Hard turn
-            self.controls.throttle = 0 if vel_f > 250 else 0.2
             self.controls.steer = sign(angle)
             self.controls.boost = False
+            self.controls.throttle = 0 if vel_f > 150 else 0.1
+            if point_local[X] < 25:
+                # Brake or go backwards when the point is really close but not in front of us
+                self.controls.throttle = clip((25 - point_local[X]) * -.5, 0, -0.6)
+                self.controls.steer = 0
+                if vel_f > 300:
+                    self.controls.handbrake = True
 
         else:
             # Should drop speed or just keep up the speed?
@@ -95,7 +102,7 @@ class DriveController:
 
             # Turn and maybe slide
             self.controls.steer = clip(angle + (2.5*angle) ** 3, -1.0, 1.0)
-            if slide and dist > 300 and abs(angle) > REQUIRED_ANG_FOR_SLIDE and abs(point_local[Y]) < tr * 6:
+            if slide and abs(angle) > REQUIRED_ANG_FOR_SLIDE:
                 self.controls.handbrake = True
                 self.controls.steer = sign(angle)
             else:
@@ -117,6 +124,8 @@ class DriveController:
                 vel_delta = target_vel - vel_towards_point
                 self.controls.throttle = clip(vel_delta / 350, -1, 1)
                 self.controls.boost = False
+                if self.controls.handbrake:
+                    self.controls.throttle = min(0.4, self.controls.throttle)
 
         # Saved if something outside calls start_dodge() in the meantime
         self.last_point = point
@@ -167,21 +176,9 @@ class AimCone:
             self.left_ang = math.atan2(left_most[Y], left_most[X])
             self.left_dir = normalize(left_most)
 
-    def contains_direction(self, direction):
-        # Direction can be both a angle or a vec3. Determine angle
-        if isinstance(direction, float):
-            ang = direction
-        elif isinstance(direction, vec3):
-            ang = math.atan2(direction[Y], direction[X])
-        else:
-            print("Err: direction is not an angle or vec3")
-            ang = 0
-
-        # Check if direction is with cone
-        if self.right_ang < self.left_ang:
-            return self.right_ang >= ang or ang >= self.left_ang
-        else:
-            return self.right_ang >= ang >= self.left_ang
+    def contains_direction(self, direction, span_offset: float=0):
+        ang_delta = angle_between(direction, self.get_center_dir())
+        return abs(ang_delta) < self.span_size() / 2.0 + span_offset
 
     def span_size(self):
         if self.right_ang < self.left_ang:
@@ -196,6 +193,14 @@ class AimCone:
         ang = self.get_center_ang()
         return vec3(math.cos(ang), math.sin(ang), 0)
 
+    def get_closest_dir_in_cone(self, direction, span_offset: float=0):
+        if self.contains_direction(direction, span_offset):
+            return normalize(direction)
+        else:
+            ang_to_right = abs(angle_between(direction, self.right_dir))
+            ang_to_left = abs(angle_between(direction, self.left_dir))
+            return self.right_dir if ang_to_right < ang_to_left else self.left_dir
+
     def get_goto_point(self, bot, src, point):
         point = xy(point)
         desired_dir = self.get_center_dir()
@@ -206,7 +211,7 @@ class AimCone:
 
         ang_to_desired_dir = angle_between(desired_dir_inv, point_to_car)
 
-        ANG_ROUTE_ACCEPTED = math.pi / 4.0
+        ANG_ROUTE_ACCEPTED = math.pi / 4.3
         can_go_straight = abs(ang_to_desired_dir) < self.span_size() / 2.0
         can_with_route = abs(ang_to_desired_dir) < self.span_size() / 2.0 + ANG_ROUTE_ACCEPTED
         point = point + desired_dir_inv * 50
@@ -243,6 +248,130 @@ class AimCone:
             end = center + arm_dir * arm_len
             alpha = 255 if i == 0 or i == arm_count - 1 else 110
             renderer.draw_line_3d(center, end, renderer.create_color(alpha, r, g, b))
+
+
+class ShotController:
+    def __init__(self):
+        self.controls = SimpleControllerState()
+        self.dodge = None
+        self.last_point = None
+        self.last_dodge_end_time = 0
+        self.dodge_cooldown = 0.26
+        self.recovery = None
+        self.aim_is_ok = False
+        self.waits_for_fall = False
+        self.ball_is_flying = False
+        self.can_shoot = False
+        self.using_curve = False
+        self.curve_point = None
+        self.ball_when_hit = None
+
+    def with_aiming(self, bot, aim_cone: AimCone, time: float):
+
+        #       aim: |           |           |           |
+        #  ball      |   bad     |    ok     |   good    |
+        # z pos:     |           |           |           |
+        # -----------+-----------+-----------+-----------+
+        #  too high  |   give    |   give    |   wait/   |
+        #            |    up     |    up     |  improve  |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+        #   medium   |   give    |  improve  |  aerial   |
+        #            |    up     |    aim    |           |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+        #   soon on  |  improve  |  slow     |  slow     |
+        #   ground   |    aim    |  curve    |  straight |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+        #  on ground |  improve  |  fast     |  fast     |
+        #            |   aim??   |  curve    |  straight |
+        # -----------+ - - - - - + - - - - - + - - - - - +
+
+        # FIXME if the ball is not on the ground we treat it as 'soon on ground' in all other cases
+
+        self.controls = SimpleControllerState()
+        self.aim_is_ok = False
+        self.waits_for_fall = False
+        self.ball_is_flying = False
+        self.can_shoot = False
+        self.using_curve = False
+        self.curve_point = None
+        self.ball_when_hit = None
+        car = bot.info.my_car
+
+        ball_soon = ball_predict(bot, time)
+        car_to_ball_soon = ball_soon.pos - car.pos
+
+        if ball_soon.pos[Z] < 110 or (ball_soon.pos[Z] < 500 and ball_soon.vel[Z] <= 0) or True: #FIXME Always true
+
+            # The ball is on the ground or soon on the ground
+
+            if ball_soon.pos[Z] > 110: # and ball_soon.vel[Z] <= 0:
+                # The ball is slightly in the air, lets wait just a bit more
+                self.waits_for_fall = True
+                ball_landing = next_ball_landing(bot, ball_soon, size=100)
+                time = time + ball_landing.time
+                ball_soon = ball_predict(bot, time)
+                car_to_ball_soon = ball_soon.pos - car.pos
+
+            self.ball_when_hit = ball_soon
+
+            # The ball is on the ground, are we in position for a shot?
+            if aim_cone.contains_direction(car_to_ball_soon):
+
+                # Straight shot
+
+                self.aim_is_ok = True
+                self.can_shoot = True
+
+                if norm(car_to_ball_soon) < 240 + BALL_RADIUS and aim_cone.contains_direction(car_to_ball_soon):
+                    bot.drive.start_dodge()
+
+                offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
+                speed = norm(car_to_ball_soon) / time
+                self.controls = bot.drive.go_towards_point(bot, offset_point, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
+                return self.controls
+
+            elif aim_cone.contains_direction(car_to_ball_soon, math.pi / 5):
+
+                # Curve shot
+
+                self.aim_is_ok = True
+                self.using_curve = True
+                self.can_shoot = True
+
+                offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
+                closest_dir = aim_cone.get_closest_dir_in_cone(car_to_ball_soon)
+                self.curve_point = curve_from_arrival_dir(car.pos, offset_point, closest_dir)
+
+                self.curve_point[X] = clip(self.curve_point[X], -FIELD_WIDTH / 2, FIELD_WIDTH / 2)
+                self.curve_point[Y] = clip(self.curve_point[Y], -FIELD_LENGTH / 2, FIELD_LENGTH / 2)
+
+                if norm(car_to_ball_soon) < 240 + BALL_RADIUS and aim_cone.contains_direction(car_to_ball_soon):
+                    bot.drive.start_dodge()
+
+                speed = norm(car_to_ball_soon) / time
+                self.controls = bot.drive.go_towards_point(bot, self.curve_point, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
+                return self.controls
+
+            else:
+
+                # We are NOT in position!
+                self.aim_is_ok = False
+
+                pass
+
+        else:
+
+            if aim_cone.contains_direction(car_to_ball_soon):
+                self.waits_for_fall = True
+                self.aim_is_ok = True
+                #self.can_shoot = False
+                pass  # Allow small aerial (wait if ball is too high)
+
+            elif aim_cone.contains_direction(car_to_ball_soon, math.pi / 4):
+                self.ball_is_flying = True
+                pass  # Aim is ok, but ball is in the air
+
+
 
 
 # ----------------------------------------- Helper functions --------------------------------
