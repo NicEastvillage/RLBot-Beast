@@ -147,8 +147,6 @@ class ShootAtGoal:
             bot.controls = shoot_controls
 
             if bot.shoot.using_curve and bot.do_rendering:
-                bot.renderer.draw_line_3d(car.pos, bot.shoot.curve_point, bot.renderer.gray())
-                bot.renderer.draw_line_3d(hit_pos, bot.shoot.curve_point, bot.renderer.gray())
                 render.draw_bezier(bot, [car.pos, bot.shoot.curve_point, hit_pos])
 
 
@@ -169,23 +167,25 @@ class ClearBall:
 
         reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
         car_to_ball = reachable_ball.pos - bot.info.my_car.pos
-        in_position = self.aim_cone.contains_direction(car_to_ball)
+        in_position = self.aim_cone.contains_direction(car_to_ball, math.pi / 8)
 
         return ball_own_half_01 * in_position
 
     def execute(self, bot):
-        reach_time = predict.time_till_reach_ball(bot.info.my_car, bot.info.ball)
-        reachable_ball = predict.ball_predict(bot, reach_time)
-        goto, goto_time = self.aim_cone.get_goto_point(bot, bot.info.my_car.pos, reachable_ball.pos)
+        car = bot.info.my_car
+        shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
+        hit_pos = bot.shoot.ball_when_hit.pos
 
         if bot.do_rendering:
-            self.aim_cone.draw(bot, reachable_ball.pos, r=0, g=170, b=255)
+            self.aim_cone.draw(bot, hit_pos, r=0, g=170, b=255)
 
-        if goto is None:
+        if bot.shoot.can_shoot:
+            bot.controls = shoot_controls
+
+            if bot.shoot.using_curve and bot.do_rendering:
+                render.draw_bezier(bot, [car.pos, bot.shoot.curve_point, hit_pos])
+
+        else:
             # go home-ish
             own_goal = lerp(bot.info.own_goal, bot.info.ball.pos, 0.5)
             bot.controls = bot.drive.go_towards_point(bot, own_goal, target_vel=1460, slide=True, boost=True, can_keep_speed=True)
-        else:
-            dist = norm(bot.info.my_car.pos - reachable_ball.pos)
-            speed = dist / (reach_time * goto_time)
-            bot.controls = bot.drive.go_towards_point(bot, goto, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
