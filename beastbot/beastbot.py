@@ -14,7 +14,7 @@ from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
 
-RENDER = False
+RENDER = True
 
 
 class Beast(BaseAgent):
@@ -32,8 +32,8 @@ class Beast(BaseAgent):
         self.shoot = ShotController()
 
     def initialize_agent(self):
-        self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), Carry()])
         self.info = EGameInfo(self.index, self.team, )
+        self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), SaveGoal(self), Carry()])
 
         if not RENDER:
             self.renderer = FakeRenderer()

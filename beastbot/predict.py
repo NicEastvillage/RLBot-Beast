@@ -125,3 +125,15 @@ def time_till_reach_ball(car, ball):
     time_long = dist / max(norm(car.vel), 1400)
     time = lerp(time_normal, time_long, dist_long_01)
     return time
+
+
+def will_ball_hit_goal(bot):
+    ball = bot.info.ball
+    if ball.vel[Y] == 0:
+        return UncertainEvent(False, 1e306)
+
+    time = (FIELD_LENGTH / 2 - abs(ball.pos[Y])) / abs(ball.vel[Y])
+    hit_pos = ball_predict(bot, time).pos
+    hits_goal = abs(hit_pos[X]) < GOAL_WIDTH / 2 + BALL_RADIUS
+
+    return UncertainEvent(hits_goal, time)

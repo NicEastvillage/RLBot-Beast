@@ -114,7 +114,7 @@ class DriveController:
             # Find appropriate throttle/boost
             if vel_towards_point < target_vel:
                 self.controls.throttle = 1
-                if boost and vel_towards_point + 25 < target_vel \
+                if boost and vel_towards_point + 25 < target_vel and target_vel > 1400 \
                         and not self.controls.handbrake and is_heading_towards(angle, dist):
                     self.controls.boost = True
                 else:
@@ -122,7 +122,7 @@ class DriveController:
 
             else:
                 vel_delta = target_vel - vel_towards_point
-                self.controls.throttle = clip(vel_delta / 350, -1, 1)
+                self.controls.throttle = clip(0.2 + vel_delta / 500, 0, -1)
                 self.controls.boost = False
                 if self.controls.handbrake:
                     self.controls.throttle = min(0.4, self.controls.throttle)
@@ -266,7 +266,7 @@ class ShotController:
         self.curve_point = None
         self.ball_when_hit = None
 
-    def with_aiming(self, bot, aim_cone: AimCone, time: float):
+    def with_aiming(self, bot, aim_cone: AimCone, time: float, dodge_hit: bool=True):
 
         #       aim: |           |           |           |
         #  ball      |   bad     |    ok     |   good    |
@@ -326,7 +326,7 @@ class ShotController:
                     bot.drive.start_dodge()
 
                 offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
-                speed = norm(car_to_ball_soon) / time
+                speed = self.determine_speed(norm(car_to_ball_soon), time)
                 self.controls = bot.drive.go_towards_point(bot, offset_point, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
                 return self.controls
 
@@ -345,10 +345,10 @@ class ShotController:
                 self.curve_point[X] = clip(self.curve_point[X], -FIELD_WIDTH / 2, FIELD_WIDTH / 2)
                 self.curve_point[Y] = clip(self.curve_point[Y], -FIELD_LENGTH / 2, FIELD_LENGTH / 2)
 
-                if norm(car_to_ball_soon) < 240 + BALL_RADIUS and aim_cone.contains_direction(car_to_ball_soon):
+                if dodge_hit and norm(car_to_ball_soon) < 240 + BALL_RADIUS and angle_between(car.forward(), car_to_ball_soon) < 0.5 and aim_cone.contains_direction(car_to_ball_soon):
                     bot.drive.start_dodge()
 
-                speed = norm(car_to_ball_soon) / time
+                speed = self.determine_speed(norm(car_to_ball_soon), time)
                 self.controls = bot.drive.go_towards_point(bot, self.curve_point, target_vel=speed, slide=True, boost=True, can_keep_speed=False)
                 return self.controls
 
@@ -370,6 +370,16 @@ class ShotController:
             elif aim_cone.contains_direction(car_to_ball_soon, math.pi / 4):
                 self.ball_is_flying = True
                 pass  # Aim is ok, but ball is in the air
+
+    def determine_speed(self, dist, time):
+        if time == 0:
+            return 2300
+        elif dist < 1700:
+            return dist / time
+        else:
+            extra = (dist - 1700) / 1000
+            return (1 + extra) * dist / time
+
 
 
 

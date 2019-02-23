@@ -189,3 +189,56 @@ class ClearBall:
             # go home-ish
             own_goal = lerp(bot.info.own_goal, bot.info.ball.pos, 0.5)
             bot.controls = bot.drive.go_towards_point(bot, own_goal, target_vel=1460, slide=True, boost=True, can_keep_speed=True)
+
+
+class SaveGoal:
+    def __init__(self, bot):
+        team_sign = bot.info.team_sign
+        self.own_goal_right = vec3(-820 * team_sign, 5120 * team_sign, 0)
+        self.own_goal_left = vec3(820 * team_sign, 5120 * team_sign, 0)
+        self.aim_cone = None
+        self.ball_to_goal_right = None
+        self.ball_to_goal_left = None
+
+    def utility(self, bot):
+        team_sign = bot.info.team_sign
+        ball = bot.info.ball
+
+        ball_to_goal = bot.info.own_goal - ball.pos
+        ball_vel_g = proj_onto_size(ball.vel, ball_to_goal)
+        if ball_vel_g > 0:
+            vel_g_01 = clip01(ball_vel_g / 850 + 0.36)
+        else:
+            vel_g_01 = 0
+
+        too_close = norm(ball_to_goal) < GOAL_WIDTH / 2 + BALL_RADIUS
+
+        hits_goal_prediction = predict.will_ball_hit_goal(bot)
+        hits_goal = hits_goal_prediction.happens and sign(ball.vel[Y]) == team_sign and hits_goal_prediction.time < 6
+
+        return clip01(vel_g_01) or hits_goal or too_close
+
+    def execute(self, bot):
+
+        car = bot.info.my_car
+        ball = bot.info.ball
+
+        hits_goal_prediction = predict.will_ball_hit_goal(bot)
+        reach_time = clip(predict.time_till_reach_ball(car, ball), 0, hits_goal_prediction.time - 0.5)
+        reachable_ball = predict.ball_predict(bot, reach_time)
+        self.ball_to_goal_right = self.own_goal_right - reachable_ball.pos
+        self.ball_to_goal_left = self.own_goal_left - reachable_ball.pos
+        self.aim_cone = AimCone(self.ball_to_goal_left, self.ball_to_goal_right)
+
+        self.aim_cone.draw(bot, reachable_ball.pos, r=200, g=0, b=160)
+
+        shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, reach_time)
+
+        if not bot.shoot.can_shoot:
+            # Go home but avoid ball
+            dist = norm(bot.info.own_goal - car.pos)
+            speed = max(dist / reach_time, 700) if reach_time != 0 else 2300
+            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal, target_vel=speed, slide=True, boost=True)
+
+        else:
+            bot.controls = shoot_controls
