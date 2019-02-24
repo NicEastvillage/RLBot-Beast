@@ -138,9 +138,7 @@ class ShootAtGoal:
 
         elif not bot.shoot.can_shoot:
             # return home
-            boost = dist > 1500 or enemy_dist < dist
-            dodge = dist > 1500 or enemy_dist < dist
-            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal, target_vel=2200, slide=True, boost=boost, can_keep_speed=True, can_dodge=dodge)
+            bot.controls = bot.drive.go_home(bot)
 
         else:
             # Shoot !
@@ -205,18 +203,12 @@ class SaveGoal:
         ball = bot.info.ball
 
         ball_to_goal = bot.info.own_goal - ball.pos
-        ball_vel_g = proj_onto_size(ball.vel, ball_to_goal)
-        if ball_vel_g > 0:
-            vel_g_01 = clip01(ball_vel_g / 850 + 0.36)
-        else:
-            vel_g_01 = 0
-
         too_close = norm(ball_to_goal) < GOAL_WIDTH / 2 + BALL_RADIUS
 
         hits_goal_prediction = predict.will_ball_hit_goal(bot)
-        hits_goal = hits_goal_prediction.happens and sign(ball.vel[Y]) == team_sign and hits_goal_prediction.time < 6
+        hits_goal = hits_goal_prediction.happens and sign(ball.vel[Y]) == team_sign and hits_goal_prediction.time < 3
 
-        return clip01(vel_g_01) or hits_goal or too_close
+        return hits_goal or too_close
 
     def execute(self, bot):
 
@@ -235,10 +227,7 @@ class SaveGoal:
         shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, reach_time)
 
         if not bot.shoot.can_shoot:
-            # Go home but avoid ball
-            dist = norm(bot.info.own_goal - car.pos)
-            speed = max(dist / reach_time, 700) if reach_time != 0 else 2300
-            bot.controls = bot.drive.go_towards_point(bot, bot.info.own_goal, target_vel=speed, slide=True, boost=True)
-
+            # Go home
+            bot.controls = bot.drive.go_home(bot)
         else:
             bot.controls = shoot_controls

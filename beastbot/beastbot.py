@@ -53,7 +53,8 @@ class Beast(BaseAgent):
         if self.info.is_kickoff and not self.doing_kickoff:
             self.plan = KickoffPlan()
             self.doing_kickoff = True
-            print("Beast: Begins kickoff")
+            team_name = "[BLUE]" if self.team == 0 else "[ORANGE]"
+            print("Beast", self.index, team_name, ": Hello World!")
 
         # Execute logic
         if self.plan is None or self.plan.finished:

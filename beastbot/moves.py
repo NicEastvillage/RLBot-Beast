@@ -158,6 +158,25 @@ class DriveController:
             if bot.do_rendering:
                 bot.renderer.draw_line_3d(car.pos, point, bot.renderer.green())
 
+    def go_home(self, bot):
+        car = bot.info.my_car
+        home = bot.info.own_goal
+        target = home
+
+        closest_enemy, enemy_dist = bot.info.closest_enemy(bot.info.ball.pos)
+
+        car_to_home = home - car.pos
+        dist = norm(car_to_home)
+        vel_f_home = proj_onto_size(car.vel, car_to_home)
+
+        if vel_f_home * 2 > dist:
+            target = bot.info.ball.pos
+
+        boost = dist > 1500 or enemy_dist < dist
+        dodge = dist > 1500 or enemy_dist < dist
+
+        return self.go_towards_point(bot, target, 2300, True, boost=boost, can_dodge=dodge)
+
 
 class AimCone:
     def __init__(self, right_most, left_most):

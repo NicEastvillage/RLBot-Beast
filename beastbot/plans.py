@@ -106,7 +106,7 @@ class KickoffPlan:
         point = vec3(0, bot.info.team_sign * (dist / 2.6 - MIDDLE_OFFSET), 0)
         speed = 2300
         opp_dist = norm(bot.info.opponents[0].pos)
-        opp_does_kick = opp_dist < dist + 700
+        opp_does_kick = opp_dist < dist + 600
 
         # Opponent is not going for kickoff, so we slow down a bit
         if not opp_does_kick:
