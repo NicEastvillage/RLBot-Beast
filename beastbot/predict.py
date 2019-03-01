@@ -124,7 +124,7 @@ def time_till_reach_ball(car, ball):
     time_normal = dist / max(250, vel_f)
     time_long = dist / max(norm(car.vel), 1400)
     time = lerp(time_normal, time_long, dist_long_01)
-    return time
+    return time * 0.95
 
 
 def will_ball_hit_goal(bot):

@@ -2,7 +2,7 @@ from RLUtilities.Maneuvers import AirDodge, AerialTurn
 from rlbot.agents.base_agent import SimpleControllerState
 
 import render
-from plans import DodgePlan, RecoverPlan
+from plans import DodgePlan, RecoverPlan, SmallJumpPlan
 from predict import ball_predict, next_ball_landing
 from rlmath import *
 
@@ -297,8 +297,8 @@ class ShotController:
         #   medium   |   give    |  improve  |  aerial   |
         #            |    up     |    aim    |           |
         # -----------+ - - - - - + - - - - - + - - - - - +
-        #   soon on  |  improve  |  slow     |  slow     |
-        #   ground   |    aim    |  curve    |  straight |
+        #   soon on  |  improve  |  slow     |   small   |
+        #   ground   |    aim    |  curve    |   jump    |
         # -----------+ - - - - - + - - - - - + - - - - - +
         #  on ground |  improve  |  fast     |  fast     |
         #            |   aim??   |  curve    |  straight |
@@ -319,11 +319,28 @@ class ShotController:
         ball_soon = ball_predict(bot, time)
         car_to_ball_soon = ball_soon.pos - car.pos
 
-        if ball_soon.pos[Z] < 110 or (ball_soon.pos[Z] < 500 and ball_soon.vel[Z] <= 0) or True: #FIXME Always true
+        if ball_soon.pos[Z] < 110 or (ball_soon.pos[Z] < 475 and ball_soon.vel[Z] <= 0) or True: #FIXME Always true
 
             # The ball is on the ground or soon on the ground
 
-            if ball_soon.pos[Z] > 110: # and ball_soon.vel[Z] <= 0:
+            if 275 < ball_soon.pos[Z] < 475 and aim_cone.contains_direction(car_to_ball_soon):
+                # Can we hit it if we make a small jump?
+                vel_f = proj_onto_size(car.vel, xy(car_to_ball_soon))
+                car_expected_pos = car.pos + car.vel * time
+                ball_soon_flat = xy(ball_soon.pos)
+                diff = norm(car_expected_pos - ball_soon_flat)
+
+                if bot.do_rendering:
+                    bot.renderer.draw_line_3d(car.pos, car_expected_pos, bot.renderer.lime())
+                    bot.renderer.draw_rect_3d(car_expected_pos, 12, 12, True, bot.renderer.lime())
+
+                print(time, vel_f, diff)
+
+                if vel_f > 400:
+                    if diff < 150:
+                        bot.plan = SmallJumpPlan(lambda b: b.info.ball.pos)
+
+            if 110 < ball_soon.pos[Z]: # and ball_soon.vel[Z] <= 0:
                 # The ball is slightly in the air, lets wait just a bit more
                 self.waits_for_fall = True
                 ball_landing = next_ball_landing(bot, ball_soon, size=100)
