@@ -334,8 +334,6 @@ class ShotController:
                     bot.renderer.draw_line_3d(car.pos, car_expected_pos, bot.renderer.lime())
                     bot.renderer.draw_rect_3d(car_expected_pos, 12, 12, True, bot.renderer.lime())
 
-                print(time, vel_f, diff)
-
                 if vel_f > 400:
                     if diff < 150:
                         bot.plan = SmallJumpPlan(lambda b: b.info.ball.pos)
