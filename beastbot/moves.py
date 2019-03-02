@@ -1,6 +1,7 @@
 from RLUtilities.Maneuvers import AirDodge, AerialTurn
 from rlbot.agents.base_agent import SimpleControllerState
 
+import time
 import render
 from plans import DodgePlan, RecoverPlan, SmallJumpPlan
 from predict import ball_predict, next_ball_landing
@@ -415,7 +416,10 @@ class ShotController:
             return (1 + extra) * dist / time
 
 
-
+def celebrate(bot):
+    controls = SimpleControllerState()
+    controls.steer = math.sin(time.time() * 10)
+    return controls
 
 
 # ----------------------------------------- Helper functions --------------------------------

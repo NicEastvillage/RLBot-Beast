@@ -6,6 +6,7 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.game_state_util import CarState, Physics, Vector3, Rotator, GameState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
+import moves
 from behaviour import *
 from info import EGameInfo
 from moves import DriveController, AimCone, ShotController
@@ -48,6 +49,10 @@ class Beast(BaseAgent):
         self.info.read_packet(packet)
 
         self.renderer.begin_rendering()
+
+        # Check if match is over
+        if packet.game_info.is_match_ended:
+            return moves.celebrate(self)  # Assuming we win!
 
         # Check kickoff
         if self.info.is_kickoff and not self.doing_kickoff:
