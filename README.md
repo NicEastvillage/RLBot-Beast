@@ -27,7 +27,7 @@ Beast from the East participated in:
   * also eliminated in the 2v2 **quarterfinals** with Zoomlette by Jonas as teammate
 * [Snowbot Showdown](https://braacket.com/tournament/69BF67CC-54A5-4212-B108-1677922358C9/match/6670A22A-17FF-4398-AF76-6DF2DA8B8EFD), hosted by jeroen11dijk
   * eliminated in the **qualifier round**
-* [Titan Tournament](https://braacket.com/tournament/tinytourney2), hosted by Jeroen11dijk
+* [Titan Tournament](https://braacket.com/tournament/tinytourney2), hosted by jeroen11dijk
   * got a **5th place**
 * [Tiny Tournament](https://braacket.com/tournament/0661561E-BA13-49E9-80BF-ABD953579CED/match), hosted by jeroen11dijk
   * got a **2nd place**
