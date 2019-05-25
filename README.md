@@ -3,11 +3,6 @@ An offline bot for Rocket League using the framework [RLBot](https://github.com/
 
 Designed for 1v1 soccer.
 
-It participated in:
-* Rocket League Bot Tournament August 2018
-  * got #9 place in 1v1
-  * got #5 place in 2v2 with random teammates
-
 Beast from the East uses a utility system to decide what to do, and a set of controllers to execute that.
 In terms of skill Beast is similar to Psyonix AllStar.
 
@@ -22,6 +17,23 @@ In terms of skill Beast is similar to Psyonix AllStar.
 4. Click the 'Run' button
 
 The match configuration can be changed in rlbot.cfg
+
+## Tournament Participation
+
+Beast from the East participated in:
+* [RLBot Wintertide Tournament 2019](https://braacket.com/tournament/wintertide)
+  * got **4th place** in 1v1
+  * eliminated in the 2v2 **quarterfinals** with NV Derevo by jeroen11dijk as teammate
+  * also eliminated in the 2v2 **quarterfinals** with Zoomlette by Jonas as teammate
+* [Snowbot Showdown](https://braacket.com/tournament/69BF67CC-54A5-4212-B108-1677922358C9/match/6670A22A-17FF-4398-AF76-6DF2DA8B8EFD), hosted by jeroen11dijk
+  * eliminated in the **qualifier round**
+* [Titan Tournament](https://braacket.com/tournament/tinytourney2), hosted by Jeroen11dijk
+  * got a **5th place**
+* [Tiny Tournament](https://braacket.com/tournament/0661561E-BA13-49E9-80BF-ABD953579CED/match), hosted by jeroen11dijk
+  * got a **2nd place**
+* [Rocket League Bot Tournament August 2018](https://braacket.com/tournament/527AAEBD-D323-455A-90EB-9AFFA8C92B34/dashboard)
+  * got **9th place** in 1v1
+  * got **5th place** in 2v2 with random teammates
 
 ## More
 
