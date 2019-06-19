@@ -10,7 +10,7 @@ import moves
 from behaviour import *
 from info import EGameInfo
 from moves import DriveController, AimCone, ShotController
-from plans import KickoffPlan, SmallJumpPlan
+from plans import KickoffPlan, SmallJumpPlan, choose_kickoff_plan
 from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
@@ -56,7 +56,7 @@ class Beast(BaseAgent):
 
         # Check kickoff
         if self.info.is_kickoff and not self.doing_kickoff:
-            self.plan = KickoffPlan()
+            self.plan = choose_kickoff_plan(self)
             self.doing_kickoff = True
             team_name = "[BLUE]" if self.team == 0 else "[ORANGE]"
             print("Beast", self.index, team_name, ": Hello World!")

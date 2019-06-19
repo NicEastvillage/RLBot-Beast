@@ -224,6 +224,96 @@ class KickoffPlan:
             bot.renderer.draw_line_3d(car.pos, point, bot.renderer.white())
 
 
+def choose_kickoff_plan(bot):
+
+    # Do we have teammates? If no -> always go for kickoff
+    if len(bot.info.teammates) == 0:
+        return KickoffPlan()
+
+    # Kickoff spawn locations (corners may vary from map to map)
+    ts = bot.info.team_sign
+    right_corner_loc = vec3(-1970, ts * 2450, 0)   # actually left for orange
+    left_corner_loc = vec3(1970, ts * 2450, 0)   # actually right for orange
+    back_right_loc = vec3(-256, ts * 3840, 0)   # actually left for orange
+    back_left_loc = vec3(256, ts * 3840, 0)   # actually right for orange
+    back_center_loc = vec3(0, ts * 4608, 0)
+
+    # Are we in the corner -> go for kickoff
+    if is_my_kickoff_spawn(bot, right_corner_loc)\
+            or is_my_kickoff_spawn(bot, left_corner_loc):
+        return KickoffPlan()
+
+    # Is a teammate in the corner -> collect boost
+    if is_teammate_kickoff_spawn(bot, right_corner_loc)\
+            or is_teammate_kickoff_spawn(bot, left_corner_loc):
+        print("Collecting boost")
+        return CollectClosestBoost()
+
+    # No teammate in the corner
+    # Are we back right or left -> go for kickoff
+    if is_my_kickoff_spawn(bot, back_right_loc)\
+            or is_my_kickoff_spawn(bot, back_left_loc):
+        return KickoffPlan()
+
+    # No teammate in the corner
+    # Is a teammate back right or left -> collect boost
+    if is_teammate_kickoff_spawn(bot, back_right_loc) \
+            or is_teammate_kickoff_spawn(bot, back_left_loc):
+        print("Collecting boost")
+        return CollectClosestBoost()
+
+    # We have no teammates
+    return KickoffPlan()
+
+
+def is_my_kickoff_spawn(bot, loc):
+    dist = norm(bot.info.my_car.pos - loc)
+    return dist < 150
+
+
+def is_teammate_kickoff_spawn(bot, loc):
+    for mate in bot.info.teammates:
+        dist = norm(mate.pos - loc)
+        if dist < 150:
+            return True
+    return False
+
+
+class CollectClosestBoost:
+    def __init__(self):
+        self.finished = False
+        self.big_pad_locs = [
+            vec3(3584, 0, 0),
+            vec3(-3584, 0, 0),
+            vec3(3072, 4096, 0),
+            vec3(3072, -4096, 0),
+            vec3(-3072, 4096, 0),
+            vec3(-3072, -4096, 0)
+        ]
+        self.closest_pad = None
+
+    def execute(self, bot):
+        car = bot.info.my_car
+
+        # Choose the closest big boost pad
+        if self.closest_pad is None:
+            closest_dist = 99999
+            for pad in self.big_pad_locs:
+                dist = norm(car.pos - pad)
+                if dist < closest_dist:
+                    closest_dist = dist
+                    self.closest_pad = pad
+
+        # Drive towards the pad
+        bot.controls = bot.drive.go_towards_point(bot, self.closest_pad, target_vel=2300, boost=True, can_keep_speed=True)
+
+        car_to_pad = self.closest_pad - car.pos
+        vel = proj_onto_size(car.vel, car_to_pad)
+        dist = norm(car_to_pad)
+        if dist < vel * 0.3:
+            self.finished = True
+
+
 class RecoverPlan:
     def __init__(self):
         self.finished = False
