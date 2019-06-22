@@ -238,6 +238,9 @@ def choose_kickoff_plan(bot):
     back_left_loc = vec3(256, ts * 3840, 0)   # actually right for orange
     back_center_loc = vec3(0, ts * 4608, 0)
 
+    boost_x = 3072
+    boost_y = ts * 4096
+
     # Are we in the corner -> go for kickoff
     if is_my_kickoff_spawn(bot, right_corner_loc)\
             or is_my_kickoff_spawn(bot, left_corner_loc):
@@ -246,8 +249,18 @@ def choose_kickoff_plan(bot):
     # Is a teammate in the corner -> collect boost
     if is_teammate_kickoff_spawn(bot, right_corner_loc)\
             or is_teammate_kickoff_spawn(bot, left_corner_loc):
-        print("Collecting boost")
-        return CollectClosestBoost()
+        if bot.info.my_car.pos[X] > 10:
+            # go for left boost
+            return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
+        if bot.info.my_car.pos[X] < -10:
+            # go for right boost
+            return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
+        if is_teammate_kickoff_spawn(bot, back_right_loc):
+            # go for left boost
+            return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
+        else:
+            # go for right boost
+            return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
 
     # No teammate in the corner
     # Are we back right or left -> go for kickoff
@@ -257,10 +270,12 @@ def choose_kickoff_plan(bot):
 
     # No teammate in the corner
     # Is a teammate back right or left -> collect boost
-    if is_teammate_kickoff_spawn(bot, back_right_loc) \
-            or is_teammate_kickoff_spawn(bot, back_left_loc):
-        print("Collecting boost")
-        return CollectClosestBoost()
+    if is_teammate_kickoff_spawn(bot, back_right_loc):
+        # go for left boost
+        return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
+    elif is_teammate_kickoff_spawn(bot, back_left_loc):
+        # go for right boost
+        return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
 
     # We have no teammates
     return KickoffPlan()
@@ -279,8 +294,26 @@ def is_teammate_kickoff_spawn(bot, loc):
     return False
 
 
-class CollectClosestBoost:
-    def __init__(self):
+class CollectSpecificBoostPlan:
+    def __init__(self, pad_pos):
+        self.finished = False
+        self.boost_pad_pos = pad_pos
+
+    def execute(self, bot):
+        car = bot.info.my_car
+
+        # Drive towards the pad
+        bot.controls = bot.drive.go_towards_point(bot, self.boost_pad_pos, target_vel=2300, boost=True, can_keep_speed=True)
+
+        car_to_pad = self.boost_pad_pos - car.pos
+        vel = proj_onto_size(car.vel, car_to_pad)
+        dist = norm(car_to_pad)
+        if dist < vel * 0.3:
+            self.finished = True
+
+
+class CollectClosestBoostPlan:
+    def __init__(self, specific_loc=None):
         self.finished = False
         self.big_pad_locs = [
             vec3(3584, 0, 0),
@@ -291,6 +324,9 @@ class CollectClosestBoost:
             vec3(-3072, -4096, 0)
         ]
         self.closest_pad = None
+
+        if specific_loc is not None:
+            self.closest_pad = specific_loc
 
     def execute(self, bot):
         car = bot.info.my_car
