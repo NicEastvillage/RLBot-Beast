@@ -11,11 +11,6 @@ class EBoostPad(BoostPad):
         self.is_big = is_big
 
 
-class ECar(Car):
-    def __init__(self):
-        super().__init__()
-        self.name = ""
-
 class EGameInfo(GameInfo):
     def __init__(self, index, team):
         super().__init__(index, team)
