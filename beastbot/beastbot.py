@@ -15,7 +15,7 @@ from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
 
-RENDER = False
+RENDER = True
 
 
 class Beast(BaseAgent):
@@ -58,8 +58,7 @@ class Beast(BaseAgent):
         if self.info.is_kickoff and not self.doing_kickoff:
             self.plan = choose_kickoff_plan(self)
             self.doing_kickoff = True
-            team_name = "[BLUE]" if self.team == 0 else "[ORANGE]"
-            print("Beast", self.index, team_name, ": Hello World!")
+            self.print("Hello world!")
 
         # Execute logic
         if self.plan is None or self.plan.finished:
@@ -92,6 +91,10 @@ class Beast(BaseAgent):
 
         self.renderer.end_rendering()
         return self.controls
+
+    def print(self, s):
+        team_name = "[BLUE]" if self.team == 0 else "[ORANGE]"
+        print("Beast", self.index, team_name, ":", s)
 
     def random_color(self, anything):
         color_functions = {

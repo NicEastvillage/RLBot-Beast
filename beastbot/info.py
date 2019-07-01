@@ -1,4 +1,5 @@
 from RLUtilities.GameInfo import GameInfo, BoostPad
+from RLUtilities.Simulation import Car
 from rlbot.messages.flat import GameTickPacket, FieldInfo
 
 from rlmath import *
@@ -9,6 +10,11 @@ class EBoostPad(BoostPad):
         super().__init__(index, pos, is_active, timer)
         self.is_big = is_big
 
+
+class ECar(Car):
+    def __init__(self):
+        super().__init__()
+        self.name = ""
 
 class EGameInfo(GameInfo):
     def __init__(self, index, team):

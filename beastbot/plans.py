@@ -228,6 +228,7 @@ def choose_kickoff_plan(bot):
 
     # Do we have teammates? If no -> always go for kickoff
     if len(bot.info.teammates) == 0:
+        bot.print("No team mates, early conclusion")
         return KickoffPlan()
 
     # Kickoff spawn locations (corners may vary from map to map)
@@ -241,43 +242,64 @@ def choose_kickoff_plan(bot):
     boost_x = 3072
     boost_y = ts * 4096
 
-    # Are we in the corner -> go for kickoff
-    if is_my_kickoff_spawn(bot, right_corner_loc)\
-            or is_my_kickoff_spawn(bot, left_corner_loc):
-        return KickoffPlan()
+    # Are we in the corner -> go for kickoff (If two bot's are in the corners, we assume lowest index goes for kickoff)
+    if is_my_kickoff_spawn(bot, right_corner_loc):
+        tm_index = index_of_teammate_at_kickoff_spawn(bot, left_corner_loc)
+        if 0 <= tm_index < bot.index:
+            bot.print("SecondMan right")
+            return SecondManSlowCornerKickoffPlan(bot)
+        else:
+            bot.print("FirstMan right")
+            return KickoffPlan()
+    if is_my_kickoff_spawn(bot, left_corner_loc):
+        tm_index = index_of_teammate_at_kickoff_spawn(bot, right_corner_loc)
+        if 0 <= tm_index < bot.index:
+            bot.print("SecondMan left")
+            return SecondManSlowCornerKickoffPlan(bot)
+        else:
+            bot.print("FirstMan left")
+            return KickoffPlan()
 
     # Is a teammate in the corner -> collect boost
-    if is_teammate_kickoff_spawn(bot, right_corner_loc)\
-            or is_teammate_kickoff_spawn(bot, left_corner_loc):
+    if 0 <= index_of_teammate_at_kickoff_spawn(bot, right_corner_loc) \
+            or 0 <= index_of_teammate_at_kickoff_spawn(bot, left_corner_loc):
         if bot.info.my_car.pos[X] > 10:
             # go for left boost
+            bot.print("Boost left, because team mate corner")
             return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
         if bot.info.my_car.pos[X] < -10:
             # go for right boost
+            bot.print("Boost right, because team mate corner")
             return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
-        if is_teammate_kickoff_spawn(bot, back_right_loc):
+        if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
             # go for left boost
+            bot.print("Boost left, because team mate back right")
             return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
         else:
             # go for right boost
+            bot.print("Boost right, because team mate back left")
             return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
 
     # No teammate in the corner
     # Are we back right or left -> go for kickoff
     if is_my_kickoff_spawn(bot, back_right_loc)\
             or is_my_kickoff_spawn(bot, back_left_loc):
+        bot.print("Kickoff, back side")
         return KickoffPlan()
 
     # No teammate in the corner
     # Is a teammate back right or left -> collect boost
-    if is_teammate_kickoff_spawn(bot, back_right_loc):
+    if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
         # go for left boost
+        bot.print("Boost left, im back")
         return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
-    elif is_teammate_kickoff_spawn(bot, back_left_loc):
+    elif 0 <= index_of_teammate_at_kickoff_spawn(bot, back_left_loc):
         # go for right boost
+        bot.print("Boost right, im back")
         return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
 
     # We have no teammates
+    bot.print("No team mates")
     return KickoffPlan()
 
 
@@ -286,12 +308,35 @@ def is_my_kickoff_spawn(bot, loc):
     return dist < 150
 
 
-def is_teammate_kickoff_spawn(bot, loc):
-    for mate in bot.info.teammates:
-        dist = norm(mate.pos - loc)
-        if dist < 150:
-            return True
-    return False
+def index_of_teammate_at_kickoff_spawn(bot, loc):
+    """
+    Returns index of teammate at loc, or -1 if there is no teammate
+    """
+    # RLU Cars does not contain index, so we have to find that ourselves :(
+    for i, car in enumerate(bot.info.cars):
+        if car.team == bot.info.my_car.team:
+            dist = norm(car.pos - loc)
+            if dist < 150:
+                return i
+    return -1
+
+
+class SecondManSlowCornerKickoffPlan:
+    def __init__(self, bot):
+        self.finished = False
+
+        # These vectors will help us make the curve
+        ts = bot.info.team_sign
+        self.target_loc = vec3(0, ts * 400, 0)
+        self.target_dir = vec3(0, -ts, 0)
+
+    def execute(self, bot):
+        car = bot.info.my_car
+
+        curve_point = curve_from_arrival_dir(car.pos, self.target_loc, self.target_dir)
+        bot.controls = bot.drive.go_towards_point(bot, curve_point, target_vel=1400, slide=True, boost=True, can_keep_speed=False)
+
+        self.finished = norm(car.pos) < 1000   # End plan when reaching getting close to ball (approx at boost pad)
 
 
 class CollectSpecificBoostPlan:
@@ -362,4 +407,5 @@ class RecoverPlan:
         self.aerialturn.step(0.01666)
         self.aerialturn.controls.throttle = 1
         bot.controls = self.aerialturn.controls
+        bot.controls.throttle = True
         self.finished = self.aerialturn.finished
