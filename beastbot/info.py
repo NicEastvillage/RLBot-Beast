@@ -1,5 +1,4 @@
 from RLUtilities.GameInfo import GameInfo, BoostPad
-from RLUtilities.Simulation import Car
 from rlbot.messages.flat import GameTickPacket, FieldInfo
 
 from rlmath import *

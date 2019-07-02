@@ -228,7 +228,6 @@ def choose_kickoff_plan(bot):
 
     # Do we have teammates? If no -> always go for kickoff
     if len(bot.info.teammates) == 0:
-        bot.print("No team mates, early conclusion")
         return KickoffPlan()
 
     # Kickoff spawn locations (corners may vary from map to map)
@@ -246,18 +245,14 @@ def choose_kickoff_plan(bot):
     if is_my_kickoff_spawn(bot, right_corner_loc):
         tm_index = index_of_teammate_at_kickoff_spawn(bot, left_corner_loc)
         if 0 <= tm_index < bot.index:
-            bot.print("SecondMan right")
             return SecondManSlowCornerKickoffPlan(bot)
         else:
-            bot.print("FirstMan right")
             return KickoffPlan()
     if is_my_kickoff_spawn(bot, left_corner_loc):
         tm_index = index_of_teammate_at_kickoff_spawn(bot, right_corner_loc)
         if 0 <= tm_index < bot.index:
-            bot.print("SecondMan left")
             return SecondManSlowCornerKickoffPlan(bot)
         else:
-            bot.print("FirstMan left")
             return KickoffPlan()
 
     # Is a teammate in the corner -> collect boost
@@ -265,41 +260,33 @@ def choose_kickoff_plan(bot):
             or 0 <= index_of_teammate_at_kickoff_spawn(bot, left_corner_loc):
         if bot.info.my_car.pos[X] > 10:
             # go for left boost
-            bot.print("Boost left, because team mate corner")
             return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
         if bot.info.my_car.pos[X] < -10:
             # go for right boost
-            bot.print("Boost right, because team mate corner")
             return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
         if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
             # go for left boost
-            bot.print("Boost left, because team mate back right")
             return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
         else:
             # go for right boost
-            bot.print("Boost right, because team mate back left")
             return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
 
     # No teammate in the corner
     # Are we back right or left -> go for kickoff
     if is_my_kickoff_spawn(bot, back_right_loc)\
             or is_my_kickoff_spawn(bot, back_left_loc):
-        bot.print("Kickoff, back side")
         return KickoffPlan()
 
     # No teammate in the corner
     # Is a teammate back right or left -> collect boost
     if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
         # go for left boost
-        bot.print("Boost left, im back")
         return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
     elif 0 <= index_of_teammate_at_kickoff_spawn(bot, back_left_loc):
         # go for right boost
-        bot.print("Boost right, im back")
         return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
 
     # We have no teammates
-    bot.print("No team mates")
     return KickoffPlan()
 
 
