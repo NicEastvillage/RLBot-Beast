@@ -45,19 +45,11 @@ class Mat33:
         """
         Mat33(xx, xy, xz, yx, yy, yz, zx, zy, zz)
 
-        Mat33(colA, colB, colC)
-
         Mat33(mat)
         """
 
         if isinstance(xx, Mat33):
             self.data = xx.data.copy()
-        elif hasattr(xx, 'x') and hasattr(xy, 'x') and hasattr(xz, 'x'):
-            self.data = [
-                xx.x, xx.y, xx.z,
-                xy.x, xy.y, xy.z,
-                xz.x, xz.y, xz.z
-            ]
         else:
             self.data = [xx, xy, xz, yx, yy, yz, zx, zy, zz]
 
@@ -128,6 +120,22 @@ class Mat33:
         return Mat33(v, v, v, v, v, v, v, v, v)
 
     @staticmethod
+    def from_rows(row_a: Vec3, row_b: Vec3, row_c: Vec3) -> 'Mat33':
+        return Mat33(
+            row_a.x, row_a.y, row_a.z,
+            row_b.x, row_b.y, row_b.z,
+            row_c.x, row_c.y, row_c.z
+        )
+
+    @staticmethod
+    def from_columns(col_a: Vec3, col_b: Vec3, col_c: Vec3) -> 'Mat33':
+        return Mat33(
+            col_a.x, col_b.x, col_c.x,
+            col_a.y, col_b.y, col_c.y,
+            col_a.z, col_b.z, col_c.z
+        )
+
+    @staticmethod
     def identity():
         return Mat33(1, 0, 0, 0, 1, 0, 0, 0, 1)
 
@@ -140,7 +148,7 @@ def norm(vec: Vec3) -> float:
     return math.sqrt(vec.x**2 + vec.y**2 + vec.z**2)
 
 
-def normalized(vec: Vec3) -> Vec3:
+def normalize(vec: Vec3) -> Vec3:
     return vec / norm(vec)
 
 

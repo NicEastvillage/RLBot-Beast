@@ -1,14 +1,11 @@
-import math
-
-from RLUtilities.LinearAlgebra import *
-
+from vec import *
 
 FIELD_WIDTH = 8192
 FIELD_LENGTH = 10240
 FILED_HEIGHT = 2044
 GOAL_WIDTH = 1900
 GOAL_HEIGHT = 640
-GRAVITY = vec3(0, 0, -650)
+GRAVITY = Vec3(0, 0, -650)
 BALL_RADIUS = 92
 
 
@@ -19,8 +16,8 @@ Z = 2
 
 class Zone2d:
     def __init__(self, cornerA, cornerB):
-        self.cornerMin = vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), 0)
-        self.cornerMax = vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), 0)
+        self.cornerMin = Vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), 0)
+        self.cornerMax = Vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), 0)
 
     def contains(self, point):
         return self.cornerMin[X] <= point[X] <= self.cornerMax[X]\
@@ -29,8 +26,8 @@ class Zone2d:
 
 class Zone3d:
     def __init__(self, cornerA, cornerB):
-        self.cornerMin = vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), min(cornerA[Z], cornerB[Z]))
-        self.cornerMax = vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), max(cornerA[Z], cornerB[Z]))
+        self.cornerMin = Vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), min(cornerA[Z], cornerB[Z]))
+        self.cornerMax = Vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), max(cornerA[Z], cornerB[Z]))
 
     def contains(self, point):
         return self.cornerMin[X] <= point[X] <= self.cornerMax[X]\
@@ -47,8 +44,77 @@ def sign(x) -> float:
     return (1, -1)[x < 0]
 
 
+def clip(x, minimum, maximum):
+    return min(max(minimum, x), maximum)
+
+
 def clip01(x) -> float:
     return clip(x, 0, 1)
+
+
+def angle_between(v: Vec3, u: Vec3) -> float:
+    return math.acos(dot(normalize(v), normalize(u)))
+
+
+def axis_to_rotation(omega: Vec3) -> Mat33:
+    norm_omega = norm(omega)
+    if abs(norm_omega) < 0.000001:
+        return Mat33.identity()
+    else:
+        u = omega / norm_omega
+
+        c = math.cos(norm_omega)
+        s = math.sin(norm_omega)
+
+        return Mat33(
+            u[0] * u[0] * (1.0 - c) + c,
+            u[0] * u[1] * (1.0 - c) - u[2] * s,
+            u[0] * u[2] * (1.0 - c) + u[1] * s,
+
+            u[1] * u[0] * (1.0 - c) + u[2] * s,
+            u[1] * u[1] * (1.0 - c) + c,
+            u[1] * u[2] * (1.0 - c) - u[0] * s,
+
+            u[2] * u[0] * (1.0 - c) - u[1] * s,
+            u[2] * u[1] * (1.0 - c) + u[0] * s,
+            u[2] * u[2] * (1.0 - c) + c
+        )
+
+
+def euler_to_rotation(pyr: Vec3) -> Mat33:
+    cp = math.cos(pyr[0])
+    sp = math.sin(pyr[0])
+    cy = math.cos(pyr[1])
+    sy = math.sin(pyr[1])
+    cr = math.cos(pyr[2])
+    sr = math.sin(pyr[2])
+
+    rotation = Mat33()
+
+    # front direction
+    rotation.set(0, 0, cp * cy)
+    rotation.set(1, 0, cp * sy)
+    rotation.set(2, 0, sp)
+
+    # left direction
+    rotation.set(0, 1, cy * sp * sr - cr * sy)
+    rotation.set(1, 1, sy * sp * sr + cr * cy)
+    rotation.set(2, 1, -cp * sr)
+
+    # up direction
+    rotation.set(0, 2, -cr * cy * sp - sr * sy)
+    rotation.set(1, 2, -cr * sy * sp + sr * cy)
+    rotation.set(2, 2, cp * cr)
+
+    return rotation
+
+
+def rotation_to_euler(rotation: Mat33) -> Vec3:
+    return Vec3(
+        math.atan2(rotation.get(2, 0), norm(Vec3(rotation.get(0, 0), rotation.get(1, 0)))),
+        math.atan2(rotation.get(1, 0), rotation.get(0, 0)),
+        math.atan2(-rotation.get(2, 1), rotation.get(2, 2))
+    )
 
 
 def lerp(a, b, t: float):
