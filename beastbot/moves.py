@@ -77,8 +77,8 @@ class DriveController:
         point_is_in_turn_radius_deadzone = norm(point_local - tr_center_local) < tr
         # Draw turn radius deadzone
         if car.on_ground and bot.do_rendering:
-            tr_center_world = car.pos + dot(car.theta, tr_center_local)
-            tr_center_world_2 = car.pos + dot(car.theta, -1 * tr_center_local)
+            tr_center_world = car.pos + dot(car.rot, tr_center_local)
+            tr_center_world_2 = car.pos + dot(car.rot, -1 * tr_center_local)
             render.draw_circle(bot, tr_center_world, car.up(), tr, 22)
             render.draw_circle(bot, tr_center_world_2, car.up(), tr, 22)
 

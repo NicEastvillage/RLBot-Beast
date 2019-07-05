@@ -72,6 +72,23 @@ def axis_to_rotation(axis: Vec3) -> Mat33:
         )
 
 
+def rotation_to_axis(rot: Mat33) -> Vec3:
+
+    ang = math.acos(clip(0.5 * (tr(rot) - 1.0), -1.0, 1.0))
+
+    # For small angles, prefer series expansion to division by sin(theta) ~ 0
+    if abs(ang) < 0.00001:
+        scale = 0.5 + ang * ang / 12.0
+    else:
+        scale = 0.5 * ang / math.sin(ang)
+
+    return Vec3(
+        rot.get(2, 1) - rot.get(1, 2),
+        rot.get(0, 2) - rot.get(2, 0),
+        rot.get(1, 0) - rot.get(0, 1)
+    ) * scale
+
+
 def euler_to_rotation(pitch_yaw_roll: Vec3) -> Mat33:
     cp = math.cos(pitch_yaw_roll[0])
     sp = math.sin(pitch_yaw_roll[0])
