@@ -28,8 +28,9 @@ class Ball:
 
 
 class Car:
-    def __init__(self, id=-1, team=0, pos=Vec3(), vel=Vec3(), ang_vel=Vec3(), rot=Mat33(), time=0.0):
-        self.id = id
+    def __init__(self, index=-1, name="Unknown", team=0, pos=Vec3(), vel=Vec3(), ang_vel=Vec3(), rot=Mat33(), time=0.0):
+        self.id = index
+        self.name = name
         self.team = team
         self.pos = pos
         self.vel = vel
@@ -37,6 +38,7 @@ class Car:
         self.ang_vel = ang_vel
         self.time = time
 
+        self.is_demolished = False
         self.jumped = False
         self.double_jumped = False
         self.on_ground = True
@@ -141,6 +143,7 @@ class GameInfo:
             car.ang_vel = Vec3(car_phy.angular_velocity)
             car.rot = euler_to_rotation(Vec3(car_phy.rotation.pitch, car_phy.rotation.yaw, car_phy.rotation.roll))
 
+            car.is_demolished = game_car.is_demolished
             car.on_ground = game_car.has_wheel_contact
             car.supersonic = game_car.is_super_sonic
             car.jumped = game_car.jumped
@@ -152,8 +155,10 @@ class GameInfo:
 
             if len(self.cars) <= i:
 
-                car.id = i
+                # First time we see this car
+                car.index = i
                 car.team = game_car.team
+                car.name = game_car.name
                 self.cars.append(car)
 
                 if game_car.team == self.team:

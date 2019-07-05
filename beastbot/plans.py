@@ -268,23 +268,28 @@ class AerialTurn:
     def find_landing_orientation(car: Car, num_points: int) -> Mat33:
 
         """
-        dummy = Car(car)
+        dummy = DummyObject(car)
         trajectory = [Vec3(dummy.pos)]
 
         for i in range(0, num_points):
-            dummy.step(SimpleControllerState(), 0.0333)  # Apply physics and let car fall through the air
+            fall(dummy, 0.0333)  # Apply physics and let car fall through the air
             trajectory.append(Vec3(dummy.pos))
             up = dummy.pitch_surface_normal()
             if norm(up) > 0.0 and i > 10:
+                up = normalize(up)
                 forward = normalize(dummy.vel - dot(dummy.vel, up) * up)
-                left = normalize(cross(up, forward))
+                left = cross(up, forward)
 
-                return Mat33(forward[0], left[0], up[0],
-                             forward[1], left[1], up[1],
-                             forward[2], left[2], up[2])
-         """
+                return Mat33.from_columns(forward, left, up)
 
-        return car.rot
+        return Mat33(car.rot)
+        """
+
+        forward = normalize(xy(car.rot.col(0)))
+        up = Vec3(z=1)
+        left = cross(up, forward)
+
+        return Mat33.from_columns(forward, left, up)
 
     @staticmethod
     # w0: beginning step angular velocity (world coordinates)
@@ -464,11 +469,10 @@ def index_of_teammate_at_kickoff_spawn(bot, loc):
     Returns index of teammate at loc, or -1 if there is no teammate
     """
     # RLU Cars does not contain index, so we have to find that ourselves :(
-    for i, car in enumerate(bot.info.cars):
-        if car.team == bot.info.my_car.team:
-            dist = norm(car.pos - loc)
-            if dist < 150:
-                return i
+    for car in bot.info.teammates:
+        dist = norm(car.pos - loc)
+        if dist < 150:
+            return car.index
     return -1
 
 
