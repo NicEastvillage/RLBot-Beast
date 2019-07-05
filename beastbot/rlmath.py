@@ -56,15 +56,15 @@ def angle_between(v: Vec3, u: Vec3) -> float:
     return math.acos(dot(normalize(v), normalize(u)))
 
 
-def axis_to_rotation(omega: Vec3) -> Mat33:
-    norm_omega = norm(omega)
-    if abs(norm_omega) < 0.000001:
+def axis_to_rotation(axis: Vec3) -> Mat33:
+    radians = norm(axis)
+    if abs(radians) < 0.000001:
         return Mat33.identity()
     else:
-        u = omega / norm_omega
+        u = axis / radians
 
-        c = math.cos(norm_omega)
-        s = math.sin(norm_omega)
+        c = math.cos(radians)
+        s = math.sin(radians)
 
         return Mat33(
             u[0] * u[0] * (1.0 - c) + c,
@@ -81,13 +81,13 @@ def axis_to_rotation(omega: Vec3) -> Mat33:
         )
 
 
-def euler_to_rotation(pyr: Vec3) -> Mat33:
-    cp = math.cos(pyr[0])
-    sp = math.sin(pyr[0])
-    cy = math.cos(pyr[1])
-    sy = math.sin(pyr[1])
-    cr = math.cos(pyr[2])
-    sr = math.sin(pyr[2])
+def euler_to_rotation(pitch_yaw_roll: Vec3) -> Mat33:
+    cp = math.cos(pitch_yaw_roll[0])
+    sp = math.sin(pitch_yaw_roll[0])
+    cy = math.cos(pitch_yaw_roll[1])
+    sy = math.sin(pitch_yaw_roll[1])
+    cr = math.cos(pitch_yaw_roll[2])
+    sr = math.sin(pitch_yaw_roll[2])
 
     rotation = Mat33()
 
@@ -138,17 +138,17 @@ def fix_ang(ang: float) -> float:
     return ((ang + math.pi) % math.tau) - math.pi
 
 
-def proj_onto(src: vec3, dir: vec3) -> vec3:
+def proj_onto(src: Vec3, dir: Vec3) -> Vec3:
     """
     Returns the vector component of src that is parallel with dir, i.e. the projection of src onto dir.
     """
     try:
         return (dot(src, dir) / dot(dir, dir)) * dir
     except ZeroDivisionError:
-        return vec3()
+        return Vec3()
 
 
-def proj_onto_size(src: vec3, dir: vec3) -> float:
+def proj_onto_size(src: Vec3, dir: Vec3) -> float:
     """
     Returns the size of the vector that is the project of src onto dir
     """
@@ -159,14 +159,14 @@ def proj_onto_size(src: vec3, dir: vec3) -> float:
         return norm(src)
 
 
-def rotated_2d(vec: vec3, ang: float) -> vec3:
+def rotated_2d(vec: Vec3, ang: float) -> Vec3:
     c = math.cos(ang)
     s = math.sin(ang)
-    return vec3(c * vec[X] - s * vec[Y],
+    return Vec3(c * vec[X] - s * vec[Y],
                 s * vec[X] + c * vec[Y])
 
 
-def is_near_wall(point: vec3, offset: float=130) -> bool:
+def is_near_wall(point: Vec3, offset: float=110) -> bool:
     return abs(point[X]) > FIELD_WIDTH - offset or abs(point[Y]) > FIELD_LENGTH - offset  # TODO Add diagonal walls
 
 
@@ -188,7 +188,7 @@ def curve_from_arrival_dir(src, target, arrival_direction, w=1):
     return target + w * t * dir
 
 
-def bezier(t: float, points: list) -> vec3:
+def bezier(t: float, points: list) -> Vec3:
     """
     Returns a point on a bezier curve made from the given controls points
     """
@@ -199,6 +199,17 @@ def bezier(t: float, points: list) -> vec3:
         return (1 - t) * bezier(t, points[0:-1]) + t * bezier(t, points[1:n])
 
 
-def is_closer_to_goal_than(a: vec3, b: vec3, team_index):
+def is_closer_to_goal_than(a: Vec3, b: Vec3, team_index):
     """ Returns true if a is closer than b to goal owned by the given team """
     return (a[Y] < b[Y], a[Y] > b[Y])[team_index]
+
+
+# Unit tests
+if __name__ == "__main__":
+    assert clip(12, -2, 2) == 2
+    assert clip(-20, -5, 3) == -5
+    assert angle_between(Vec3(x=1), Vec3(y=1)) == math.pi / 2
+    assert angle_between(Vec3(y=1), Vec3(y=-1, z=1)) == 0.75 * math.pi
+    assert norm(dot(axis_to_rotation(Vec3(z=math.pi)), Vec3(x=1)) - Vec3(x=-1)) < 0.000001
+    pyr = Vec3(0.5, 0.2, -0.4)
+    assert norm(rotation_to_euler(euler_to_rotation(pyr)) - pyr) < 0.000001

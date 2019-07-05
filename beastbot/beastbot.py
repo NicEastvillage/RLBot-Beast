@@ -145,8 +145,8 @@ class DefaultBehaviour:
 
         if right_side_of_ball:
             # Aim cone
-            dir_to_post_1 = (bot.info.enemy_goal + vec3(3800, 0, 0)) - bot.info.ball.pos
-            dir_to_post_2 = (bot.info.enemy_goal + vec3(-3800, 0, 0)) - bot.info.ball.pos
+            dir_to_post_1 = (bot.info.enemy_goal + Vec3(3800, 0, 0)) - bot.info.ball.pos
+            dir_to_post_2 = (bot.info.enemy_goal + Vec3(-3800, 0, 0)) - bot.info.ball.pos
             cone = AimCone(dir_to_post_1, dir_to_post_2)
             cone.get_goto_point(bot, car.pos, bot.info.ball.pos)
             if bot.do_rendering:

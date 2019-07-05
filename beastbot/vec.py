@@ -111,8 +111,8 @@ class Mat33:
         return self * scale
 
     def __str__(self):
-        return "Mat33(" + str(self.xx) + ", " + str(self.xy) + ", " + str(self.xz)\
-                        + str(self.yx) + ", " + str(self.yy) + ", " + str(self.yz)\
+        return "Mat33(" + str(self.xx) + ", " + str(self.xy) + ", " + str(self.xz) + ", " \
+                        + str(self.yx) + ", " + str(self.yy) + ", " + str(self.yz) + ", " \
                         + str(self.zx) + ", " + str(self.zy) + ", " + str(self.zz) + ")"
 
     @staticmethod

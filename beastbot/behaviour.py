@@ -29,7 +29,7 @@ class Carry:
 
         dist_01 = clip01(1 - norm(car_to_ball) / 3000)
 
-        head_dir = lerp(vec3(0, 0, 1), car.forward(), 0.1)
+        head_dir = lerp(Vec3(0, 0, 1), car.forward(), 0.1)
         ang = angle_between(head_dir, car_to_ball)
         ang_01 = clip01(1 - ang / (math.pi / 2))
 
@@ -128,7 +128,7 @@ class ShootAtGoal:
 
             enemy_to_ball = normalize(hit_pos - closest_enemy.pos)
             wait_point = hit_pos + enemy_to_ball * enemy_dist  # a point 50% closer to the center of the field
-            wait_point = lerp(wait_point, ball.pos + vec3(0, bot.info.team_sign * 3000, 0), 0.5)
+            wait_point = lerp(wait_point, ball.pos + Vec3(0, bot.info.team_sign * 3000, 0), 0.5)
             bot.controls = bot.drive.go_towards_point(bot, wait_point, norm(car.pos - wait_point), slide=False, boost=False, can_keep_speed=True, can_dodge=False)
 
             if bot.do_rendering:
@@ -190,8 +190,8 @@ class ClearBall:
 class SaveGoal:
     def __init__(self, bot):
         team_sign = bot.info.team_sign
-        self.own_goal_right = vec3(-820 * team_sign, 5120 * team_sign, 0)
-        self.own_goal_left = vec3(820 * team_sign, 5120 * team_sign, 0)
+        self.own_goal_right = Vec3(-820 * team_sign, 5120 * team_sign, 0)
+        self.own_goal_left = Vec3(820 * team_sign, 5120 * team_sign, 0)
         self.aim_cone = None
         self.ball_to_goal_right = None
         self.ball_to_goal_left = None

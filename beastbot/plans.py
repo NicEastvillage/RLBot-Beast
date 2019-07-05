@@ -192,7 +192,7 @@ class KickoffPlan:
         dist = norm(car.pos)
         vel_p = -proj_onto_size(car.vel, car.pos)
 
-        point = vec3(0, bot.info.team_sign * (dist / 2.6 - MIDDLE_OFFSET), 0)
+        point = Vec3(0, bot.info.team_sign * (dist / 2.6 - MIDDLE_OFFSET), 0)
         speed = 2300
         opp_dist = norm(bot.info.opponents[0].pos)
         opp_does_kick = opp_dist < dist + 600
@@ -200,8 +200,8 @@ class KickoffPlan:
         # Opponent is not going for kickoff, so we slow down a bit
         if not opp_does_kick:
             speed = 2210
-            point = vec3(0, bot.info.team_sign * (dist / 2.05 - MIDDLE_OFFSET), 0)
-            point += vec3(35 * sign(car.pos[X]), 0, 0)
+            point = Vec3(0, bot.info.team_sign * (dist / 2.05 - MIDDLE_OFFSET), 0)
+            point += Vec3(35 * sign(car.pos[X]), 0, 0)
 
 
         # Dodge when close to (0, 0) - but only if the opponent also goes for kickoff. The dodge itself should happen in about 0.3 seconds
@@ -232,11 +232,11 @@ def choose_kickoff_plan(bot):
 
     # Kickoff spawn locations (corners may vary from map to map)
     ts = bot.info.team_sign
-    right_corner_loc = vec3(-1970, ts * 2450, 0)   # actually left for orange
-    left_corner_loc = vec3(1970, ts * 2450, 0)   # actually right for orange
-    back_right_loc = vec3(-256, ts * 3840, 0)   # actually left for orange
-    back_left_loc = vec3(256, ts * 3840, 0)   # actually right for orange
-    back_center_loc = vec3(0, ts * 4608, 0)
+    right_corner_loc = Vec3(-1970, ts * 2450, 0)   # actually left for orange
+    left_corner_loc = Vec3(1970, ts * 2450, 0)   # actually right for orange
+    back_right_loc = Vec3(-256, ts * 3840, 0)   # actually left for orange
+    back_left_loc = Vec3(256, ts * 3840, 0)   # actually right for orange
+    back_center_loc = Vec3(0, ts * 4608, 0)
 
     boost_x = 3072
     boost_y = ts * 4096
@@ -260,16 +260,16 @@ def choose_kickoff_plan(bot):
             or 0 <= index_of_teammate_at_kickoff_spawn(bot, left_corner_loc):
         if bot.info.my_car.pos[X] > 10:
             # go for left boost
-            return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
+            return CollectSpecificBoostPlan(Vec3(boost_x, boost_y, 0))
         if bot.info.my_car.pos[X] < -10:
             # go for right boost
-            return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
+            return CollectSpecificBoostPlan(Vec3(-boost_x, boost_y, 0))
         if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
             # go for left boost
-            return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
+            return CollectSpecificBoostPlan(Vec3(boost_x, boost_y, 0))
         else:
             # go for right boost
-            return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
+            return CollectSpecificBoostPlan(Vec3(-boost_x, boost_y, 0))
 
     # No teammate in the corner
     # Are we back right or left -> go for kickoff
@@ -281,10 +281,10 @@ def choose_kickoff_plan(bot):
     # Is a teammate back right or left -> collect boost
     if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
         # go for left boost
-        return CollectSpecificBoostPlan(vec3(boost_x, boost_y, 0))
+        return CollectSpecificBoostPlan(Vec3(boost_x, boost_y, 0))
     elif 0 <= index_of_teammate_at_kickoff_spawn(bot, back_left_loc):
         # go for right boost
-        return CollectSpecificBoostPlan(vec3(-boost_x, boost_y, 0))
+        return CollectSpecificBoostPlan(Vec3(-boost_x, boost_y, 0))
 
     # We have no teammates
     return KickoffPlan()
@@ -314,8 +314,8 @@ class SecondManSlowCornerKickoffPlan:
 
         # These vectors will help us make the curve
         ts = bot.info.team_sign
-        self.target_loc = vec3(0, ts * 400, 0)
-        self.target_dir = vec3(0, -ts, 0)
+        self.target_loc = Vec3(0, ts * 400, 0)
+        self.target_dir = Vec3(0, -ts, 0)
 
     def execute(self, bot):
         car = bot.info.my_car
@@ -348,12 +348,12 @@ class CollectClosestBoostPlan:
     def __init__(self, specific_loc=None):
         self.finished = False
         self.big_pad_locs = [
-            vec3(3584, 0, 0),
-            vec3(-3584, 0, 0),
-            vec3(3072, 4096, 0),
-            vec3(3072, -4096, 0),
-            vec3(-3072, 4096, 0),
-            vec3(-3072, -4096, 0)
+            Vec3(3584, 0, 0),
+            Vec3(-3584, 0, 0),
+            Vec3(3072, 4096, 0),
+            Vec3(3072, -4096, 0),
+            Vec3(-3072, 4096, 0),
+            Vec3(-3072, -4096, 0)
         ]
         self.closest_pad = None
 

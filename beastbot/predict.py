@@ -10,23 +10,23 @@ class DummyObject:
         if base is not None:
             # Position
             if hasattr(base, "location"):
-                self.pos = vec3(base.location.x,
+                self.pos = Vec3(base.location.x,
                                 base.location.y,
                                 base.location.z)
             else:
-                self.pos = base.pos
+                self.pos = Vec3(base.pos)
 
             # Velocity
             if hasattr(base, "velocity"):
-                self.vel = vec3(base.velocity.x,
+                self.vel = Vec3(base.velocity.x,
                                 base.velocity.y,
                                 base.velocity.z)
             else:
-                self.vel = base.vel
+                self.vel = Vec3(base.vel)
 
         else:
-            self.pos = vec3(0, 0, 0)
-            self.vel = vec3(0, 0, 0)
+            self.pos = Vec3(0, 0, 0)
+            self.vel = Vec3(0, 0, 0)
 
 
 class UncertainEvent:

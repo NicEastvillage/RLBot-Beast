@@ -20,11 +20,11 @@ class EGameInfo(GameInfo):
         self.current_game_time = 0
         self.is_kickoff = False
 
-        self.own_goal = vec3(0, self.team_sign * FIELD_LENGTH / 2, 0)
-        self.own_goal_field = vec3(0, self.team_sign * (FIELD_LENGTH / 2 - 560), 0)
-        self.enemy_goal = vec3(0, -self.team_sign * FIELD_LENGTH / 2, 0)
-        self.enemy_goal_right = vec3(820 * self.team_sign, -5120 * self.team_sign, 0)
-        self.enemy_goal_left = vec3(-820 * self.team_sign, -5120 * self.team_sign, 0)
+        self.own_goal = Vec3(0, self.team_sign * FIELD_LENGTH / 2, 0)
+        self.own_goal_field = Vec3(0, self.team_sign * (FIELD_LENGTH / 2 - 560), 0)
+        self.enemy_goal = Vec3(0, -self.team_sign * FIELD_LENGTH / 2, 0)
+        self.enemy_goal_right = Vec3(820 * self.team_sign, -5120 * self.team_sign, 0)
+        self.enemy_goal_left = Vec3(-820 * self.team_sign, -5120 * self.team_sign, 0)
 
         self.field_info_loaded = False
 
@@ -35,7 +35,7 @@ class EGameInfo(GameInfo):
         self.boost_pads = []
         for i in range(field_info.num_boosts):
             pad = field_info.boost_pads[i]
-            pos = vec3(pad.location.x, pad.location.y, pad.location.z)
+            pos = Vec3(pad.location.x, pad.location.y, pad.location.z)
             self.boost_pads.append(EBoostPad(i, pos, pad.is_full_boost, True, 0.0))
         self.convenient_boost_pad = self.boost_pads[0]
         self.convenient_boost_pad_score = 0
@@ -79,7 +79,7 @@ class EGameInfo(GameInfo):
 
         return dist_score * angle_score * (0.8, 1)[pad.is_big]
 
-    def closest_enemy(self, pos: vec3):
+    def closest_enemy(self, pos: Vec3):
         enemy = None
         dist = -1
         for e in self.opponents:

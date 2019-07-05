@@ -21,7 +21,7 @@ class DriveController:
         if self.dodge is None:
             self.dodge = DodgePlan(self.last_point)
 
-    def go_towards_point(self, bot, point: vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, can_dodge=True, wall_offset_allowed=110) -> SimpleControllerState:
+    def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost=False, can_keep_speed=True, can_dodge=True, wall_offset_allowed=110) -> SimpleControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
         REQUIRED_VELF_FOR_DODGE = 1100
 
@@ -44,7 +44,7 @@ class DriveController:
             return self.controls
 
         # Get down from wall by choosing a point close to ground
-        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), vec3(0, 0, 1)) > math.pi * 0.31:
+        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), Vec3(0, 0, 1)) > math.pi * 0.31:
             point = lerp(xy(car.pos), xy(point), 0.5)
 
         # If the car is in a goal, avoid goal posts
@@ -72,7 +72,7 @@ class DriveController:
         # Is in turn radius deadzone?
         tr = turn_radius(abs(vel_f + 50))  # small bias
         tr_side = sign(angle)
-        tr_center_local = vec3(0, tr * tr_side, 0)
+        tr_center_local = Vec3(0, tr * tr_side, 0)
         point_is_in_turn_radius_deadzone = norm(point_local - tr_center_local) < tr
         # Draw turn radius deadzone
         if car.on_ground and bot.do_rendering:
@@ -184,15 +184,15 @@ class AimCone:
         # Right angle and direction
         if isinstance(right_most, float):
             self.right_ang = fix_ang(right_most)
-            self.right_dir = vec3(math.cos(right_most), math.sin(right_most), 0)
-        elif isinstance(right_most, vec3):
+            self.right_dir = Vec3(math.cos(right_most), math.sin(right_most), 0)
+        elif isinstance(right_most, Vec3):
             self.right_ang = math.atan2(right_most[Y], right_most[X])
             self.right_dir = normalize(right_most)
         # Left angle and direction
         if isinstance(left_most, float):
             self.left_ang = fix_ang(left_most)
-            self.left_dir = vec3(math.cos(left_most), math.sin(left_most), 0)
-        elif isinstance(left_most, vec3):
+            self.left_dir = Vec3(math.cos(left_most), math.sin(left_most), 0)
+        elif isinstance(left_most, Vec3):
             self.left_ang = math.atan2(left_most[Y], left_most[X])
             self.left_dir = normalize(left_most)
 
@@ -211,7 +211,7 @@ class AimCone:
 
     def get_center_dir(self):
         ang = self.get_center_ang()
-        return vec3(math.cos(ang), math.sin(ang), 0)
+        return Vec3(math.cos(ang), math.sin(ang), 0)
 
     def get_closest_dir_in_cone(self, direction, span_offset: float=0):
         if self.contains_direction(direction, span_offset):
@@ -264,7 +264,7 @@ class AimCone:
 
         for i in range(arm_count):
             ang = self.right_ang - ang_step * i
-            arm_dir = vec3(math.cos(ang), math.sin(ang), 0)
+            arm_dir = Vec3(math.cos(ang), math.sin(ang), 0)
             end = center + arm_dir * arm_len
             alpha = 255 if i == 0 or i == arm_count - 1 else 110
             renderer.draw_line_3d(center, end, renderer.create_color(alpha, r, g, b))
