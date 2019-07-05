@@ -138,7 +138,7 @@ class DefaultBehaviour:
         own_goal_to_ball = ball.pos - bot.info.own_goal
         dist = norm(car_to_ball)
 
-        offence = ball.pos[Y] * bot.info.team_sign < 0
+        offence = ball.pos.y * bot.info.team_sign < 0
         dot_enemy = dot(car_to_ball, ball_to_enemy_goal)
         dot_own = dot(car_to_ball, own_goal_to_ball)
         right_side_of_ball = dot_enemy > 0 if offence else dot_own > 0

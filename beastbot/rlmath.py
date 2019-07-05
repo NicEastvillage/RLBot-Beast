@@ -7,23 +7,23 @@ Z = 2
 
 class Zone2d:
     def __init__(self, cornerA, cornerB):
-        self.cornerMin = Vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), 0)
-        self.cornerMax = Vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), 0)
+        self.cornerMin = Vec3(min(cornerA.x, cornerB.x), min(cornerA.y, cornerB.y), 0)
+        self.cornerMax = Vec3(max(cornerA.x, cornerB.x), max(cornerA.y, cornerB.y), 0)
 
     def contains(self, point):
-        return self.cornerMin[X] <= point[X] <= self.cornerMax[X]\
-               and self.cornerMin[Y] <= point[Y] <= self.cornerMax[Y]
+        return self.cornerMin.x <= point.x <= self.cornerMax.x\
+               and self.cornerMin.y <= point.y <= self.cornerMax.y
 
 
 class Zone3d:
     def __init__(self, cornerA, cornerB):
-        self.cornerMin = Vec3(min(cornerA[X], cornerB[X]), min(cornerA[Y], cornerB[Y]), min(cornerA[Z], cornerB[Z]))
-        self.cornerMax = Vec3(max(cornerA[X], cornerB[X]), max(cornerA[Y], cornerB[Y]), max(cornerA[Z], cornerB[Z]))
+        self.cornerMin = Vec3(min(cornerA.x, cornerB.x), min(cornerA.y, cornerB.y), min(cornerA.z, cornerB.z))
+        self.cornerMax = Vec3(max(cornerA.x, cornerB.x), max(cornerA.y, cornerB.y), max(cornerA.z, cornerB.z))
 
     def contains(self, point):
-        return self.cornerMin[X] <= point[X] <= self.cornerMax[X]\
-               and self.cornerMin[Y] <= point[Y] <= self.cornerMax[Y]\
-               and self.cornerMin[Z] <= point[Z] <= self.cornerMax[Z]
+        return self.cornerMin.x <= point.x <= self.cornerMax.x\
+               and self.cornerMin.y <= point.y <= self.cornerMax.y\
+               and self.cornerMin.z <= point.z <= self.cornerMax.z
 
 
 # returns sign of x, and 0 if x == 0
@@ -153,8 +153,8 @@ def proj_onto_size(src: Vec3, dir: Vec3) -> float:
 def rotated_2d(vec: Vec3, ang: float) -> Vec3:
     c = math.cos(ang)
     s = math.sin(ang)
-    return Vec3(c * vec[X] - s * vec[Y],
-                s * vec[X] + c * vec[Y])
+    return Vec3(c * vec.x - s * vec.y,
+                s * vec.x + c * vec.y)
 
 
 def curve_from_arrival_dir(src, target, arrival_direction, w=1):
@@ -162,12 +162,12 @@ def curve_from_arrival_dir(src, target, arrival_direction, w=1):
     Returns a point that is equally far from src and target on the line going through target with the given direction
     """
     dir = normalize(arrival_direction)
-    tx = target[X]
-    ty = target[Y]
-    sx = src[X]
-    sy = src[Y]
-    dx = dir[X]
-    dy = dir[Y]
+    tx = target.x
+    ty = target.y
+    sx = src.x
+    sy = src.y
+    dx = dir.x
+    dy = dir.y
 
     t = - (tx * tx - 2 * tx * sx + ty * ty - 2 * ty * sy + sx * sx + sy * sy) / (2 * (tx * dx + ty * dy - sx * dx - sy * dy))
     t = clip(t, -1700, 1700)
@@ -188,7 +188,7 @@ def bezier(t: float, points: list) -> Vec3:
 
 def is_closer_to_goal_than(a: Vec3, b: Vec3, team_index):
     """ Returns true if a is closer than b to goal owned by the given team """
-    return (a[Y] < b[Y], a[Y] > b[Y])[team_index]
+    return (a.y < b.y, a.y > b.y)[team_index]
 
 
 # Unit tests

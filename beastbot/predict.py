@@ -82,31 +82,31 @@ def next_ball_landing(bot, obj=None, size=Ball.RADIUS) -> UncertainEvent:
     return UncertainEvent(landing.happens, t, data={"obj": moved_obj})
 
 
-def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY[Z]) -> UncertainEvent:
+def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY.z) -> UncertainEvent:
     """ Returns if and when the ball arrives at a given height. The dir argument can be set to a string
     saying ANY, DOWN, or UP to specify which direction the ball should be moving when arriving. """
 
-    is_close = abs(height - obj.pos[Z]) < 3
+    is_close = abs(height - obj.pos.z) < 3
     if is_close and dir == "ANY":
         return UncertainEvent(True, 0)
 
-    D = 2 * g * height - 2 * g * obj.pos[Z] + obj.vel[Z] ** 2
+    D = 2 * g * height - 2 * g * obj.pos.z + obj.vel.z ** 2
 
     # Check if height is above current pos.z, because then it might never get there
-    if obj.pos[Z] < height and dir != "DOWN":
-        turn_time = -obj.vel[Z] / (2 * g)
-        turn_point_height = fall(DummyObject(obj), turn_time).pos[Z]
+    if obj.pos.z < height and dir != "DOWN":
+        turn_time = -obj.vel.z / (2 * g)
+        turn_point_height = fall(DummyObject(obj), turn_time).pos.z
 
         # Return false if height is never reached or was in the past
         if turn_point_height < height or turn_time < 0 or D < 0:
             return UncertainEvent(False, 1e300)
 
         # The height is reached on the way up
-        return UncertainEvent(True, (-obj.vel[Z] + math.sqrt(D)) / g)
+        return UncertainEvent(True, (-obj.vel.z + math.sqrt(D)) / g)
 
     if dir != "UP" and 0 < D:
         # Height is reached on the way down
-        return UncertainEvent(True, -(obj.vel[Z] + math.sqrt(D)) / g)
+        return UncertainEvent(True, -(obj.vel.z + math.sqrt(D)) / g)
     else:
         # Never fulfils requirements
         return UncertainEvent(False, 1e300)
@@ -129,11 +129,11 @@ def time_till_reach_ball(car, ball):
 
 def will_ball_hit_goal(bot):
     ball = bot.info.ball
-    if ball.vel[Y] == 0:
+    if ball.vel.y == 0:
         return UncertainEvent(False, 1e306)
 
-    time = (Field.LENGTH / 2 - abs(ball.pos[Y])) / abs(ball.vel[Y])
+    time = (Field.LENGTH / 2 - abs(ball.pos.y)) / abs(ball.vel.y)
     hit_pos = ball_predict(bot, time).pos
-    hits_goal = abs(hit_pos[X]) < Field.GOAL_WIDTH / 2 + Ball.RADIUS
+    hits_goal = abs(hit_pos.x) < Field.GOAL_WIDTH / 2 + Ball.RADIUS
 
     return UncertainEvent(hits_goal, time)

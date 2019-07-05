@@ -24,7 +24,7 @@ class Carry:
 
         car_to_ball = car.pos - ball.pos
 
-        bouncing_b = ball.pos[Z] > 130 or abs(ball.vel[Z]) > 300
+        bouncing_b = ball.pos.z > 130 or abs(ball.vel.z) > 300
         if not bouncing_b:
             return 0
 
@@ -90,7 +90,7 @@ class ShootAtGoal:
         ball_soon = predict.ball_predict(bot, 1)
 
         arena_length2 = bot.info.team_sign * Field.LENGTH / 2
-        own_half_01 = clip01(remap(arena_length2, -arena_length2, 0.0, 1.1, ball_soon.pos[Y]))
+        own_half_01 = clip01(remap(arena_length2, -arena_length2, 0.0, 1.1, ball_soon.pos.y))
 
         reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
         self.ball_to_goal_right = bot.info.enemy_goal_right - reachable_ball.pos
@@ -124,7 +124,7 @@ class ShootAtGoal:
             if bot.do_rendering:
                 bot.renderer.draw_line_3d(car.pos, offset_ball, bot.renderer.yellow())
 
-        elif not bot.shoot.aim_is_ok and hit_pos[Y] * -bot.info.team_sign > 4350 and abs(hit_pos[X]) > 900 and not dist < 450:
+        elif not bot.shoot.aim_is_ok and hit_pos.y * -bot.info.team_sign > 4350 and abs(hit_pos.x) > 900 and not dist < 450:
             # hit_pos is an enemy corner and we are not close: Avoid enemy corners and just wait
 
             enemy_to_ball = normalize(hit_pos - closest_enemy.pos)
@@ -160,7 +160,7 @@ class ClearBall:
         team_sign = bot.info.team_sign
 
         length = team_sign * Field.LENGTH / 2
-        ball_own_half_01 = clip01(remap(-length, length, -0.2, 1.2, bot.info.ball.pos[Y]))
+        ball_own_half_01 = clip01(remap(-length, length, -0.2, 1.2, bot.info.ball.pos.y))
 
         reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
         car_to_ball = reachable_ball.pos - bot.info.my_car.pos
@@ -205,7 +205,7 @@ class SaveGoal:
         too_close = norm(ball_to_goal) < Field.GOAL_WIDTH / 2 + Ball.RADIUS
 
         hits_goal_prediction = predict.will_ball_hit_goal(bot)
-        hits_goal = hits_goal_prediction.happens and sign(ball.vel[Y]) == team_sign and hits_goal_prediction.time < 3
+        hits_goal = hits_goal_prediction.happens and sign(ball.vel.y) == team_sign and hits_goal_prediction.time < 3
 
         return hits_goal or too_close
 

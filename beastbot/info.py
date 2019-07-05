@@ -1,3 +1,4 @@
+from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.messages.flat import GameTickPacket, FieldInfo
 
 from rlmath import *
@@ -40,6 +41,8 @@ class Car:
         self.double_jumped = False
         self.on_ground = True
         self.supersonic = False
+
+        self.last_input = SimpleControllerState()
 
     def forward(self) -> Vec3:
         return self.rot.col(0)
@@ -209,4 +212,4 @@ class GameInfo:
 
 
 def is_near_wall(point: Vec3, offset: float=110) -> bool:
-    return abs(point[X]) > Field.WIDTH - offset or abs(point[Y]) > Field.LENGTH - offset  # TODO Add diagonal walls
+    return abs(point.x) > Field.WIDTH - offset or abs(point.y) > Field.LENGTH - offset  # TODO Add diagonal walls

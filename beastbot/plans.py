@@ -71,13 +71,13 @@ class DodgePlan:
                 self.controls.yaw = 0
             else:
                 target_local = dot(car_to_target, car.theta)
-                target_local[Z] = 0
+                target_local.z = 0
 
                 direction = normalize(target_local)
 
                 self.controls.roll = 0
-                self.controls.pitch = -direction[X]
-                self.controls.yaw = sign(car.theta[2, 2]) * direction[Y]
+                self.controls.pitch = -direction.x
+                self.controls.yaw = sign(car.theta[2, 2]) * direction.y
 
         # Stop pressing jump
         elif ct >= self._t_first_unjump:
@@ -156,13 +156,13 @@ class SmallJumpPlan:
                 self.controls.yaw = 0
             else:
                 target_local = dot(car_to_target, car.theta)
-                target_local[Z] = 0
+                target_local.z = 0
 
                 direction = normalize(target_local)
 
                 self.controls.roll = 0
-                self.controls.pitch = -direction[X]
-                self.controls.yaw = sign(car.theta[2, 2]) * direction[Y]
+                self.controls.pitch = -direction.x
+                self.controls.yaw = sign(car.theta[2, 2]) * direction.y
 
         # Pitch slightly upwards before starting the dodge
         elif ct >= self._t_aim_prepare:
@@ -201,7 +201,7 @@ class KickoffPlan:
         if not opp_does_kick:
             speed = 2210
             point = Vec3(0, bot.info.team_sign * (dist / 2.05 - MIDDLE_OFFSET), 0)
-            point += Vec3(35 * sign(car.pos[X]), 0, 0)
+            point += Vec3(35 * sign(car.pos.x), 0, 0)
 
 
         # Dodge when close to (0, 0) - but only if the opponent also goes for kickoff. The dodge itself should happen in about 0.3 seconds
@@ -213,9 +213,9 @@ class KickoffPlan:
             bot.drive.start_dodge()
 
         # Pickup boost when spawning back corner by driving a bit towards the middle boost pad first
-        elif abs(car.pos[X]) > 230 and abs(car.pos[Y]) > 2880:
+        elif abs(car.pos.x) > 230 and abs(car.pos.y) > 2880:
             # The pads exact location is (0, 2816), but don't have to be exact
-            point[Y] = bot.info.team_sign * 2790
+            point.y = bot.info.team_sign * 2790
 
         bot.controls = bot.drive.go_towards_point(bot, point, target_vel=speed, slide=False, boost=True, can_dodge=False, can_keep_speed=False)
         self.finished = not bot.info.is_kickoff
@@ -258,10 +258,10 @@ def choose_kickoff_plan(bot):
     # Is a teammate in the corner -> collect boost
     if 0 <= index_of_teammate_at_kickoff_spawn(bot, right_corner_loc) \
             or 0 <= index_of_teammate_at_kickoff_spawn(bot, left_corner_loc):
-        if bot.info.my_car.pos[X] > 10:
+        if bot.info.my_car.pos.x > 10:
             # go for left boost
             return CollectSpecificBoostPlan(Vec3(boost_x, boost_y, 0))
-        if bot.info.my_car.pos[X] < -10:
+        if bot.info.my_car.pos.x < -10:
             # go for right boost
             return CollectSpecificBoostPlan(Vec3(-boost_x, boost_y, 0))
         if 0 <= index_of_teammate_at_kickoff_spawn(bot, back_right_loc):
