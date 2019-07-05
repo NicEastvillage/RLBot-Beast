@@ -1,14 +1,5 @@
 from vec import *
 
-FIELD_WIDTH = 8192
-FIELD_LENGTH = 10240
-FILED_HEIGHT = 2044
-GOAL_WIDTH = 1900
-GOAL_HEIGHT = 640
-GRAVITY = Vec3(0, 0, -650)
-BALL_RADIUS = 92
-
-
 X = 0
 Y = 1
 Z = 2
@@ -164,10 +155,6 @@ def rotated_2d(vec: Vec3, ang: float) -> Vec3:
     s = math.sin(ang)
     return Vec3(c * vec[X] - s * vec[Y],
                 s * vec[X] + c * vec[Y])
-
-
-def is_near_wall(point: Vec3, offset: float=110) -> bool:
-    return abs(point[X]) > FIELD_WIDTH - offset or abs(point[Y]) > FIELD_LENGTH - offset  # TODO Add diagonal walls
 
 
 def curve_from_arrival_dir(src, target, arrival_direction, w=1):

@@ -115,6 +115,12 @@ class Mat33:
                         + str(self.yx) + ", " + str(self.yy) + ", " + str(self.yz) + ", " \
                         + str(self.zx) + ", " + str(self.zy) + ", " + str(self.zz) + ")"
 
+    def col(self, n: int) -> Vec3:
+        return Vec3(self.get(0, n), self.get(1, n), self.get(2, n))
+
+    def row(self, n: int) -> Vec3:
+        return Vec3(self.get(n, 0), self.get(n, 1), self.get(n, 2))
+
     @staticmethod
     def of(v: float) -> 'Mat33':
         return Mat33(v, v, v, v, v, v, v, v, v)

@@ -1,4 +1,4 @@
-
+from info import GRAVITY, Ball, Field
 from rlmath import *
 
 
@@ -65,7 +65,7 @@ def ball_predict(bot, time: float) -> DummyObject:
     return DummyObject(path.slices[t].physics)
 
 
-def next_ball_landing(bot, obj=None, size=BALL_RADIUS) -> UncertainEvent:
+def next_ball_landing(bot, obj=None, size=Ball.RADIUS) -> UncertainEvent:
     """ Returns a UncertainEvent describing the next ball landing. If obj==None the current ball is used, otherwise the
     given obj is used. """
     if obj is None:
@@ -115,7 +115,7 @@ def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY[Z]) -> Uncer
 def time_till_reach_ball(car, ball):
     """ Rough estimate about when we can reach the ball in 2d. """
     car_to_ball = xy(ball.pos - car.pos)
-    dist = norm(car_to_ball) - BALL_RADIUS / 2
+    dist = norm(car_to_ball) - Ball.RADIUS / 2
     vel_c_f = proj_onto_size(car.vel, car_to_ball)
     vel_b_f = proj_onto_size(ball.vel, car_to_ball)
     vel_c_amp = lerp(vel_c_f, norm(car.vel), 0.6)
@@ -132,8 +132,8 @@ def will_ball_hit_goal(bot):
     if ball.vel[Y] == 0:
         return UncertainEvent(False, 1e306)
 
-    time = (FIELD_LENGTH / 2 - abs(ball.pos[Y])) / abs(ball.vel[Y])
+    time = (Field.LENGTH / 2 - abs(ball.pos[Y])) / abs(ball.vel[Y])
     hit_pos = ball_predict(bot, time).pos
-    hits_goal = abs(hit_pos[X]) < GOAL_WIDTH / 2 + BALL_RADIUS
+    hits_goal = abs(hit_pos[X]) < Field.GOAL_WIDTH / 2 + Ball.RADIUS
 
     return UncertainEvent(hits_goal, time)

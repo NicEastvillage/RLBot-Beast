@@ -1,5 +1,6 @@
 import predict
 import render
+from info import Field, Ball
 from moves import AimCone
 from plans import DodgePlan
 from rlmath import *
@@ -88,7 +89,7 @@ class ShootAtGoal:
     def utility(self, bot):
         ball_soon = predict.ball_predict(bot, 1)
 
-        arena_length2 = bot.info.team_sign * FIELD_LENGTH / 2
+        arena_length2 = bot.info.team_sign * Field.LENGTH / 2
         own_half_01 = clip01(remap(arena_length2, -arena_length2, 0.0, 1.1, ball_soon.pos[Y]))
 
         reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
@@ -117,7 +118,7 @@ class ShootAtGoal:
             # Can't shoot but or at least on the right side: Chase
 
             goal_to_ball = normalize(hit_pos - bot.info.enemy_goal)
-            offset_ball = hit_pos + goal_to_ball * BALL_RADIUS * 0.9
+            offset_ball = hit_pos + goal_to_ball * Ball.RADIUS * 0.9
             bot.controls = bot.drive.go_towards_point(bot, offset_ball, target_vel=2200, slide=False, boost=True)
 
             if bot.do_rendering:
@@ -158,7 +159,7 @@ class ClearBall:
     def utility(self, bot):
         team_sign = bot.info.team_sign
 
-        length = team_sign * FIELD_LENGTH / 2
+        length = team_sign * Field.LENGTH / 2
         ball_own_half_01 = clip01(remap(-length, length, -0.2, 1.2, bot.info.ball.pos[Y]))
 
         reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
@@ -201,7 +202,7 @@ class SaveGoal:
         ball = bot.info.ball
 
         ball_to_goal = bot.info.own_goal - ball.pos
-        too_close = norm(ball_to_goal) < GOAL_WIDTH / 2 + BALL_RADIUS
+        too_close = norm(ball_to_goal) < Field.GOAL_WIDTH / 2 + Ball.RADIUS
 
         hits_goal_prediction = predict.will_ball_hit_goal(bot)
         hits_goal = hits_goal_prediction.happens and sign(ball.vel[Y]) == team_sign and hits_goal_prediction.time < 3

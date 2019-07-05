@@ -3,7 +3,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 import moves
 from behaviour import *
-from info import EGameInfo
+from info import GameInfo
 from moves import DriveController, AimCone, ShotController
 from plans import choose_kickoff_plan
 from render import FakeRenderer, draw_ball_path
@@ -28,7 +28,7 @@ class Beast(BaseAgent):
         self.shoot = ShotController()
 
     def initialize_agent(self):
-        self.info = EGameInfo(self.index, self.team, )
+        self.info = GameInfo(self.index, self.team)
         self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), SaveGoal(self), Carry()])
 
         if not RENDER:
@@ -43,11 +43,11 @@ class Beast(BaseAgent):
                 return SimpleControllerState()
         self.info.read_packet(packet)
 
-        self.renderer.begin_rendering()
-
         # Check if match is over
         if packet.game_info.is_match_ended:
             return moves.celebrate(self)  # Assuming we win!
+
+        self.renderer.begin_rendering()
 
         # Check kickoff
         if self.info.is_kickoff and not self.doing_kickoff:
