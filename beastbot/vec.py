@@ -22,13 +22,13 @@ class Vec3:
     def __sub__(self, other: 'Vec3') -> 'Vec3':
         return Vec3(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def __neg__(self):
+    def __neg__(self) -> 'Vec3':
         return Vec3(-self.x, -self.y, -self.z)
 
     def __mul__(self, scale: float) -> 'Vec3':
         return Vec3(self.x * scale, self.y * scale, self.z * scale)
 
-    def __rmul__(self, scale):
+    def __rmul__(self, scale: float) -> 'Vec3':
         return self * scale
 
     def __truediv__(self, scale: float) -> 'Vec3':
@@ -67,7 +67,7 @@ class Mat33:
         return self.data[item]
 
     def __setitem__(self, key: int, value: float):
-        self[key] = value
+        self.data[key] = value
 
     def get(self, row: int, col: int) -> float:
         return self.data[row * 3 + col]
@@ -172,9 +172,9 @@ def dot(mat1: Vec3 or Mat33, mat2: Vec3 or Mat33) -> float or Vec3 or Mat33:
     elif isinstance(mat1, Mat33) and isinstance(mat2, Vec3):
         # Mat dot Vec -> Vec
         return Vec3(
-            mat1.xx * mat2.x + mat1.xy * mat2.x + mat1.xz * mat2.x,
-            mat1.yx * mat2.y + mat1.yy * mat2.y + mat1.yz * mat2.y,
-            mat1.zx * mat2.z + mat1.zy * mat2.z + mat1.zz * mat2.z
+            mat1.xx * mat2.x + mat1.xy * mat2.y + mat1.xz * mat2.z,
+            mat1.yx * mat2.x + mat1.yy * mat2.y + mat1.yz * mat2.z,
+            mat1.zx * mat2.x + mat1.zy * mat2.y + mat1.zz * mat2.z
         )
 
     elif isinstance(mat1, Vec3) and isinstance(mat2, Mat33):

@@ -1,9 +1,5 @@
 from vec import *
 
-X = 0
-Y = 1
-Z = 2
-
 
 class Zone2d:
     def __init__(self, cornerA, cornerB):
@@ -52,6 +48,18 @@ def axis_to_rotation(axis: Vec3) -> Mat33:
     if abs(radians) < 0.000001:
         return Mat33.identity()
     else:
+
+        axis = normalize(axis)
+
+        K = Mat33(
+            0.0, -axis[2], axis[1],
+            axis[2], 0.0, -axis[0],
+            -axis[1], axis[0], 0.0
+        )
+
+        return Mat33.identity() + math.sin(radians) * K + (1.0 - math.cos(radians)) * dot(K, K)
+
+        """
         u = axis / radians
 
         c = math.cos(radians)
@@ -70,6 +78,7 @@ def axis_to_rotation(axis: Vec3) -> Mat33:
             u[2] * u[1] * (1.0 - c) + u[0] * s,
             u[2] * u[2] * (1.0 - c) + c
         )
+        """
 
 
 def rotation_to_axis(rot: Mat33) -> Vec3:
@@ -214,6 +223,8 @@ if __name__ == "__main__":
     assert clip(-20, -5, 3) == -5
     assert angle_between(Vec3(x=1), Vec3(y=1)) == math.pi / 2
     assert angle_between(Vec3(y=1), Vec3(y=-1, z=1)) == 0.75 * math.pi
+    assert norm(dot(axis_to_rotation(Vec3(x=-math.pi)), Vec3(y=1)) - Vec3(y=-1)) < 0.000001
+    assert norm(dot(axis_to_rotation(Vec3(y=0.5*math.pi)), Vec3(z=1)) - Vec3(x=-1)) < 0.000001
     assert norm(dot(axis_to_rotation(Vec3(z=math.pi)), Vec3(x=1)) - Vec3(x=-1)) < 0.000001
     pyr = Vec3(0.5, 0.2, -0.4)
     assert norm(rotation_to_euler(euler_to_rotation(pyr)) - pyr) < 0.000001

@@ -10,7 +10,7 @@ from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
 
-RENDER = False
+RENDER = True
 
 
 class Beast(BaseAgent):
@@ -75,8 +75,9 @@ class Beast(BaseAgent):
         if self.do_rendering:
             draw_ball_path(self, 4, 5)
             doing = self.plan or self.choice
+            car = self.info.my_car
             if doing is not None:
-                self.renderer.draw_string_3d(self.info.my_car.pos, 1, 1, doing.__class__.__name__, self.random_color(doing.__class__))
+                self.renderer.draw_string_3d(car.pos, 1, 1, doing.__class__.__name__, self.random_color(doing.__class__))
 
         # Save for next frame
         self.info.my_car.last_input.roll = self.controls.roll
