@@ -1,10 +1,16 @@
+<p align="center" >
+    <img src="https://raw.githubusercontent.com/NicEastvillage/RLBot-Beast/master/beastbot/logo.png" height="100px" 
+    alt="Beast from the East" 
+    title="Beast from the East">
+</p>
+
 # Beast from the East
 An offline bot for Rocket League using the framework [RLBot](https://github.com/RLBot/RLBot).
 
 Designed for 1v1 soccer.
 
 Beast from the East uses a utility system to decide what to do, and a set of controllers to execute that.
-In terms of skill Beast is slightly better than Psyonix AllStar.
+In terms of skill Beast can easily beat one Psyonix AllStar.
 
 ## How to run
 
