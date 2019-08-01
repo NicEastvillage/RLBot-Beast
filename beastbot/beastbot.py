@@ -10,7 +10,7 @@ from render import FakeRenderer, draw_ball_path
 from rlmath import *
 from utsystem import UtilitySystem
 
-RENDER = True
+RENDER = False
 
 
 class Beast(BaseAgent):

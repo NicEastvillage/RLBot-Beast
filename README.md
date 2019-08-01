@@ -4,7 +4,7 @@ An offline bot for Rocket League using the framework [RLBot](https://github.com/
 Designed for 1v1 soccer.
 
 Beast from the East uses a utility system to decide what to do, and a set of controllers to execute that.
-In terms of skill Beast is similar to Psyonix AllStar.
+In terms of skill Beast is slightly better than Psyonix AllStar.
 
 ## How to run
 
