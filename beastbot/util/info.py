@@ -1,7 +1,8 @@
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.messages.flat import GameTickPacket, FieldInfo
 
-from rlmath import *
+from util.rlmath import clip
+from util.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm
 
 
 GRAVITY = Vec3(0, 0, -650)
@@ -107,7 +108,12 @@ class GameInfo:
         for i in range(field_info.num_boosts):
             pad = field_info.boost_pads[i]
             pos = Vec3(pad.location)
-            self.boost_pads.append(BoostPad(i, pos, pad.is_full_boost, True, 0.0))
+            pad = BoostPad(i, pos, pad.is_full_boost, True, 0.0)
+            self.boost_pads.append(pad)
+            if pad.is_big:
+                self.big_boost_pads.append(pad)
+            else:
+                self.small_boost_pads.append(pad)
 
         self.convenient_boost_pad = self.boost_pads[0]
         self.convenient_boost_pad_score = 0
