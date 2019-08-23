@@ -61,7 +61,7 @@ class Carry(Choice):
         if dist <= self.required_distance_to_ball_for_flick:
             self.flick_timer += 0.016666
             if self.flick_timer > self.wait_before_flick:
-                bot.maneuver = DodgeManeuver(bot.info.enemy_goal)  # use flick_init_jump_duration?
+                bot.maneuver = DodgeManeuver(bot, bot.info.enemy_goal)  # use flick_init_jump_duration?
         else:
             self.flick_timer = 0
 
@@ -70,7 +70,7 @@ class Carry(Choice):
                 ctt_n = normalize(target - car.pos)
                 vtt = dot(bot.info.my_car.vel, ctt_n) / dot(ctt_n, ctt_n)
                 if vtt > 750:
-                    bot.maneuver = DodgeManeuver(target)
+                    bot.maneuver = DodgeManeuver(bot, target)
 
         if bot.do_rendering:
             bot.renderer.draw_line_3d(car.pos, target, bot.renderer.pink())

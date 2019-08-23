@@ -23,9 +23,9 @@ class DriveController:
         self.dodge_cooldown = 0.26
         self.recovery = None
 
-    def start_dodge(self):
+    def start_dodge(self, bot):
         if self.dodge is None:
-            self.dodge = DodgeManeuver(self.last_point)
+            self.dodge = DodgeManeuver(bot, self.last_point)
 
     def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost_min=101, can_keep_speed=True, can_dodge=True, wall_offset_allowed=110) -> SimpleControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
@@ -72,7 +72,7 @@ class DriveController:
         # Start dodge
         if can_dodge and abs(angle) <= 0.02 and vel_towards_point > REQUIRED_VELF_FOR_DODGE\
                 and dist > vel_towards_point + 500 + 700 and bot.info.time > self.last_dodge_end_time + self.dodge_cooldown:
-            self.dodge = DodgeManeuver(point)
+            self.dodge = DodgeManeuver(bot, point)
 
         # Is in turn radius deadzone?
         tr = turn_radius(abs(vel_f + 50))  # small bias
@@ -342,7 +342,7 @@ class ShotController:
 
                 if vel_f > 400:
                     if diff < 150:
-                        bot.maneuver = SmallJumpManeuver(lambda b: b.info.ball.pos)
+                        bot.maneuver = SmallJumpManeuver(bot, lambda b: b.info.ball.pos)
 
             if 110 < ball_soon.pos.z: # and ball_soon.vel.z <= 0:
                 # The ball is slightly in the air, lets wait just a bit more
@@ -363,7 +363,7 @@ class ShotController:
                 self.can_shoot = True
 
                 if norm(car_to_ball_soon) < 240 + Ball.RADIUS and aim_cone.contains_direction(car_to_ball_soon):
-                    bot.drive.start_dodge()
+                    bot.drive.start_dodge(bot)
 
                 offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
                 speed = self.determine_speed(norm(car_to_ball_soon), time)
@@ -386,7 +386,7 @@ class ShotController:
                 self.curve_point.y = clip(self.curve_point.y, -Field.LENGTH / 2, Field.LENGTH / 2)
 
                 if dodge_hit and norm(car_to_ball_soon) < 240 + Ball.RADIUS and angle_between(car.forward, car_to_ball_soon) < 0.5 and aim_cone.contains_direction(car_to_ball_soon):
-                    bot.drive.start_dodge()
+                    bot.drive.start_dodge(bot)
 
                 speed = self.determine_speed(norm(car_to_ball_soon), time)
                 self.controls = bot.drive.go_towards_point(bot, self.curve_point, target_vel=speed, slide=True, boost_min=0, can_keep_speed=False)
@@ -423,7 +423,7 @@ class ShotController:
 
 def celebrate(bot):
     controls = SimpleControllerState()
-    controls.steer = math.sin(time.time() * 14)
+    controls.steer = math.sin(time.time() * 11)
     controls.throttle = -1
     return controls
 

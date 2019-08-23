@@ -1,5 +1,3 @@
-import time
-
 from rlbot.agents.base_agent import SimpleControllerState
 
 from maneuvers.maneuver import Maneuver
@@ -9,19 +7,19 @@ from util.vec import proj_onto_size, angle_between, dot, normalize
 
 
 class DodgeManeuver(Maneuver):
-    def __init__(self,
+    def __init__(self, bot,
                  target=None,
                  boost=False,
                  t_first_jump=0.10,
-                 t_first_wait=0.03,
-                 t_aim=0.05,
+                 t_first_wait=0.00,
+                 t_aim=0.08,
                  t_second_jump=0.28,
                  t_second_wait=0.14):
         super().__init__()
 
         self.target = target
         self.boost = boost
-        self._start_time = time.time()
+        self._start_time = bot.info.time
         self._almost_finished = False
 
         self._t_first_unjump = t_first_jump
@@ -35,7 +33,7 @@ class DodgeManeuver(Maneuver):
         self._boost_ang_req = 0.25
 
     def exec(self, bot) -> SimpleControllerState:
-        ct = time.time() - self._start_time
+        ct = bot.info.time - self._start_time
         controls = SimpleControllerState()
         controls.throttle = 1
 

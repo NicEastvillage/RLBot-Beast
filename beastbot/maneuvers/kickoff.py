@@ -112,11 +112,11 @@ class KickoffManeuver(Maneuver):
         # Dodge when close to (0, 0) - but only if the opponent also goes for kickoff.
         # The dodge itself should happen in about 0.3 seconds
         if dist - DODGE_DIST < vel_p * 0.3 and opp_does_kick:
-            bot.drive.start_dodge()
+            bot.drive.start_dodge(bot)
 
         # Make two dodges when spawning far back
         elif dist > 3640 and vel_p > 1200 and not opp_does_kick:
-            bot.drive.start_dodge()
+            bot.drive.start_dodge(bot)
 
         # Pickup boost when spawning back corner by driving a bit towards the middle boost pad first
         elif abs(car.pos.x) > 230 and abs(car.pos.y) > 2880:

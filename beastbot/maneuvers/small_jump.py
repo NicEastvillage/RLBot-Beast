@@ -1,5 +1,3 @@
-import time
-
 from rlbot.agents.base_agent import SimpleControllerState
 
 from maneuvers.maneuver import Maneuver
@@ -9,12 +7,12 @@ from util.vec import proj_onto_size, angle_between, dot, normalize
 
 
 class SmallJumpManeuver(Maneuver):
-    def __init__(self, target=None, boost=False):
+    def __init__(self, bot, target=None, boost=False):
         super().__init__()
         self.target = target
         self.boost = boost
         self.controls = SimpleControllerState()
-        self.start_time = time.time()   # TODO Bad timer!
+        self.start_time = bot.info.time
         self.almost_done = False
 
         self._t_first_unjump = 0.20
@@ -28,7 +26,7 @@ class SmallJumpManeuver(Maneuver):
         self._boost_ang_req = 0.25
 
     def exec(self, bot):
-        ct = time.time() - self.start_time
+        ct = bot.info.time - self.start_time
 
         # Target is allowed to be a function that takes bot as a parameter. Check what it is
         if callable(self.target):
