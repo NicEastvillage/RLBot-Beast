@@ -33,7 +33,7 @@ class Carry(Choice):
 
         dist_01 = clip01(1 - norm(car_to_ball) / 3000)
 
-        head_dir = lerp(Vec3(0, 0, 1), car.forward(), 0.1)
+        head_dir = lerp(Vec3(0, 0, 1), car.forward, 0.1)
         ang = angle_between(head_dir, car_to_ball)
         ang_01 = clip01(1 - ang / (math.pi / 2))
 

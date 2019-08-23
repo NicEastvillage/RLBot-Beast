@@ -46,7 +46,7 @@ class SmallJumpManeuver(Maneuver):
         # To boost or not to boost, that is the question
         car_to_target = target - car.pos
         vel_p = proj_onto_size(car.vel, car_to_target)
-        angle = angle_between(car_to_target, car.forward())
+        angle = angle_between(car_to_target, car.forward)
         self.controls.boost = self.boost and angle < self._boost_ang_req and vel_p < self._max_speed
 
         # States of dodge (note reversed order)

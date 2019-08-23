@@ -47,12 +47,15 @@ class Car:
 
         self.last_input = SimpleControllerState()
 
+    @property
     def forward(self) -> Vec3:
         return self.rot.col(0)
 
+    @property
     def left(self) -> Vec3:
         return self.rot.col(1)
 
+    @property
     def up(self) -> Vec3:
         return self.rot.col(2)
 
@@ -198,7 +201,7 @@ class GameInfo:
             return 0
 
         car_to_pad = pad.pos - self.my_car.pos
-        angle = angle_between(self.my_car.forward(), car_to_pad)
+        angle = angle_between(self.my_car.forward, car_to_pad)
 
         # Pads behind the car is bad
         if abs(angle) > 1.3:

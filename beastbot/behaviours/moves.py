@@ -49,7 +49,7 @@ class DriveController:
             return self.controls
 
         # Get down from wall by choosing a point close to ground
-        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up(), Vec3(0, 0, 1)) > math.pi * 0.31:
+        if not is_near_wall(point, wall_offset_allowed) and angle_between(car.up, Vec3(0, 0, 1)) > math.pi * 0.31:
             point = lerp(xy(car.pos), xy(point), 0.5)
 
         # If the car is in a goal, avoid goal posts
@@ -66,7 +66,7 @@ class DriveController:
         # Angle to point in local xy plane and other stuff
         angle = math.atan2(point_local.y, point_local.x)
         dist = norm(point_local)
-        vel_f = proj_onto_size(car.vel, car.forward())
+        vel_f = proj_onto_size(car.vel, car.forward)
         vel_towards_point = proj_onto_size(car.vel, car_to_point)
 
         # Start dodge
@@ -83,8 +83,8 @@ class DriveController:
         if car.on_ground and bot.do_rendering:
             tr_center_world = car.pos + dot(car.rot, tr_center_local)
             tr_center_world_2 = car.pos + dot(car.rot, -1 * tr_center_local)
-            rendering.draw_circle(bot, tr_center_world, car.up(), tr, 22)
-            rendering.draw_circle(bot, tr_center_world_2, car.up(), tr, 22)
+            rendering.draw_circle(bot, tr_center_world, car.up, tr, 22)
+            rendering.draw_circle(bot, tr_center_world_2, car.up, tr, 22)
 
         if point_is_in_turn_radius_deadzone:
             # Hard turn
@@ -385,7 +385,7 @@ class ShotController:
                 self.curve_point.x = clip(self.curve_point.x, -Field.WIDTH / 2, Field.WIDTH / 2)
                 self.curve_point.y = clip(self.curve_point.y, -Field.LENGTH / 2, Field.LENGTH / 2)
 
-                if dodge_hit and norm(car_to_ball_soon) < 240 + Ball.RADIUS and angle_between(car.forward(), car_to_ball_soon) < 0.5 and aim_cone.contains_direction(car_to_ball_soon):
+                if dodge_hit and norm(car_to_ball_soon) < 240 + Ball.RADIUS and angle_between(car.forward, car_to_ball_soon) < 0.5 and aim_cone.contains_direction(car_to_ball_soon):
                     bot.drive.start_dodge()
 
                 speed = self.determine_speed(norm(car_to_ball_soon), time)
