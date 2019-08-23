@@ -2,6 +2,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 
 from behaviours.moves import AimCone
 from behaviours.utsystem import Choice
+from maneuvers.collect_boost import CollectClosestBoostManeuver, filter_pads
 from util import predict, rendering
 from util.info import Field, Ball
 from util.rlmath import clip01, remap, is_closer_to_goal_than, lerp
@@ -66,6 +67,12 @@ class ShootAtGoal(Choice):
             return bot.drive.go_towards_point(bot, wait_point, norm(car.pos - wait_point), slide=False, can_keep_speed=True, can_dodge=False)
 
         elif not bot.shoot.can_shoot:
+            if car.boost == 0:
+
+                collect_center = ball.pos.y * bot.info.team_sign <= 0
+                collect_small = closest_enemy.pos.y * bot.info.team_sign <= 0
+                pads = filter_pads(bot, bot.info.big_boost_pads, big_only=not collect_small, enemy_side=False, center=collect_center)
+                bot.maneuver = CollectClosestBoostManeuver(bot, pads)
             # return home
             return bot.drive.go_home(bot)
 

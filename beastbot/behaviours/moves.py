@@ -423,7 +423,7 @@ class ShotController:
 
 def celebrate(bot):
     controls = SimpleControllerState()
-    controls.steer = math.sin(time.time() * 11)
+    controls.steer = math.sin(time.time() * 10)
     controls.throttle = -1
     return controls
 
