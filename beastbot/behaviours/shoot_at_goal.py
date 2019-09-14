@@ -6,7 +6,7 @@ from maneuvers.collect_boost import CollectClosestBoostManeuver, filter_pads
 from util import predict, rendering
 from util.info import Field, Ball
 from util.rlmath import clip01, remap, is_closer_to_goal_than, lerp
-from util.vec import norm, normalize, Vec3
+from util.vec import norm, normalize, Vec3, xy, dot
 
 
 class ShootAtGoal(Choice):
@@ -67,10 +67,15 @@ class ShootAtGoal(Choice):
             return bot.drive.go_towards_point(bot, wait_point, norm(car.pos - wait_point), slide=False, can_keep_speed=True, can_dodge=False)
 
         elif not bot.shoot.can_shoot:
-            if car.boost == 0:
+
+            enemy_to_ball = normalize(xy(ball.pos - closest_enemy.pos))
+            ball_to_my_goal = normalize(xy(bot.info.own_goal - ball.pos))
+            dot_threat = dot(enemy_to_ball, ball_to_my_goal)  # 1 = enemy is in position, -1 = enemy is NOT in position
+
+            if car.boost == 0 and ball.pos.y * bot.info.team_sign < 500 and dot_threat < 0:
 
                 collect_center = ball.pos.y * bot.info.team_sign <= 0
-                collect_small = closest_enemy.pos.y * bot.info.team_sign <= 0
+                collect_small = closest_enemy.pos.y * bot.info.team_sign <= 0 or enemy_dist < 700
                 pads = filter_pads(bot, bot.info.big_boost_pads, big_only=not collect_small, enemy_side=False, center=collect_center)
                 bot.maneuver = CollectClosestBoostManeuver(bot, pads)
             # return home

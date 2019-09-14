@@ -97,7 +97,7 @@ class Beast(BaseAgent):
         if self.info.is_kickoff and not self.doing_kickoff:
             self.maneuver = choose_kickoff_maneuver(self)
             self.doing_kickoff = True
-            self.print("Hello world!")
+            self.print("Kickoff - Hello world!")
 
         # Execute logic
         if self.maneuver is None or self.maneuver.done:

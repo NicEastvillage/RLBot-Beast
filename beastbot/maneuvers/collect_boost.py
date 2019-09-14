@@ -20,23 +20,33 @@ class CollectClosestBoostManeuver(Maneuver):
         if pads is None:
             pads = bot.info.big_boost_pads
 
+        self.pick_pad(bot, pads)
+
+    def pick_pad(self, bot, pads: List[BoostPad]):
         # Find closest boost pad
         my_pos = bot.info.my_car.pos
         shortest_dist = 99999999
         for pad in pads:
-            dist = norm(my_pos - pad.pos)
-            if dist < shortest_dist:
-                self.closest_pad = pad
-                shortest_dist = dist
+            if pad.is_active:
+                dist = norm(my_pos - pad.pos)
+                if dist < shortest_dist:
+                    self.closest_pad = pad
+                    shortest_dist = dist
+
 
     def exec(self, bot) -> SimpleControllerState:
         car = bot.info.my_car
 
-        # End maneuver when almost there
+        # Somehow we didn't find a good pad
+        if self.closest_pad is None:
+            self.done = True
+            return SimpleControllerState()
+
+        # End maneuver when almost there or pad becomes inactive
         car_to_pad = self.closest_pad.pos - car.pos
         vel = proj_onto_size(car.vel, car_to_pad)
         dist = norm(car_to_pad)
-        if dist < 50 + vel * 0.2 or car.boost > 50:
+        if dist < 50 + vel * 0.2 or car.boost > 50 or not self.closest_pad.is_active:
             self.done = True
 
         bot.renderer.draw_line_3d(car.pos, self.closest_pad.pos, bot.renderer.yellow())
