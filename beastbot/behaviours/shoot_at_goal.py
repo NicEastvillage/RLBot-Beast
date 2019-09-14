@@ -72,10 +72,10 @@ class ShootAtGoal(Choice):
             ball_to_my_goal = normalize(xy(bot.info.own_goal - ball.pos))
             dot_threat = dot(enemy_to_ball, ball_to_my_goal)  # 1 = enemy is in position, -1 = enemy is NOT in position
 
-            if car.boost == 0 and ball.pos.y * bot.info.team_sign < 500 and dot_threat < 0:
+            if car.boost == 0 and ball.pos.y * bot.info.team_sign < 500 and dot_threat < 0.1:
 
                 collect_center = ball.pos.y * bot.info.team_sign <= 0
-                collect_small = closest_enemy.pos.y * bot.info.team_sign <= 0 or enemy_dist < 700
+                collect_small = closest_enemy.pos.y * bot.info.team_sign <= 0 or enemy_dist < 900
                 pads = filter_pads(bot, bot.info.big_boost_pads, big_only=not collect_small, enemy_side=False, center=collect_center)
                 bot.maneuver = CollectClosestBoostManeuver(bot, pads)
             # return home

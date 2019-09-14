@@ -50,7 +50,7 @@ class CollectClosestBoostManeuver(Maneuver):
             self.done = True
 
         bot.renderer.draw_line_3d(car.pos, self.closest_pad.pos, bot.renderer.yellow())
-        return bot.drive.go_towards_point(bot, self.closest_pad.pos, target_vel=2200, slide=True, boost_min=0)
+        return bot.drive.go_towards_point(bot, self.closest_pad.pos, target_vel=2200, slide=True, boost_min=0, can_dodge=self.closest_pad.is_big)
 
 
 def filter_pads(bot, pads: List[BoostPad], big_only=True, my_side=True, center=True, enemy_side=True):
