@@ -14,7 +14,7 @@ class HalfFlipManeuver(Maneuver):
         self.halfflip_start_time = bot.info.time
         self._almost_finished = False
 
-        self._t_first_jump_end = 0.10
+        self._t_first_jump_end = 0.1
         self._t_second_jump_begin = self._t_first_jump_end + 0.08
         self._t_second_jump_end = self._t_second_jump_begin + 0.25
         self._t_roll_begin = self._t_second_jump_begin + 0.35
@@ -32,6 +32,7 @@ class HalfFlipManeuver(Maneuver):
         # Reverse a bit
         if vel_f > -50 and man_ct < 0.3:
             controls.throttle = -1
+            self.halfflip_start_time = bot.info.time
             return controls
 
         ct = bot.info.time - self.halfflip_start_time
