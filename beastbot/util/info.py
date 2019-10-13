@@ -45,6 +45,8 @@ class Car:
         self.on_ground = True
         self.supersonic = False
 
+        self.last_expected_time_till_reach_ball = 3
+
         self.last_input = SimpleControllerState()
 
     @property
@@ -79,6 +81,8 @@ class GameInfo:
         self.dt = 0.016666
         self.time = 0
         self.is_kickoff = False
+        self.last_kickoff_end_time = 0
+        self.time_since_last_kickoff = 0
 
         self.ball = Ball()
 
@@ -129,6 +133,9 @@ class GameInfo:
         self.dt = packet.game_info.seconds_elapsed - self.time
         self.time = packet.game_info.seconds_elapsed
         self.is_kickoff = packet.game_info.is_kickoff_pause
+        if self.is_kickoff:
+            self.last_kickoff_end_time = self.time
+        self.time_since_last_kickoff = self.time - self.last_kickoff_end_time
 
         # Read ball
         ball_phy = packet.game_ball.physics

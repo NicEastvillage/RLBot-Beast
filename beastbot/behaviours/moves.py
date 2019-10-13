@@ -28,7 +28,7 @@ class DriveController:
         if self.dodge is None:
             self.dodge = DodgeManeuver(bot, self.last_point)
 
-    def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost_min=101, can_keep_speed=True, can_dodge=True, wall_offset_allowed=110) -> SimpleControllerState:
+    def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost_min=101, can_keep_speed=True, can_dodge=True, wall_offset_allowed=125) -> SimpleControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
         REQUIRED_VELF_FOR_DODGE = 1100
 
@@ -332,7 +332,8 @@ class ShotController:
         ball_soon = ball_predict(bot, time)
         car_to_ball_soon = ball_soon.pos - car.pos
         dot_facing_score = dot(normalize(car_to_ball_soon), normalize(car.forward))
-        is_facing = remap(0, 3000, -1, 1, norm(car_to_ball_soon)) < dot_facing_score or True #FIXME Restriction didn't help, submitting now
+        vel_towards_ball_soon = proj_onto_size(car.vel, car_to_ball_soon)
+        is_facing = 0 < dot_facing_score
 
         if ball_soon.pos.z < 110 or (ball_soon.pos.z < 475 and ball_soon.vel.z <= 0) or True: #FIXME Always true
 
@@ -344,13 +345,14 @@ class ShotController:
                 car_expected_pos = car.pos + car.vel * time
                 ball_soon_flat = xy(ball_soon.pos)
                 diff = norm(car_expected_pos - ball_soon_flat)
+                ball_in_front = dot(ball_soon.pos - car_expected_pos, car.vel) > 0
 
                 if bot.do_rendering:
                     bot.renderer.draw_line_3d(car.pos, car_expected_pos, bot.renderer.lime())
                     bot.renderer.draw_rect_3d(car_expected_pos, 12, 12, True, bot.renderer.lime())
 
                 if vel_f > 400:
-                    if diff < 150:
+                    if diff < 150 and ball_in_front:
                         bot.maneuver = SmallJumpManeuver(bot, lambda b: b.info.ball.pos)
 
             if 110 < ball_soon.pos.z:  # and ball_soon.vel.z <= 0:
@@ -364,7 +366,7 @@ class ShotController:
             self.ball_when_hit = ball_soon
 
             # The ball is on the ground, are we in position for a shot?
-            if aim_cone.contains_direction(car_to_ball_soon):
+            if aim_cone.contains_direction(car_to_ball_soon) and is_facing:
 
                 # Straight shot
 
@@ -372,7 +374,7 @@ class ShotController:
                 self.can_shoot = True
 
                 if norm(car_to_ball_soon) < 240 + Ball.RADIUS and aim_cone.contains_direction(car_to_ball_soon)\
-                        and (norm(car.vel) < 600 or is_facing):
+                        and vel_towards_ball_soon > 300:
                     bot.drive.start_dodge(bot)
 
                 offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
@@ -396,7 +398,7 @@ class ShotController:
                 self.curve_point.y = clip(self.curve_point.y, -Field.LENGTH / 2, Field.LENGTH / 2)
 
                 if dodge_hit and norm(car_to_ball_soon) < 240 + Ball.RADIUS and angle_between(car.forward, car_to_ball_soon) < 0.5\
-                        and aim_cone.contains_direction(car_to_ball_soon):
+                        and aim_cone.contains_direction(car_to_ball_soon) and vel_towards_ball_soon > 300:
                     bot.drive.start_dodge(bot)
 
                 speed = self.determine_speed(norm(car_to_ball_soon), time)
