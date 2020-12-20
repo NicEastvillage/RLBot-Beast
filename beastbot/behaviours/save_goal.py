@@ -2,10 +2,10 @@ from rlbot.agents.base_agent import SimpleControllerState
 
 from behaviours.moves import AimCone
 from behaviours.utsystem import Choice
-from util import predict
-from util.info import Field, Ball
-from util.rlmath import sign, clip
-from util.vec import Vec3, norm
+from utility import predict
+from utility.info import Field, Ball
+from utility.rlmath import sign, clip
+from utility.vec import Vec3, norm
 
 
 class SaveGoal(Choice):

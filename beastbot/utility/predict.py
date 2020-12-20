@@ -1,8 +1,8 @@
 import math
 
-from util.info import GRAVITY, Ball, Field
-from util.rlmath import clip, lerp, clip01
-from util.vec import norm, proj_onto_size, xy, Vec3
+from utility.info import GRAVITY, Ball, Field
+from utility.rlmath import clip, lerp, clip01
+from utility.vec import norm, proj_onto_size, xy, Vec3
 
 
 class DummyObject:

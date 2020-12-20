@@ -2,7 +2,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 
 from maneuvers.maneuver import Maneuver
 from maneuvers.recovery import RecoveryManeuver
-from util.vec import proj_onto_size
+from utility.vec import proj_onto_size
 
 
 class HalfFlipManeuver(Maneuver):

@@ -9,11 +9,11 @@ from behaviours.clear_ball import ClearBall
 from behaviours.save_goal import SaveGoal
 from behaviours.shoot_at_goal import ShootAtGoal
 from maneuvers.kickoff import choose_kickoff_maneuver
-from util.info import GameInfo
+from utility.info import GameInfo
 from behaviours.moves import DriveController, AimCone, ShotController
-from util.rendering import draw_ball_path
+from utility.rendering import draw_ball_path
 from behaviours.utsystem import UtilitySystem, Choice
-from util.vec import xy, Vec3, norm, dot
+from utility.vec import xy, Vec3, norm, dot
 
 RENDER = True
 

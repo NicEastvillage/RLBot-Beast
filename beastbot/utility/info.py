@@ -1,8 +1,8 @@
 from rlbot.agents.base_agent import SimpleControllerState
 from rlbot.messages.flat import GameTickPacket, FieldInfo
 
-from util.rlmath import clip
-from util.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm
+from utility.rlmath import clip
+from utility.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm
 
 
 GRAVITY = Vec3(0, 0, -650)

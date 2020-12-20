@@ -4,9 +4,9 @@ from rlbot.agents.base_agent import SimpleControllerState
 
 from behaviours.utsystem import Choice
 from maneuvers.dodge import DodgeManeuver
-from util import predict
-from util.rlmath import clip01, lerp
-from util.vec import norm, Vec3, angle_between, normalize, dot
+from utility import predict
+from utility.rlmath import clip01, lerp
+from utility.vec import norm, Vec3, angle_between, normalize, dot
 
 
 class Carry(Choice):

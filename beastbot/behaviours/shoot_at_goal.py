@@ -3,10 +3,10 @@ from rlbot.agents.base_agent import SimpleControllerState
 from behaviours.moves import AimCone
 from behaviours.utsystem import Choice
 from maneuvers.collect_boost import CollectClosestBoostManeuver, filter_pads
-from util import predict, rendering
-from util.info import Field, Ball
-from util.rlmath import clip01, remap, is_closer_to_goal_than, lerp
-from util.vec import norm, normalize, Vec3, xy, dot
+from utility import predict, rendering
+from utility.info import Field, Ball
+from utility.rlmath import clip01, remap, is_closer_to_goal_than, lerp
+from utility.vec import norm, normalize, Vec3, xy, dot
 
 
 class ShootAtGoal(Choice):
