@@ -9,7 +9,18 @@ from maneuvers.recovery import RecoveryManeuver
 from utility import rendering
 from utility.info import is_near_wall, Field
 from utility.rlmath import lerp, sign, clip
-from utility.vec import Vec3, angle_between, xy, dot, norm, proj_onto_size
+from utility.vec import Vec3, angle_between, xy, dot, norm, proj_onto_size, normalize
+
+
+class HandbrakeLimiter:
+    def __init__(self):
+        self.tick = 0
+        self.HANDBRAKE_FRAMES = 10
+        self.WAIT_FRAMES = 16
+
+    def can_handbrake(self):
+        self.tick = (self.tick % (self.HANDBRAKE_FRAMES + self.WAIT_FRAMES))
+        return self.tick >= self.WAIT_FRAMES
 
 
 class DriveController:
@@ -20,6 +31,7 @@ class DriveController:
         self.last_dodge_end_time = 0
         self.dodge_cooldown = 0.27
         self.recovery = None
+        self.handbrake_limiter = HandbrakeLimiter()
 
     def start_dodge(self, bot):
         if self.dodge is None:
@@ -112,7 +124,7 @@ class DriveController:
 
             # Turn and maybe slide
             self.controls.steer = clip(angle + (2.5*angle) ** 3, -1.0, 1.0)
-            if slide and abs(angle) > REQUIRED_ANG_FOR_SLIDE:
+            if slide and abs(angle) > REQUIRED_ANG_FOR_SLIDE and self.handbrake_limiter.can_handbrake():
                 self.controls.handbrake = True
                 self.controls.steer = sign(angle)
             else:
@@ -179,8 +191,14 @@ class DriveController:
         dist = norm(car_to_home)
         vel_f_home = proj_onto_size(car.vel, car_to_home)
 
-        if vel_f_home * 2 > dist:
-            target = bot.info.ball.pos
+        car_to_ball = bot.info.ball.pos - car.pos
+        facing_ball = dot(car.forward, normalize(car_to_ball))
+
+        # if vel_f_home * 2 > dist:
+        #     target = bot.info.ball.pos
+
+        if dist < 300 and facing_ball > 0.5:
+            return SimpleControllerState()
 
         boost = 40 - (dist / 100) + enemy_dist / 200
         dodge = dist > 1500 or enemy_dist < dist
