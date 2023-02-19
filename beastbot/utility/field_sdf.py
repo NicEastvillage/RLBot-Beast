@@ -44,7 +44,7 @@ def sdf_wall_dist(point: Vec3) -> float:
     goals_q = abs(point - Vec3(z=Field.GOAL_HEIGHT / 2)) - GOALS_SEMI_SIZE + ONES * ROUNDNESS
     goals_dist_outside = norm(vec_max(goals_q, Vec3()))
     goals_dist_inside = min(max_comp(goals_q), 0)
-    goals_dist = base_dist_outside + base_dist_inside
+    goals_dist = goals_dist_outside + goals_dist_inside
 
     # Union with goals and invert result
     return -min(base_corner_dist, goals_dist)
