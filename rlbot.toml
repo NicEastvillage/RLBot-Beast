@@ -1,0 +1,18 @@
+[rlbot]
+launcher = "Steam"
+auto_start_bots = true
+
+[match]
+num_cars = 2
+enable_rendering = true
+
+[mutators]
+match_length = "Unlimited"
+
+[[cars]]
+config = "beastbot/beast.bot.toml"
+team = 0
+
+[[cars]]
+config = "beastbot/beast.bot.toml"
+team = 1

@@ -1,4 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from maneuvers.maneuver import Maneuver
 from maneuvers.recovery import RecoveryManeuver
@@ -11,7 +11,7 @@ class SmallJumpManeuver(Maneuver):
         super().__init__()
         self.target = target
         self.boost = boost
-        self.controls = SimpleControllerState()
+        self.controls = ControllerState()
         self.start_time = bot.info.time
         self.almost_done = False
 
@@ -63,7 +63,7 @@ class SmallJumpManeuver(Maneuver):
 
         elif ct >= self._t_aim:
             if ct >= self._t_second_jump:
-                self.controls.jump = 1
+                self.controls.jump = True
 
             # Direction, yaw, pitch, roll
             if self.target is None:
@@ -90,6 +90,6 @@ class SmallJumpManeuver(Maneuver):
 
         # First jump
         else:
-            self.controls.jump = 1
+            self.controls.jump = True
 
         return self.controls

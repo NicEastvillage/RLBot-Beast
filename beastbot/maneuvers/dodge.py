@@ -1,4 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from maneuvers.maneuver import Maneuver
 from maneuvers.recovery import RecoveryManeuver
@@ -32,9 +32,9 @@ class DodgeManeuver(Maneuver):
         self._max_speed = 2000  # Don't boost if above this speed
         self._boost_ang_req = 0.25
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         ct = bot.info.time - self._start_time
-        controls = SimpleControllerState()
+        controls = ControllerState()
         controls.throttle = 1
 
         car = bot.info.my_car
@@ -66,7 +66,7 @@ class DodgeManeuver(Maneuver):
             pass
         elif ct >= self._t_aim:
             if ct >= self._t_second_jump:
-                controls.jump = 1
+                controls.jump = True
 
             # Direction, yaw, pitch, roll
             if self.target is None:
@@ -89,6 +89,6 @@ class DodgeManeuver(Maneuver):
 
         # First jump
         else:
-            controls.jump = 1
+            controls.jump = True
 
         return controls

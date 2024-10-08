@@ -1,4 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from maneuvers.maneuver import Maneuver
 from maneuvers.recovery import RecoveryManeuver
@@ -22,9 +22,9 @@ class HalfFlipManeuver(Maneuver):
 
         self._max_speed = 2100  # Don't boost if above this speed
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         man_ct = bot.info.time - self.maneuver_start_time
-        controls = SimpleControllerState()
+        controls = ControllerState()
 
         car = bot.info.my_car
         vel_f = proj_onto_size(car.vel, car.forward)
@@ -53,12 +53,12 @@ class HalfFlipManeuver(Maneuver):
         elif ct >= self._t_second_jump_end:
             controls.pitch = -1
         elif ct >= self._t_second_jump_begin:
-            controls.jump = 1
+            controls.jump = True
             controls.pitch = 1
         elif ct >= self._t_first_jump_end:
             controls.pitch = 1
         else:
-            controls.jump = 1
+            controls.jump = True
             controls.throttle = -1
             controls.pitch = 1
 

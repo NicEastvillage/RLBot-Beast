@@ -6,7 +6,7 @@ from utility.vec import Vec3, cross, normalize, axis_to_rotation, dot
 
 
 def draw_ball_path(bot, duration: float, step_size: int):
-    ball_prediction = bot.get_ball_prediction_struct()
+    ball_prediction = bot.ball_predition
     if ball_prediction is not None and duration > 0 and step_size > 0:
         time_passed = 0
         steps_taken = 0
@@ -31,7 +31,7 @@ def draw_circle(bot, center: Vec3, normal: Vec3, radius: float, pieces: int):
         arm = dot(rotation_mat, arm)
         points.append(center + arm)
 
-    bot.renderer.draw_polyline_3d(points, bot.renderer.orange())
+    bot.renderer.draw_polyline_3d(points, bot.renderer.orange)
 
 
 def draw_bezier(bot, points: List[Vec3], time_step: float=0.05):

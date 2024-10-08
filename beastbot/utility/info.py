@@ -1,5 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
-from rlbot.messages.flat import GameTickPacket, FieldInfo
+from rlbot_flatbuffers import ControllerState, FieldInfo, GameTickPacket, AirState, GameStateType
 
 from utility.rlmath import clip
 from utility.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm
@@ -45,11 +44,10 @@ class Car:
         self.jumped = False
         self.double_jumped = False
         self.on_ground = True
-        self.supersonic = False
 
         self.last_expected_time_till_reach_ball = 3
 
-        self.last_input = SimpleControllerState()
+        self.last_input = ControllerState()
 
     @property
     def forward(self) -> Vec3:
@@ -108,14 +106,13 @@ class GameInfo:
         self.field_info_loaded = False
 
     def read_field_info(self, field_info: FieldInfo):
-        if field_info is None or field_info.num_boosts == 0:
+        if field_info is None or len(field_info.boost_pads) == 0:
             return
 
         self.boost_pads = []
         self.small_boost_pads = []
         self.big_boost_pads = []
-        for i in range(field_info.num_boosts):
-            pad = field_info.boost_pads[i]
+        for i, pad in enumerate(field_info.boost_pads):
             pos = Vec3(pad.location)
             pad = BoostPad(i, pos, pad.is_full_boost, True, 0.0)
             self.boost_pads.append(pad)
@@ -134,13 +131,13 @@ class GameInfo:
         # Game state
         self.dt = packet.game_info.seconds_elapsed - self.time
         self.time = packet.game_info.seconds_elapsed
-        self.is_kickoff = packet.game_info.is_kickoff_pause
+        self.is_kickoff = packet.game_info.game_state_type == GameStateType.Kickoff
         if self.is_kickoff:
             self.last_kickoff_end_time = self.time
         self.time_since_last_kickoff = self.time - self.last_kickoff_end_time
 
         # Read ball
-        ball_phy = packet.game_ball.physics
+        ball_phy = packet.balls[0].physics
         self.ball.pos = Vec3(ball_phy.location)
         self.ball.vel = Vec3(ball_phy.velocity)
         self.ball.ang_vel = Vec3(ball_phy.angular_velocity)
@@ -148,9 +145,7 @@ class GameInfo:
         # self.ball.step(dt)
 
         # Read cars
-        for i in range(0, packet.num_cars):
-
-            game_car = packet.game_cars[i]
+        for i, game_car in enumerate(packet.players):
 
             car_phy = game_car.physics
 
@@ -161,11 +156,10 @@ class GameInfo:
             car.ang_vel = Vec3(car_phy.angular_velocity)
             car.rot = euler_to_rotation(Vec3(car_phy.rotation.pitch, car_phy.rotation.yaw, car_phy.rotation.roll))
 
-            car.is_demolished = game_car.is_demolished
-            car.on_ground = game_car.has_wheel_contact
-            car.supersonic = game_car.is_super_sonic
-            car.jumped = game_car.jumped
-            car.double_jumped = game_car.double_jumped
+            car.is_demolished = game_car.demolished_timeout != -1
+            car.on_ground = game_car.air_state == AirState.OnGround
+            car.jumped = game_car.dodge_timeout != -1
+            car.double_jumped = game_car.dodge_timeout <= 0
             car.boost = game_car.boost
             car.time = self.time
 
@@ -187,15 +181,10 @@ class GameInfo:
                 else:
                     self.opponents.append(car)
 
-        # Read boost pads
-        for i in range(0, len(self.boost_pads)):
-            boost_pad = packet.game_boosts[i]
-            self.boost_pads[i].is_active = boost_pad.is_active
-            self.boost_pads[i].timer = boost_pad.timer
-
+        # Read boost pad states
         self.convenient_boost_pad_score = 0
         for pad in self.boost_pads:
-            pad_state = packet.game_boosts[pad.index]
+            pad_state = packet.boost_pads[pad.index]
             pad.is_active = pad_state.is_active
             pad.timer = pad_state.timer
 

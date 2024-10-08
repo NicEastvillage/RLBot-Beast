@@ -1,6 +1,6 @@
 import math
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from controllers.aim_cone import AimCone
 from maneuvers.small_jump import SmallJumpManeuver
@@ -13,7 +13,7 @@ from utility.vec import dot, normalize, proj_onto_size, xy, norm, angle_between
 
 class ShotController:
     def __init__(self):
-        self.controls = SimpleControllerState()
+        self.controls = ControllerState()
         self.dodge = None
         self.last_point = None
         self.last_dodge_end_time = 0
@@ -48,7 +48,7 @@ class ShotController:
 
         # FIXME if the ball is not on the ground we treat it as 'soon on ground' in all other cases
 
-        self.controls = SimpleControllerState()
+        self.controls = ControllerState()
         self.aim_is_ok = False
         self.waits_for_fall = False
         self.ball_is_flying = False
@@ -77,8 +77,8 @@ class ShotController:
                 ball_in_front = dot(ball_soon.pos - car_expected_pos, car.vel) > 0
 
                 if bot.do_rendering:
-                    bot.renderer.draw_line_3d(car.pos, car_expected_pos, bot.renderer.lime())
-                    bot.renderer.draw_rect_3d(car_expected_pos, 12, 12, True, bot.renderer.lime())
+                    bot.renderer.draw_line_3d(car.pos, car_expected_pos, bot.renderer.lime)
+                    bot.renderer.draw_rect_3d(car_expected_pos, 12, 12, True, bot.renderer.lime)
 
                 if vel_f > 400:
                     if diff < 150 and ball_in_front:

@@ -1,4 +1,4 @@
-[Bot Loadout]
+[blue_loadout]
 team_color_id = 59
 custom_color_id = 27
 car_id = 30
@@ -13,7 +13,7 @@ engine_audio_id = 0
 trails_id = 47
 goal_explosion_id = 2349
 
-[Bot Loadout Orange]
+[orange_loadout]
 team_color_id = 47
 custom_color_id = 35
 car_id = 30
