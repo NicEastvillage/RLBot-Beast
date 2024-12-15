@@ -198,12 +198,7 @@ class GameInfo:
             return 0
 
         car_to_pad = pad.pos - self.my_car.pos
-        try:
-            angle = angle_between(self.my_car.forward, car_to_pad)
-        except:
-            print(self.my_car.forward, car_to_pad)
-            print(dot(normalize(self.my_car.forward), normalize(car_to_pad)))
-            raise
+        angle = angle_between(self.my_car.forward, car_to_pad)
 
         # Pads behind the car is bad
         if abs(angle) > 1.3:

@@ -11,7 +11,11 @@ def sign(x) -> float:
 
 
 def clip(x, minimum, maximum):
-    return min(max(minimum, x), maximum)
+    if x < minimum:
+        return minimum
+    elif x > maximum:
+        return maximum
+    return x
 
 
 def clip01(x) -> float:

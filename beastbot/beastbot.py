@@ -60,7 +60,7 @@ class Beast(Bot):
         controller = self.use_brain()
 
         # Additional rendering
-        if self.do_rendering or True:
+        if self.do_rendering:
             draw_ball_path(self, 4, 5)
             doing = self.maneuver or self.choice
             if doing is not None:

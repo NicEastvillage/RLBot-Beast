@@ -250,7 +250,8 @@ def max_comp(vec: Vec3) -> float:
 
 
 def angle_between(v: Vec3, u: Vec3) -> float:
-    return math.acos(dot(normalize(v), normalize(u)))
+    v = dot(normalize(v), normalize(u))
+    return math.acos(clip(v, -1, 1))
 
 
 def axis_to_rotation(axis: Vec3) -> Mat33:
