@@ -17,7 +17,7 @@ class DummyObject:
                                 base.location.y,
                                 base.location.z)
             else:
-                self.pos = Vec3(base.pos)
+                self.pos = Vec3.from_vec(base.pos)
 
             # Velocity
             if hasattr(base, "velocity"):
@@ -25,7 +25,7 @@ class DummyObject:
                                 base.velocity.y,
                                 base.velocity.z)
             else:
-                self.vel = Vec3(base.vel)
+                self.vel = Vec3.from_vec(base.vel)
 
         else:
             self.pos = Vec3(0, 0, 0)

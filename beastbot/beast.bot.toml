@@ -1,4 +1,5 @@
 [settings]
+agent_id = "eastvillage/beast"
 name = "Beast from the East"
 loadout_config = "loadout.toml"
 run_command = "..\\venv\\Scripts\\python beastbot.py"

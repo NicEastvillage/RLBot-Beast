@@ -1,8 +1,7 @@
-from rlbot_flatbuffers import ControllerState, FieldInfo, GameTickPacket, AirState, GameStateType
+from rlbot_flatbuffers import ControllerState, FieldInfo, GamePacket, AirState, GameStatus
 
 from utility.rlmath import clip
-from utility.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm
-
+from utility.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm, dot, normalize
 
 GRAVITY = Vec3(0, 0, -650)
 
@@ -113,7 +112,7 @@ class GameInfo:
         self.small_boost_pads = []
         self.big_boost_pads = []
         for i, pad in enumerate(field_info.boost_pads):
-            pos = Vec3(pad.location)
+            pos = Vec3.from_vec(pad.location)
             pad = BoostPad(i, pos, pad.is_full_boost, True, 0.0)
             self.boost_pads.append(pad)
             if pad.is_big:
@@ -126,21 +125,21 @@ class GameInfo:
 
         self.field_info_loaded = True
 
-    def read_packet(self, packet: GameTickPacket):
+    def read_packet(self, packet: GamePacket):
 
         # Game state
         self.dt = packet.game_info.seconds_elapsed - self.time
         self.time = packet.game_info.seconds_elapsed
-        self.is_kickoff = packet.game_info.game_state_type == GameStateType.Kickoff
+        self.is_kickoff = packet.game_info.game_status == GameStatus.Kickoff
         if self.is_kickoff:
             self.last_kickoff_end_time = self.time
         self.time_since_last_kickoff = self.time - self.last_kickoff_end_time
 
         # Read ball
         ball_phy = packet.balls[0].physics
-        self.ball.pos = Vec3(ball_phy.location)
-        self.ball.vel = Vec3(ball_phy.velocity)
-        self.ball.ang_vel = Vec3(ball_phy.angular_velocity)
+        self.ball.pos = Vec3.from_vec(ball_phy.location)
+        self.ball.vel = Vec3.from_vec(ball_phy.velocity)
+        self.ball.ang_vel = Vec3.from_vec(ball_phy.angular_velocity)
         self.ball.t = self.time
         # self.ball.step(dt)
 
@@ -151,9 +150,9 @@ class GameInfo:
 
             car = self.cars[i] if i < len(self.cars) else Car()
 
-            car.pos = Vec3(car_phy.location)
-            car.vel = Vec3(car_phy.velocity)
-            car.ang_vel = Vec3(car_phy.angular_velocity)
+            car.pos = Vec3.from_vec(car_phy.location)
+            car.vel = Vec3.from_vec(car_phy.velocity)
+            car.ang_vel = Vec3.from_vec(car_phy.angular_velocity)
             car.rot = euler_to_rotation(Vec3(car_phy.rotation.pitch, car_phy.rotation.yaw, car_phy.rotation.roll))
 
             car.is_demolished = game_car.demolished_timeout != -1
@@ -199,7 +198,12 @@ class GameInfo:
             return 0
 
         car_to_pad = pad.pos - self.my_car.pos
-        angle = angle_between(self.my_car.forward, car_to_pad)
+        try:
+            angle = angle_between(self.my_car.forward, car_to_pad)
+        except:
+            print(self.my_car.forward, car_to_pad)
+            print(dot(normalize(self.my_car.forward), normalize(car_to_pad)))
+            raise
 
         # Pads behind the car is bad
         if abs(angle) > 1.3:

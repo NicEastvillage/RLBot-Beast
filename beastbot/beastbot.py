@@ -1,5 +1,5 @@
 from rlbot.managers import Bot
-from rlbot_flatbuffers import GameTickPacket, ControllerState, GameStateType
+from rlbot_flatbuffers import GamePacket, ControllerState, GameStatus
 
 from controllers import other
 from behaviours.carry import Carry
@@ -36,7 +36,7 @@ class Beast(Bot):
 
         self.initialized = False
 
-    def get_output(self, packet: GameTickPacket) -> ControllerState:
+    def get_output(self, packet: GamePacket) -> ControllerState:
         # Initialize
         if not self.initialized:
             self.info = GameInfo(self.index, self.team)
@@ -52,7 +52,7 @@ class Beast(Bot):
         self.info.read_packet(packet)
 
         # Check if match is over
-        if packet.game_info.game_state_type == GameStateType.Ended:
+        if packet.game_info.game_status == GameStatus.Ended:
             return other.celebrate(self)  # Assuming we win!
 
         self.renderer.begin_rendering()
@@ -60,12 +60,12 @@ class Beast(Bot):
         controller = self.use_brain()
 
         # Additional rendering
-        if self.do_rendering:
+        if self.do_rendering or True:
             draw_ball_path(self, 4, 5)
             doing = self.maneuver or self.choice
             if doing is not None:
                 status_str = f'{self.name}: {doing.__class__.__name__}'
-                self.renderer.draw_string_2d(300, 700 + self.index * 20, 1, 1, status_str, self.renderer.team_color(alt_color=True))
+                self.renderer.draw_string_2d(status_str, 0.03, 0.3 + self.index * 22/1080, 1, self.renderer.team_color(self.team, True))
 
         self.renderer.end_rendering()
 

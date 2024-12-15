@@ -1,19 +1,14 @@
 import math
 
+from rlbot_flatbuffers import Vector3
+
 from utility.rlmath import clip
 
 
-class Vec3:
-    def __init__(self, x: float or 'Vec3'=0.0, y: float=0.0, z: float=0.0):
-        if hasattr(x, 'x'):
-            # We have been given a vector. Copy it
-            self.x = float(x.x)
-            self.y = float(x.y) if hasattr(x, 'y') else 0
-            self.z = float(x.z) if hasattr(x, 'z') else 0
-        else:
-            self.x = float(x)
-            self.y = float(y)
-            self.z = float(z)
+class Vec3(Vector3):
+    @staticmethod
+    def from_vec(flat: Vector3):
+        return Vec3(flat.x, flat.y, flat.z)
 
     def __getitem__(self, item: int):
         return (self.x, self.y, self.z)[item]
