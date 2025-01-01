@@ -16,7 +16,7 @@ from utility.rendering import draw_ball_path
 from behaviours.utsystem import UtilitySystem, Choice
 from utility.vec import xy, Vec3, norm, dot
 
-RENDER = False
+RENDER = True
 
 
 class Beast(Bot):

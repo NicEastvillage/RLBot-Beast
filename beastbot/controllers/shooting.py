@@ -78,7 +78,7 @@ class ShotController:
 
                 if bot.do_rendering:
                     bot.renderer.draw_line_3d(car.pos, car_expected_pos, bot.renderer.lime)
-                    bot.renderer.draw_rect_3d(car_expected_pos, 12, 12, True, bot.renderer.lime)
+                    bot.renderer.draw_rect_3d(car_expected_pos, 12/1920, 12/1080, bot.renderer.lime)
 
                 if vel_f > 400:
                     if diff < 150 and ball_in_front:
