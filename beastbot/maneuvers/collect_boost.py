@@ -2,7 +2,7 @@
 
 from typing import List
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from maneuvers.maneuver import Maneuver
 from utility.info import BoostPad
@@ -34,13 +34,13 @@ class CollectClosestBoostManeuver(Maneuver):
                     shortest_dist = dist
 
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         car = bot.info.my_car
 
         # Somehow we didn't find a good pad
         if self.closest_pad is None:
             self.done = True
-            return SimpleControllerState()
+            return ControllerState()
 
         # End maneuver when almost there or pad becomes inactive
         car_to_pad = self.closest_pad.pos - car.pos
@@ -49,7 +49,8 @@ class CollectClosestBoostManeuver(Maneuver):
         if dist < 50 + vel * 0.2 or car.boost > 50 or not self.closest_pad.is_active:
             self.done = True
 
-        bot.renderer.draw_line_3d(car.pos, self.closest_pad.pos, bot.renderer.yellow())
+        if bot.do_rendering:
+            bot.renderer.draw_line_3d(car.pos, self.closest_pad.pos, bot.renderer.yellow)
         return bot.drive.go_towards_point(bot, self.closest_pad.pos, target_vel=2200, slide=True, boost_min=0, can_dodge=self.closest_pad.is_big)
 
 

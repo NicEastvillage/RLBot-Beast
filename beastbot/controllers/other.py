@@ -1,11 +1,11 @@
 import math
 import time
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 
 def celebrate(bot):
-    controls = SimpleControllerState()
+    controls = ControllerState()
     controls.steer = math.sin(time.time() * 14)
     controls.throttle = -1
     return controls

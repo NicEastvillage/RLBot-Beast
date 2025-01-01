@@ -1,4 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from controllers.aim_cone import AimCone
 from behaviours.utsystem import Choice
@@ -40,7 +40,7 @@ class ShootAtGoal(Choice):
 
         return clip01(own_half_01 + 0.1 * in_position + self.temp_utility_desire_boost + kickoff_bias01)
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
 
         car = bot.info.my_car
         ball = bot.info.ball
@@ -64,11 +64,11 @@ class ShootAtGoal(Choice):
             if enemy_hit_time < 1.5 * my_hit_time:
                 self.temp_utility_desire_boost -= bot.info.dt
                 if bot.do_rendering:
-                    bot.renderer.draw_line_3d(closest_enemy.pos, enemy_hit_pos, bot.renderer.red())
+                    bot.renderer.draw_line_3d(closest_enemy.pos, enemy_hit_pos, bot.renderer.red)
                 return bot.drive.go_home(bot)
 
             if bot.do_rendering:
-                bot.renderer.draw_line_3d(car.pos, offset_ball, bot.renderer.yellow())
+                bot.renderer.draw_line_3d(car.pos, offset_ball, bot.renderer.yellow)
 
             return bot.drive.go_towards_point(bot, offset_ball, target_vel=2200, slide=False, boost_min=0)
 
@@ -80,7 +80,7 @@ class ShootAtGoal(Choice):
             wait_point = lerp(wait_point, ball.pos + Vec3(0, bot.info.team_sign * 3000, 0), 0.5)
 
             if bot.do_rendering:
-                bot.renderer.draw_line_3d(car.pos, wait_point, bot.renderer.yellow())
+                bot.renderer.draw_line_3d(car.pos, wait_point, bot.renderer.yellow)
 
             return bot.drive.go_towards_point(bot, wait_point, norm(car.pos - wait_point), slide=False, can_keep_speed=True, can_dodge=False)
 

@@ -1,11 +1,11 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 
 class Choice:
     def utility(self, bot) -> float:
         raise NotImplementedError
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         raise NotImplementedError
 
     def reset(self):

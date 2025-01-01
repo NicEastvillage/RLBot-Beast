@@ -1,4 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from maneuvers.maneuver import Maneuver
 from utility.curves import curve_from_arrival_dir
@@ -89,7 +89,7 @@ def index_of_teammate_at_kickoff_spawn(bot, loc):
 
 
 class KickoffManeuver(Maneuver):
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         DODGE_DIST = 250
         MIDDLE_OFFSET = 430
 
@@ -124,7 +124,8 @@ class KickoffManeuver(Maneuver):
             point.y = bot.info.team_sign * 2790
 
         self.done = not bot.info.is_kickoff
-        bot.renderer.draw_line_3d(car.pos, point, bot.renderer.white())
+        if bot.do_rendering:
+            bot.renderer.draw_line_3d(car.pos, point, bot.renderer.white)
 
         return bot.drive.go_towards_point(bot, point, target_vel=speed, slide=False, boost_min=0,
                                                   can_dodge=False, can_keep_speed=False)
@@ -139,7 +140,7 @@ class SecondManSlowCornerKickoffManeuver(Maneuver):
         self.target_loc = Vec3(0, ts * 400, 0)
         self.target_dir = Vec3(0, -ts, 0)
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         car = bot.info.my_car
 
         self.done = norm(car.pos) < 1100  # End when getting close to ball (approx at boost pad)
@@ -154,7 +155,7 @@ class CollectSpecificBoostManeuver(Maneuver):
         super().__init__()
         self.boost_pad_pos = pad_pos
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         car = bot.info.my_car
 
         car_to_pad = self.boost_pad_pos - car.pos

@@ -1,5 +1,5 @@
-from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
-from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.managers import Bot
+from rlbot_flatbuffers import GamePacket, ControllerState, GameStatus
 
 from controllers import other
 from behaviours.carry import Carry
@@ -16,12 +16,13 @@ from utility.rendering import draw_ball_path
 from behaviours.utsystem import UtilitySystem, Choice
 from utility.vec import xy, Vec3, norm, dot
 
-RENDER = True
+RENDER = False
 
 
-class Beast(BaseAgent):
-    def __init__(self, name, team, index):
-        super().__init__(name, team, index)
+class Beast(Bot):
+    def __init__(self):
+        super().__init__()
+
         self.do_rendering = RENDER
         self.info = None
         self.choice = None
@@ -33,20 +34,25 @@ class Beast(BaseAgent):
         self.shoot = ShotController()
         self.fly = FlyController()
 
-    def initialize_agent(self):
-        self.info = GameInfo(self.index, self.team)
-        self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), SaveGoal(self), Carry()])
+        self.initialized = False
 
-    def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
+    def get_output(self, packet: GamePacket) -> ControllerState:
+        # Initialize
+        if not self.initialized:
+            self.info = GameInfo(self.index, self.team)
+            self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), SaveGoal(self), Carry()])
+
         # Read packet
         if not self.info.field_info_loaded:
-            self.info.read_field_info(self.get_field_info())
+            self.info.read_field_info(self.field_info)
             if not self.info.field_info_loaded:
-                return SimpleControllerState()
+                return ControllerState()
+        if len(packet.balls) == 0:
+            return ControllerState()
         self.info.read_packet(packet)
 
         # Check if match is over
-        if packet.game_info.is_match_ended:
+        if packet.game_info.game_status == GameStatus.Ended:
             return other.celebrate(self)  # Assuming we win!
 
         self.renderer.begin_rendering()
@@ -59,7 +65,7 @@ class Beast(BaseAgent):
             doing = self.maneuver or self.choice
             if doing is not None:
                 status_str = f'{self.name}: {doing.__class__.__name__}'
-                self.renderer.draw_string_2d(300, 700 + self.index * 20, 1, 1, status_str, self.renderer.team_color(alt_color=True))
+                self.renderer.draw_string_2d(status_str, 0.03, 0.3 + self.index * 22/1080, 1, self.renderer.team_color(self.team, True))
 
         self.renderer.end_rendering()
 
@@ -81,7 +87,7 @@ class Beast(BaseAgent):
             self.info.my_car.last_input.yaw = controller.yaw
             self.info.my_car.last_input.boost = controller.boost
 
-    def use_brain(self) -> SimpleControllerState:
+    def use_brain(self) -> ControllerState:
         # Check kickoff
         if self.info.is_kickoff and not self.doing_kickoff:
             self.maneuver = choose_kickoff_maneuver(self)
@@ -141,3 +147,7 @@ class DefaultBehaviour(Choice):
         else:
             # Go home
             return bot.drive.go_towards_point(bot, bot.info.own_goal_field, 2000, True, True)
+
+
+if __name__ == '__main__':
+    Beast().run()

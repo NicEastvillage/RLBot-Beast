@@ -1,6 +1,6 @@
 import math
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from controllers.aim_cone import AimCone
 from behaviours.utsystem import Choice
@@ -41,7 +41,7 @@ class ClearBall(Choice):
 
         return ball_own_half_01 * in_position
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         car = bot.info.my_car
         shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
         hit_pos = bot.shoot.ball_when_hit.pos

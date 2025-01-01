@@ -1,4 +1,4 @@
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from controllers.aim_cone import AimCone
 from behaviours.utsystem import Choice
@@ -29,7 +29,7 @@ class SaveGoal(Choice):
 
         return hits_goal or too_close
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
 
         car = bot.info.my_car
         ball = bot.info.ball

@@ -17,7 +17,7 @@ class DummyObject:
                                 base.location.y,
                                 base.location.z)
             else:
-                self.pos = Vec3(base.pos)
+                self.pos = Vec3.from_vec(base.pos)
 
             # Velocity
             if hasattr(base, "velocity"):
@@ -25,7 +25,7 @@ class DummyObject:
                                 base.velocity.y,
                                 base.velocity.z)
             else:
-                self.vel = Vec3(base.vel)
+                self.vel = Vec3.from_vec(base.vel)
 
         else:
             self.pos = Vec3(0, 0, 0)
@@ -63,9 +63,9 @@ def fall(obj, time: float, g=GRAVITY):
 
 def ball_predict(bot, time: float) -> DummyObject:
     """ Returns a DummyObject describing the expected position and velocity of the ball """
-    path = bot.get_ball_prediction_struct()
-    t = int(clip(360 * time / 6, 1, path.num_slices)) - 1
-    return DummyObject(path.slices[t].physics)
+    trajectory = bot.ball_prediction
+    t = int(clip(360 * time / 6, 1, len(trajectory.slices))) - 1
+    return DummyObject(trajectory.slices[t].physics)
 
 
 def next_ball_landing(bot, obj=None, size=Ball.RADIUS) -> UncertainEvent:

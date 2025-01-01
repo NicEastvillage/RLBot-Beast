@@ -1,6 +1,6 @@
 import math
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from behaviours.utsystem import Choice
 from maneuvers.dodge import DodgeManeuver
@@ -42,7 +42,7 @@ class Carry(Choice):
                               #  - 0.3 * bot.analyzer.team_mate_has_ball_01
                               + self.is_dribbling * self.extra_utility_bias)
 
-    def exec(self, bot) -> SimpleControllerState:
+    def exec(self, bot) -> ControllerState:
         self.is_dribbling = True
 
         car = bot.info.my_car
@@ -67,7 +67,7 @@ class Carry(Choice):
             self.flick_timer = 0
 
         if bot.do_rendering:
-            bot.renderer.draw_line_3d(car.pos, target, bot.renderer.pink())
+            bot.renderer.draw_line_3d(car.pos, target, bot.renderer.pink)
 
         return bot.drive.go_towards_point(bot, target, target_vel=speed, slide=False, can_keep_speed=False, can_dodge=True, wall_offset_allowed=0)
 

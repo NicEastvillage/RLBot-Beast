@@ -1,6 +1,6 @@
 import math
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from controllers.other import turn_radius, is_heading_towards
 from maneuvers.dodge import DodgeManeuver
@@ -25,7 +25,7 @@ class HandbrakeLimiter:
 
 class DriveController:
     def __init__(self):
-        self.controls = SimpleControllerState()
+        self.controls = ControllerState()
         self.dodge = None
         self.last_point = None
         self.last_dodge_end_time = 0
@@ -37,7 +37,7 @@ class DriveController:
         if self.dodge is None:
             self.dodge = DodgeManeuver(bot, self.last_point)
 
-    def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost_min=101, can_keep_speed=True, can_dodge=True, wall_offset_allowed=125) -> SimpleControllerState:
+    def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost_min=101, can_keep_speed=True, can_dodge=True, wall_offset_allowed=125) -> ControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
         REQUIRED_VELF_FOR_DODGE = 1100
 
@@ -178,7 +178,7 @@ class DriveController:
             point.x = clip(point.x, -goalx, goalx)
             point.y = clip(point.y, -goaly, goaly)
             if bot.do_rendering:
-                bot.renderer.draw_line_3d(car.pos, point, bot.renderer.green())
+                bot.renderer.draw_line_3d(car.pos, point, bot.renderer.green)
 
     def go_home(self, bot):
         car = bot.info.my_car
@@ -198,7 +198,7 @@ class DriveController:
         #     target = bot.info.ball.pos
 
         if dist < 300 and facing_ball > 0.5:
-            return SimpleControllerState()
+            return ControllerState()
 
         boost = 40 - (dist / 100) + enemy_dist / 200
         dodge = dist > 1500 or enemy_dist < dist

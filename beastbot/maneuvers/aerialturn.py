@@ -1,7 +1,5 @@
 import math
 
-from rlbot.agents.base_agent import SimpleControllerState
-
 from maneuvers.maneuver import Maneuver
 
 
@@ -26,9 +24,9 @@ class AerialTurnManeuver(Maneuver):
         # u = cross(l, f)
         # self.target = Mat33.from_columns(f, l, u)
 
-        bot.renderer.draw_line_3d(car.pos, car.pos + 200 * self.target.col(0), bot.renderer.red())
-        bot.renderer.draw_line_3d(car.pos, car.pos + 200 * self.target.col(1), bot.renderer.green())
-        bot.renderer.draw_line_3d(car.pos, car.pos + 200 * self.target.col(2), bot.renderer.blue())
+        bot.renderer.draw_line_3d(car.pos, car.pos + 200 * self.target.col(0), bot.renderer.red)
+        bot.renderer.draw_line_3d(car.pos, car.pos + 200 * self.target.col(1), bot.renderer.green)
+        bot.renderer.draw_line_3d(car.pos, car.pos + 200 * self.target.col(2), bot.renderer.blue)
 
         self.done |= car.on_ground
 
@@ -57,7 +55,7 @@ class AerialTurnManeuver(Maneuver):
         uprightness = dot(car.up, self.target.col(2))
         yaw_scale = 0.0 if uprightness < 0.6 else uprightness ** 2
 
-        return SimpleControllerState(
+        return ControllerState(
             pitch=clip(P_pitch * pitch_ang + D_pitch * pitch_ang_vel, -1, 1),
             yaw=clip((P_yaw * yaw_ang + D_yaw * yaw_ang_vel) * yaw_scale, -1, 1),
             roll=clip(P_roll * roll_ang + D_roll * roll_ang_vel, -1, 1),

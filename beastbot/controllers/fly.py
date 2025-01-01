@@ -1,6 +1,6 @@
 import math
 
-from rlbot.agents.base_agent import SimpleControllerState
+from rlbot_flatbuffers import ControllerState
 
 from utility.rlmath import clip
 from utility.vec import Mat33, dot
@@ -9,9 +9,9 @@ from utility.vec import Mat33, dot
 class FlyController:
 
     def __init__(self):
-        self.controls = SimpleControllerState()
+        self.controls = ControllerState()
 
-    def align(self, bot, target_rot: Mat33) -> SimpleControllerState:
+    def align(self, bot, target_rot: Mat33) -> ControllerState:
 
         car = bot.info.my_car
 

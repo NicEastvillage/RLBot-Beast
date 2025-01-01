@@ -1,0 +1,13 @@
+[settings]
+agent_id = "eastvillage/beast"
+name = "Beast from the East"
+loadout_file = "loadout.toml"
+run_command = "..\\venv\\Scripts\\python beastbot.py"
+
+[details]
+developer = "Eastvillage"
+description = "A proud Merc bot that uses a utility system to decide whether to defend, dribble, score, or eat the opponent alive."
+fun_fact = "'Beast' is actually short for 'Bot made by Eastvillage', and 'from the East' also means 'made by Eastvillage'."
+source_link = "https://github.com/NicEastvillage/RLBot-Beast"
+language = "Python"
+tags = ["1v1"]
