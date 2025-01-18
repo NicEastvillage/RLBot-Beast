@@ -1,4 +1,4 @@
-from rlbot_flatbuffers import ControllerState, FieldInfo, GamePacket, AirState, GameStatus
+from rlbot_flatbuffers import ControllerState, FieldInfo, GamePacket, AirState, MatchPhase
 
 from utility.rlmath import clip
 from utility.vec import Vec3, Mat33, euler_to_rotation, angle_between, norm, dot, normalize
@@ -128,9 +128,9 @@ class GameInfo:
     def read_packet(self, packet: GamePacket):
 
         # Game state
-        self.dt = packet.game_info.seconds_elapsed - self.time
-        self.time = packet.game_info.seconds_elapsed
-        self.is_kickoff = packet.game_info.game_status == GameStatus.Kickoff
+        self.dt = packet.match_info.seconds_elapsed - self.time
+        self.time = packet.match_info.seconds_elapsed
+        self.is_kickoff = packet.match_info.match_phase == MatchPhase.Kickoff
         if self.is_kickoff:
             self.last_kickoff_end_time = self.time
         self.time_since_last_kickoff = self.time - self.last_kickoff_end_time

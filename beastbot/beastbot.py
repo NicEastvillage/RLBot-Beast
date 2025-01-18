@@ -1,5 +1,5 @@
 from rlbot.managers import Bot
-from rlbot_flatbuffers import GamePacket, ControllerState, GameStatus
+from rlbot_flatbuffers import GamePacket, ControllerState, MatchPhase
 
 from controllers import other
 from behaviours.carry import Carry
@@ -52,7 +52,7 @@ class Beast(Bot):
         self.info.read_packet(packet)
 
         # Check if match is over
-        if packet.game_info.game_status == GameStatus.Ended:
+        if packet.match_info.match_phase == MatchPhase.Ended:
             return other.celebrate(self)  # Assuming we win!
 
         self.renderer.begin_rendering()
