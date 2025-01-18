@@ -21,7 +21,7 @@ RENDER = True
 
 class Beast(Bot):
     def __init__(self):
-        super().__init__()
+        super().__init__("eastvillage/beast")
 
         self.do_rendering = RENDER
         self.info = None
