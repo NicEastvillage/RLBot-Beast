@@ -8,15 +8,9 @@ from utility.vec import Vec3, cross, normalize, axis_to_rotation, dot
 def draw_ball_path(bot, duration: float, step_size: int):
     pred = bot.ball_prediction
     if pred is not None and duration > 0 and step_size > 0:
-        time_passed = 0
-        steps_taken = 0
-        locations = [pred.slices[0].physics.location]
-        while time_passed < duration and steps_taken + step_size < len(pred.slices):
-            steps_taken += step_size
-            time_passed += step_size * 0.016666
-            locations.append(pred.slices[steps_taken].physics.location)
-
-        if steps_taken > 0:
+        max_slice = int(math.ceil(duration * 120))
+        locations = [s.physics.location for s in pred.slices[0:max_slice:step_size]]
+        if len(locations) > 0:
             bot.renderer.draw_polyline_3d(locations, bot.renderer.create_color(255, 255, 0, 0))
 
 

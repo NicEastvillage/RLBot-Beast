@@ -2,6 +2,7 @@ from rlbot_flatbuffers import ControllerState
 
 from maneuvers.maneuver import Maneuver
 from utility.curves import curve_from_arrival_dir
+from utility.info import Field
 from utility.rlmath import sign
 from utility.vec import Vec3, norm, proj_onto_size
 
@@ -100,7 +101,7 @@ class KickoffManeuver(Maneuver):
 
         point = Vec3(0, bot.info.team_sign * (dist / 2.6 - MIDDLE_OFFSET), 0)
         speed = 2300
-        opp_dist = norm(bot.info.opponents[0].pos)
+        opp_dist = norm(bot.info.opponents[0].pos) if len(bot.info.opponents) > 0 else Field.LENGTH
         opp_does_kick = opp_dist < dist + 600
 
         # Opponent is not going for kickoff, so we slow down a bit
