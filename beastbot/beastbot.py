@@ -47,7 +47,7 @@ class Beast(Bot):
             self.info.read_field_info(self.field_info)
             if not self.info.field_info_loaded:
                 return ControllerState()
-        if len(packet.balls) == 0:
+        if len(packet.balls) == 0 or self.ball_prediction is None:
             return ControllerState()
         self.info.read_packet(packet)
 

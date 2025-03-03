@@ -10,9 +10,9 @@ enable_rendering = true
 match_length = "Unlimited"
 
 [[cars]]
-config = "beastbot/beast.bot.toml"
+config_file = "beastbot/beast.bot.toml"
 team = 0
 
 [[cars]]
-config = "beastbot/beast.bot.toml"
+config_file = "beastbot/beast.bot.toml"
 team = 1
