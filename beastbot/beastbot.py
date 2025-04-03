@@ -14,14 +14,14 @@ from controllers.shooting import ShotController
 from controllers.aim_cone import AimCone
 from utility.rendering import draw_ball_path
 from behaviours.utsystem import UtilitySystem, Choice
-from utility.vec import xy, Vec3, norm, dot
+from utility.vec import xy, Vec3, norm, dot, euler_to_rotation
 
 RENDER = True
 
 
 class Beast(Bot):
     def __init__(self):
-        super().__init__("eastvillage/beast")
+        super().__init__("eastvillage/beast/2.3.0")
 
         self.do_rendering = RENDER
         self.info = None
@@ -36,11 +36,12 @@ class Beast(Bot):
 
         self.initialized = False
 
+    def initialize(self):
+        self.info = GameInfo(self.index, self.team)
+        self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), SaveGoal(self), Carry()])
+        self.print("Initialized!")
+
     def get_output(self, packet: GamePacket) -> ControllerState:
-        # Initialize
-        if not self.initialized:
-            self.info = GameInfo(self.index, self.team)
-            self.ut = UtilitySystem([DefaultBehaviour(), ShootAtGoal(), ClearBall(self), SaveGoal(self), Carry()])
 
         # Read packet
         if not self.info.field_info_loaded:
@@ -75,8 +76,7 @@ class Beast(Bot):
         return controller
 
     def print(self, s):
-        team_name = "[BLUE]" if self.team == 0 else "[ORANGE]"
-        print("Beast", self.index, team_name, ":", s)
+        print(f"Beast i{self.index} t{self.team} :", s)
 
     def feedback(self, controller):
         if controller is None:
@@ -92,7 +92,7 @@ class Beast(Bot):
         if self.info.is_kickoff and not self.doing_kickoff:
             self.maneuver = choose_kickoff_maneuver(self)
             self.doing_kickoff = True
-            self.print("Kickoff - Hello world!")
+            #self.print("Kickoff")
 
         # Execute logic
         if self.maneuver is None or self.maneuver.done:
