@@ -1,0 +1,7 @@
+[[config]]
+project_name = "Beast"
+bot_configs = ["beastbot/beast.bot.toml"]
+
+[config.builder_config]
+builder_type = "pyinstaller"
+entry_file = "beastbot.spec"
