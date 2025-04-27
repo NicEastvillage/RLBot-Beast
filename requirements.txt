@@ -1,1 +1,1 @@
-rlbot~=2.0.0b40
+rlbot>=2.0.0.beta

@@ -52,9 +52,6 @@ class Beast(Bot):
                 return ControllerState()
         if len(packet.balls) == 0 or self.ball_prediction is None:
             return ControllerState()
-        if len(self.match_config.player_configurations) > len(packet.players):
-            self.print('[ERROR] Packet is missing players!')
-            return ControllerState()
         self.info.read_packet(packet)
 
         # Check if match is over
