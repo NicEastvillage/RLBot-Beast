@@ -23,7 +23,7 @@ RENDER = True
 
 class Beast(Bot):
     def __init__(self):
-        super().__init__("eastvillage/beast/2.3.0")
+        super().__init__("eastvillage/beast/v2.3.0")
 
         self.do_rendering = RENDER
         self.info = None
@@ -78,7 +78,7 @@ class Beast(Bot):
         return controller
 
     def print(self, s):
-        print(f"Beast i{self.index} t{self.team} :", s)
+        print(f"Beast i{self.index} t{self.team} :", s, flush=True)
 
     def feedback(self, controller):
         if controller is None:
