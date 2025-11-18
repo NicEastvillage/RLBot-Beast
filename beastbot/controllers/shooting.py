@@ -8,7 +8,7 @@ from utility.curves import curve_from_arrival_dir
 from utility.info import Ball, Field
 from utility.predict import ball_predict, next_ball_landing
 from utility.rlmath import clip
-from utility.vec import dot, normalize, proj_onto_size, xy, norm, angle_between
+from utility.vec import dot, normalize, proj_onto_size, xy, norm, angle_between, Vec3
 
 
 class ShotController:
@@ -101,13 +101,14 @@ class ShotController:
 
                 self.aim_is_ok = True
                 self.can_shoot = True
+                dist = norm(car_to_ball_soon)
 
-                if norm(car_to_ball_soon) < 240 + Ball.RADIUS and aim_cone.contains_direction(car_to_ball_soon)\
+                if dist < 240 + Ball.RADIUS and aim_cone.contains_direction(car_to_ball_soon)\
                         and vel_towards_ball_soon > 300:
                     bot.drive.start_dodge(bot)
 
                 offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
-                speed = self.determine_speed(norm(car_to_ball_soon), time)
+                speed = self.determine_speed(dist, time)
                 self.controls = bot.drive.go_towards_point(bot, offset_point, target_vel=speed, slide=True, boost_min=0, can_keep_speed=False)
                 return self.controls
 
@@ -126,11 +127,13 @@ class ShotController:
                 self.curve_point.x = clip(self.curve_point.x, -Field.WIDTH / 2, Field.WIDTH / 2)
                 self.curve_point.y = clip(self.curve_point.y, -Field.LENGTH / 2, Field.LENGTH / 2)
 
-                if dodge_hit and norm(car_to_ball_soon) < 240 + Ball.RADIUS and angle_between(car.forward, car_to_ball_soon) < 0.5\
+                dist = norm(car_to_ball_soon)
+
+                if dodge_hit and dist < 240 + Ball.RADIUS and angle_between(car.forward, car_to_ball_soon) < 0.5\
                         and aim_cone.contains_direction(car_to_ball_soon) and vel_towards_ball_soon > 300:
                     bot.drive.start_dodge(bot)
 
-                speed = self.determine_speed(norm(car_to_ball_soon), time)
+                speed = self.determine_speed(dist, time)
                 self.controls = bot.drive.go_towards_point(bot, self.curve_point, target_vel=speed, slide=True, boost_min=0, can_keep_speed=False)
                 return self.controls
 
@@ -154,7 +157,7 @@ class ShotController:
                 pass  # Aim is ok, but ball is in the air
 
     def determine_speed(self, dist, time):
-        if time == 0:
+        if time <= 0:
             return 2300
         elif dist < 1700:
             return dist / time

@@ -123,14 +123,21 @@ def time_till_reach_ball(car, ball):
     vel_b_f = proj_onto_size(ball.vel, car_to_ball)
     vel_c_amp = lerp(vel_c_f, norm(car.vel), 0.58)
     vel_f = vel_c_amp - vel_b_f
-    dist_long_01 = clip01(dist / 10_000.0)
-    time_normal = dist / max(220, vel_f)
-    time_long = dist / max(norm(car.vel), 1410)
-    time = lerp(time_normal, time_long, dist_long_01)
-    arrive_time = time * 0.95
-    # Combine slightly with old prediction to negative rapid changes
-    result = lerp(arrive_time, car.last_expected_time_till_reach_ball, 0.22)
-    car.last_expected_time_till_reach_ball = arrive_time
+    # Compute eta, involves using the LambertW function which
+    # we approximate with two iterations of Newtons method
+    t = dist / (vel_f if vel_f > 1 else 1)
+    A = vel_f - 1600
+    for _ in range(2):
+        E = math.exp(-t)
+        F = 1600 * t + A * (1 - E) - dist
+        dF = 1600 + A * E
+        t = t - F / dF
+    if t < 0:
+        t = 0
+
+    # Combine slightly with old prediction to prevent rapid changes
+    result = lerp(t, car.last_expected_time_till_reach_ball, 0.22)
+    car.last_expected_time_till_reach_ball = t
     return result
 
 
