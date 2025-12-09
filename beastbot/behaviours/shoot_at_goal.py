@@ -28,7 +28,7 @@ class ShootAtGoal(Choice):
         arena_length2 = bot.info.team_sign * Field.LENGTH / 2
         own_half_01 = clip01(remap(arena_length2, -arena_length2, 0.0, 1.1, ball_soon.pos.y))
 
-        reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
+        reachable_ball = predict.ball_predict(bot, predict.rough_ball_eta(bot, bot.info.my_car))
         self.ball_to_goal_right = bot.info.enemy_goal_right - reachable_ball.pos
         self.ball_to_goal_left = bot.info.enemy_goal_left - reachable_ball.pos
         self.aim_cone = AimCone(self.ball_to_goal_right, self.ball_to_goal_left)
@@ -45,7 +45,7 @@ class ShootAtGoal(Choice):
         car = bot.info.my_car
         ball = bot.info.ball
 
-        my_hit_time = predict.time_till_reach_ball(car, ball)
+        my_hit_time = predict.rough_ball_eta(bot, car)
         shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, my_hit_time)
         if bot.do_rendering:
             self.aim_cone.draw(bot, bot.shoot.ball_when_hit.pos, b=0)
@@ -59,7 +59,7 @@ class ShootAtGoal(Choice):
 
             goal_to_ball = normalize(hit_pos - bot.info.enemy_goal)
             offset_ball = hit_pos + goal_to_ball * Ball.RADIUS * 0.9
-            enemy_hit_time = predict.time_till_reach_ball(closest_enemy, ball)
+            enemy_hit_time = predict.rough_ball_eta(bot, closest_enemy)
             enemy_hit_pos = predict.ball_predict(bot, enemy_hit_time).pos
             if enemy_hit_time < 1.5 * my_hit_time:
                 self.temp_utility_desire_boost -= bot.info.dt

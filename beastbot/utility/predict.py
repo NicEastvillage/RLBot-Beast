@@ -1,6 +1,6 @@
 import math
 
-from utility.info import GRAVITY, Ball, Field
+from utility.info import GRAVITY, Ball, Field, Car
 from utility.rlmath import clip, lerp, clip01
 from utility.vec import norm, proj_onto_size, xy, Vec3
 
@@ -115,32 +115,6 @@ def arrival_at_height(obj, height: float, dir: str="ANY", g=GRAVITY.z) -> Uncert
         return UncertainEvent(False, 1e300)
 
 
-def time_till_reach_ball(car, ball):
-    """ Rough estimate about when we can reach the ball in 2d. """
-    car_to_ball = xy(ball.pos - car.pos)
-    dist = norm(car_to_ball) - Ball.RADIUS / 2
-    vel_c_f = proj_onto_size(car.vel, car_to_ball)
-    vel_b_f = proj_onto_size(ball.vel, car_to_ball)
-    vel_c_amp = lerp(vel_c_f, norm(car.vel), 0.58)
-    vel_f = vel_c_amp - vel_b_f
-    # Compute eta, involves using the LambertW function which
-    # we approximate with two iterations of Newtons method
-    t = dist / (vel_f if vel_f > 1 else 1)
-    A = vel_f - 1600
-    for _ in range(2):
-        E = math.exp(-t)
-        F = 1600 * t + A * (1 - E) - dist
-        dF = 1600 + A * E
-        t = t - F / dF
-    if t < 0:
-        t = 0
-
-    # Combine slightly with old prediction to prevent rapid changes
-    result = lerp(t, car.last_expected_time_till_reach_ball, 0.22)
-    car.last_expected_time_till_reach_ball = t
-    return result
-
-
 def will_ball_hit_goal(bot):
     ball = bot.info.ball
     if ball.vel.y == 0:
@@ -151,3 +125,127 @@ def will_ball_hit_goal(bot):
     hits_goal = abs(hit_pos.x) < Field.GOAL_WIDTH / 2 + Ball.RADIUS
 
     return UncertainEvent(hits_goal, time)
+
+
+def rough_ball_eta(bot, car):
+    """ Estimate when we can reach the ball in 2d. """
+    t = 0
+    for _ in range(5):
+        ball = ball_predict(bot, t)
+        car_to_ball = xy(ball.pos - car.pos)
+        dist = norm(car_to_ball) - Ball.RADIUS / 2
+        vel_f = proj_onto_size(car.vel, car_to_ball)
+        vel_amp = lerp(vel_f, norm(car.vel), 0.58)
+        t = clip(linear_eta(vel_amp, dist, car.boost / Car.BOOST_USE_RATE), 0, 6.0)
+
+    # Combine slightly with old prediction to prevent rapid changes
+    result = lerp(t, car.last_expected_time_till_reach_ball, 0.22)
+    car.last_expected_time_till_reach_ball = t
+    return result
+
+
+def _solve_exp_segment(v0: float, x0: float, v_inf: float) -> float:
+    """Solve for t in x(t) = x0 when v(t) = v_inf - (v_inf - v0) * exp(-t)"""
+    A = v_inf - v0
+
+    # Cheap initial guess
+    t = x0 / max(v0, 1.0)
+
+    # One iteration of Newton's method
+    E = math.exp(-t)
+    x_err = v_inf * t + (v0 - v_inf) * (1 - E) - x0
+    v_err = v_inf - A * E
+    t = t - x_err / v_err
+
+    # Second iteration
+    # E = math.exp(-t)
+    # x_err = v_inf * t + (v0 - v_inf) * (1 - E) - x0
+    # v_err = v_inf - A * E
+    # t = t - x_err / v_err
+
+    return t
+
+
+def _solve_quad_segment(v0: float, x0: float, a: float) -> float:
+    """Solve for t in x(t) = v0 * t + 0.5 * a * t^2 = x0"""
+    # Cheap initial guess
+    t = x0 / max(v0, 1.0)
+
+    # One iteration of Newton's method
+    x_err = v0 * t + 0.5 * a * t * t - x0
+    v_err = v0 + a * t
+    return t - x_err / v_err
+
+
+def linear_eta(v0: float, x0: float, boost_dur: float) -> float:
+    """Calculate linear ETA based on initial velocity, distance, and boost duration"""
+    D = Car.THROTTLE_ACCELERATION_AT_LIMIT
+    THR_MAX = Car.MAX_THROTTLE_SPEED
+    B = Car.BOOST_ACCELERATION
+    v_inf = D + B
+
+    t_sum = 0.0
+
+    # CASE E: v0 >= max_speed
+    if v0 >= Car.MAX_SPEED:
+        return x0 / Car.MAX_SPEED
+
+    # CASE A: v0 < THR_MAX and boost_dur > 0 (throttle and boost)
+    if v0 < THR_MAX and boost_dur > 0:
+        # Check if target hit during exponential phase
+        t_dest = _solve_exp_segment(v0, x0, v_inf)
+        if t_dest >= 0.0 and t_dest <= boost_dur:
+            return t_dest
+
+        t_to_max_throttle = math.log((v_inf - v0) / (v_inf - THR_MAX))
+        T = min(t_to_max_throttle, boost_dur)
+
+        # Compute state at end of case A
+        exp_T = math.exp(-T)
+        vT = v_inf - (v_inf - v0) * exp_T
+        xT = v_inf * T + (v0 - v_inf) * (1 - exp_T)
+
+        x0 -= xT
+        v0 = vT
+        boost_dur -= T
+        t_sum += T
+
+    # CASE B: v0 < THR_MAX and boost_dur == 0 (throttle)
+    if v0 < THR_MAX and boost_dur <= 0:
+        t_dest = _solve_exp_segment(v0, x0, D)
+        t_to_max_throttle = math.log((D - v0) / (D - THR_MAX))
+
+        # Do we reach destination before THR_MAX?
+        if t_dest >= 0.0 and t_dest < t_to_max_throttle:
+            return t_dest
+
+        # Compute state at end of case B
+        exp_T = math.exp(-t_to_max_throttle)
+        vT = D - (D - v0) * exp_T
+        xT = D * t_to_max_throttle + (v0 - D) * (1 - exp_T)
+
+        x0 -= xT
+        v0 = vT
+        t_sum += t_to_max_throttle
+
+    # CASE C: v0 >= THR_MAX and boost_dur > 0 (boost)
+    if v0 >= THR_MAX and boost_dur > 0:
+        # Do we reach destination before out of boost?
+        t_dest = _solve_quad_segment(v0, x0, B)
+        if t_dest >= 0.0 and t_dest <= boost_dur:
+            return t_dest
+
+        # Do we hit max speed during boost?
+        t_to_max_speed = (Car.MAX_SPEED - v0) / B
+        if t_to_max_speed <= boost_dur:
+            x0 -= v0 * t_to_max_speed + 0.5 * B * t_to_max_speed * t_to_max_speed
+            return t_sum + t_to_max_speed + x0 / Car.MAX_SPEED
+
+        # We run out of boost first
+        x0 -= v0 * boost_dur + 0.5 * B * boost_dur * boost_dur
+        v0 = v0 + B * boost_dur
+        boost_dur = 0
+        t_sum += boost_dur
+
+    # CASE D: THR_MAX <= v0 < vmax and boost_dur == 0 (no accel)
+    return t_sum + x0 / v0

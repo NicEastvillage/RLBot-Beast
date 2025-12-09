@@ -35,7 +35,7 @@ class ClearBall(Choice):
         length = team_sign * Field.LENGTH / 2
         ball_own_half_01 = clip01(remap(-length, length, -0.2, 1.2, bot.info.ball.pos.y))
 
-        reachable_ball = predict.ball_predict(bot, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
+        reachable_ball = predict.ball_predict(bot, predict.rough_ball_eta(bot, bot.info.my_car))
         car_to_ball = reachable_ball.pos - bot.info.my_car.pos
         in_position = self.aim_cone.contains_direction(car_to_ball, math.pi / 8)
 
@@ -43,7 +43,7 @@ class ClearBall(Choice):
 
     def exec(self, bot) -> ControllerState:
         car = bot.info.my_car
-        shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, predict.time_till_reach_ball(bot.info.my_car, bot.info.ball))
+        shoot_controls = bot.shoot.with_aiming(bot, self.aim_cone, predict.rough_ball_eta(bot, bot.info.my_car))
         hit_pos = bot.shoot.ball_when_hit.pos
 
         if bot.do_rendering:

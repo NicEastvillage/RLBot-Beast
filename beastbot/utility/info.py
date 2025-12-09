@@ -29,6 +29,12 @@ class Ball:
 
 
 class Car:
+    MAX_SPEED = 2300
+    MAX_THROTTLE_SPEED = 1410
+    THROTTLE_ACCELERATION_AT_LIMIT = 1556.0  # Max velocity if throttle acceleration didn't drop at 1400
+    BOOST_ACCELERATION = 991.66
+    BOOST_USE_RATE = 3.33   # per second
+
     def __init__(self, index=-1, name="Unknown", team=0, pos=Vec3(), vel=Vec3(), ang_vel=Vec3(), rot=Mat33(), time=0.0):
         self.id = index
         self.name = name

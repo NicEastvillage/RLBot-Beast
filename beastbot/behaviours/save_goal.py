@@ -35,7 +35,7 @@ class SaveGoal(Choice):
         ball = bot.info.ball
 
         hits_goal_prediction = predict.will_ball_hit_goal(bot)
-        reach_time = clip(predict.time_till_reach_ball(car, ball), 0, hits_goal_prediction.time - 0.5)
+        reach_time = clip(predict.rough_ball_eta(bot, car), 0, hits_goal_prediction.time - 0.2)
         reachable_ball = predict.ball_predict(bot, reach_time)
         self.ball_to_goal_right = self.own_goal_right - reachable_ball.pos
         self.ball_to_goal_left = self.own_goal_left - reachable_ball.pos
