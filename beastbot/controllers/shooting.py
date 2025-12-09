@@ -105,7 +105,7 @@ class ShotController:
 
                 if dist < 240 + Ball.RADIUS and aim_cone.contains_direction(car_to_ball_soon)\
                         and vel_towards_ball_soon > 300:
-                    bot.drive.start_dodge(bot)
+                    bot.drive.start_dodge(bot, ball_soon.pos)
 
                 offset_point = xy(ball_soon.pos) - 50 * aim_cone.get_center_dir()
                 speed = self.determine_speed(dist, time)
@@ -131,7 +131,7 @@ class ShotController:
 
                 if dodge_hit and dist < 240 + Ball.RADIUS and angle_between(car.forward, car_to_ball_soon) < 0.5\
                         and aim_cone.contains_direction(car_to_ball_soon) and vel_towards_ball_soon > 300:
-                    bot.drive.start_dodge(bot)
+                    bot.drive.start_dodge(bot, ball_soon.pos)
 
                 speed = self.determine_speed(dist, time)
                 self.controls = bot.drive.go_towards_point(bot, self.curve_point, target_vel=speed, slide=True, boost_min=0, can_keep_speed=False)

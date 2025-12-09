@@ -33,9 +33,9 @@ class DriveController:
         self.recovery = None
         self.handbrake_limiter = HandbrakeLimiter()
 
-    def start_dodge(self, bot):
+    def start_dodge(self, bot, target=None):
         if self.dodge is None:
-            self.dodge = DodgeManeuver(bot, self.last_point)
+            self.dodge = DodgeManeuver(bot, target or self.last_point)
 
     def go_towards_point(self, bot, point: Vec3, target_vel=1430, slide=False, boost_min=101, can_keep_speed=True, can_dodge=True, wall_offset_allowed=125) -> ControllerState:
         REQUIRED_ANG_FOR_SLIDE = 1.65
