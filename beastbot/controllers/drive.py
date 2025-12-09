@@ -186,12 +186,12 @@ class DriveController:
 
         car_to_home = home - car.pos
         dist = norm(car_to_home)
-        vel_f_home = proj_onto_size(car.vel, car_to_home)
+        vel_to_home = proj_onto_size(car.vel, car_to_home)
 
         car_to_ball = bot.info.ball.pos - car.pos
         facing_ball = dot(car.forward, normalize(car_to_ball))
 
-        # if vel_f_home * 2 > dist:
+        # if vel_to_home * 2 > dist:
         #     target = bot.info.ball.pos
 
         if dist < 300 and facing_ball > 0.5:
@@ -200,4 +200,10 @@ class DriveController:
         boost = 40 - (dist / 100) + enemy_dist / 200
         dodge = dist > 1500 or enemy_dist < dist
 
-        return self.go_towards_point(bot, target, 2300, True, boost_min=boost, can_dodge=dodge)
+        ctrl = self.go_towards_point(bot, target, 2300, True, boost_min=boost, can_dodge=dodge)
+
+        if dist < 900 and vel_to_home > 1200:
+            ctrl.steer = sign(bot.info.ball.pos.x)
+            ctrl.handbrake = True
+
+        return ctrl
